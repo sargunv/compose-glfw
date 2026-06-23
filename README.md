@@ -29,6 +29,7 @@ What works today:
 - [x] Mouse move, press, and release
 - [x] Scroll wheel and trackpad events
 - [x] Basic keyboard key down, key up, and repeat routing
+- [x] Basic committed text input from keyboard layouts
 - [x] Public `glfwApplication { Window { ... } }` API
 - [x] Per-window GPU interop hook for the current OpenGL context
 
@@ -37,7 +38,6 @@ Known gaps:
 - [ ] Production-ready application lifecycle semantics
 - [ ] Multi-window lifecycle beyond the current static startup window list
 - [ ] Complete keyboard mapping: all keys, locations, modifiers, lock states, and repeat semantics
-- [ ] Basic committed text input from keyboard layouts
 - [ ] IME/preedit integration: composition text, candidate positioning, and commit/cancel lifecycle
 - [ ] Platform cursor shape updates: pointer, text, resize, and custom cursors
 - [ ] Pointer enter/leave events at the window boundary
@@ -51,6 +51,8 @@ Known gaps:
 - [ ] Packaging/publishing metadata and documented consumer setup
 - [ ] macOS backend/runtime modules
 - [ ] Windows backend/runtime modules
+
+Useful parity reference: [Compose Multiplatform desktop-only API](https://kotlinlang.org/docs/multiplatform/compose-desktop-components.html).
 
 ## Run
 

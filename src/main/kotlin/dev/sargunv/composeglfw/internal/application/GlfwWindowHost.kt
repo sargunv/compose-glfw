@@ -4,6 +4,7 @@ import dev.sargunv.composeglfw.GlfwRenderBackend
 import dev.sargunv.composeglfw.GlfwWindowInfo
 import dev.sargunv.composeglfw.GlfwWindowSpec
 import dev.sargunv.composeglfw.internal.input.GlfwInputDispatcher
+import dev.sargunv.composeglfw.internal.platform.GlfwPlatformContext
 import dev.sargunv.composeglfw.internal.platform.glfwPlatform
 import dev.sargunv.composeglfw.internal.render.opengl.OpenGlRenderBackend
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
@@ -14,16 +15,18 @@ import org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback
 internal class GlfwWindowHost(private val spec: GlfwWindowSpec) : AutoCloseable {
   private val window = GlfwPlatformWindow(spec.title, spec.size, spec.options)
   private val renderBackend = OpenGlRenderBackend(window)
+  private val platformContext = GlfwPlatformContext()
   private val scope = GlfwWindowScopeImpl(currentInfo(), renderBackend.interop)
   private val scene =
     ComposeWindowScene(
       initialDensity = window.contentScale,
       initialSize = window.framebufferSize,
+      platformContext = platformContext,
       scope = scope,
       content = spec.content,
       invalidate = ::requestRender,
     )
-  private val input = GlfwInputDispatcher(window, scene, ::requestRender)
+  private val input = GlfwInputDispatcher(window, scene, platformContext.textInput, ::requestRender)
   private var lastFramebufferSize = window.framebufferSize
   private var lastContentScale = window.contentScale
   private var renderRequested = true

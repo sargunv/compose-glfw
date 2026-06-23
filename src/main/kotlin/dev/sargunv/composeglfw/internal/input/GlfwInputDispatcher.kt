@@ -4,11 +4,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerButtons
 import androidx.compose.ui.input.pointer.PointerEventType
+import dev.sargunv.composeglfw.internal.platform.GlfwTextInputService
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
 import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
 import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_1
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
+import org.lwjgl.glfw.GLFW.glfwSetCharCallback
 import org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback
 import org.lwjgl.glfw.GLFW.glfwSetKeyCallback
 import org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback
@@ -21,6 +23,7 @@ private const val GlfwScrollAmount = 3f
 internal class GlfwInputDispatcher(
   private val window: GlfwPlatformWindow,
   private val scene: ComposeWindowScene,
+  private val textInput: GlfwTextInputService,
   private val requestRender: () -> Unit,
 ) : AutoCloseable {
   private var mousePressed = false
@@ -50,6 +53,11 @@ internal class GlfwInputDispatcher(
         requestRender()
       }
     }
+    glfwSetCharCallback(window.handle) { _, codePoint ->
+      if (textInput.commit(codePoint)) {
+        requestRender()
+      }
+    }
   }
 
   override fun close() {
@@ -57,6 +65,7 @@ internal class GlfwInputDispatcher(
     glfwSetMouseButtonCallback(window.handle, null)?.free()
     glfwSetScrollCallback(window.handle, null)?.free()
     glfwSetKeyCallback(window.handle, null)?.free()
+    glfwSetCharCallback(window.handle, null)?.free()
   }
 
   private fun updateMousePosition(x: Double, y: Double) {

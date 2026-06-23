@@ -3,18 +3,27 @@
 package dev.sargunv.composeglfw.internal.scene
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.pointer.PointerButton
+import androidx.compose.ui.input.pointer.PointerButtons
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
+import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.scene.CanvasLayersComposeScene
 import androidx.compose.ui.scene.ComposeScene
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import dev.sargunv.composeglfw.GlfwWindowScope
+import dev.sargunv.composeglfw.internal.platform.GlfwPlatformContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 internal class ComposeWindowScene(
   initialDensity: Float,
   initialSize: IntSize,
+  platformContext: GlfwPlatformContext,
   private val scope: GlfwWindowScope,
   private val content: @Composable GlfwWindowScope.() -> Unit,
   invalidate: () -> Unit,
@@ -24,6 +33,7 @@ internal class ComposeWindowScene(
       density = Density(initialDensity),
       layoutDirection = LayoutDirection.Ltr,
       size = initialSize,
+      platformContext = platformContext,
       coroutineContext = EmptyCoroutineContext,
       invalidate = invalidate,
     )
@@ -49,23 +59,23 @@ internal class ComposeWindowScene(
     }
   }
 
-  fun sendKeyEvent(event: androidx.compose.ui.input.key.KeyEvent): Boolean = scene.sendKeyEvent(event)
+  fun sendKeyEvent(event: KeyEvent): Boolean = scene.sendKeyEvent(event)
 
   fun sendPointerEvent(
-    event: androidx.compose.ui.input.pointer.PointerEventType,
-    position: androidx.compose.ui.geometry.Offset,
-    scrollDelta: androidx.compose.ui.geometry.Offset = androidx.compose.ui.geometry.Offset.Zero,
-    button: androidx.compose.ui.input.pointer.PointerButton?,
-    buttons: androidx.compose.ui.input.pointer.PointerButtons,
+    event: PointerEventType,
+    position: Offset,
+    scrollDelta: Offset = Offset.Zero,
+    button: PointerButton?,
+    buttons: PointerButtons,
   ) {
     scene.sendPointerEvent(
       eventType = event,
       position = position,
       scrollDelta = scrollDelta,
       timeMillis = System.currentTimeMillis(),
-      type = androidx.compose.ui.input.pointer.PointerType.Mouse,
+      type = PointerType.Mouse,
       buttons = buttons,
-      keyboardModifiers = androidx.compose.ui.input.pointer.PointerKeyboardModifiers(0),
+      keyboardModifiers = PointerKeyboardModifiers(0),
       nativeEvent = null,
       button = button,
     )
