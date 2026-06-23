@@ -1,11 +1,12 @@
 package dev.sargunv.composeglfw.internal.window
 
 import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import dev.sargunv.composeglfw.CursorImagePointerIcon
 import dev.sargunv.composeglfw.WindowOptions
-import dev.sargunv.composeglfw.WindowSize
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
 import org.lwjgl.glfw.GLFW.GLFW_CLIENT_API
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_CREATION_API
@@ -54,21 +55,23 @@ import kotlin.math.roundToInt
 
 internal class PlatformWindow(
   title: String,
-  size: WindowSize,
+  size: DpSize,
   options: WindowOptions,
 ) : AutoCloseable {
+  private val initialWindowSize = size.toGlfwWindowSize()
+
   var handle: Long = NULL
     private set
 
   private val displayServer = currentDisplayServer()
 
   // Drawable framebuffer size in physical pixels. This is the Skia target and ComposeScene size.
-  var framebufferSize: IntSize = IntSize(size.width, size.height)
+  var framebufferSize: IntSize = initialWindowSize
     private set
 
   // GLFW content-area size in screen coordinates. Cursor positions use this same coordinate space.
   // On Wayland this is usually logical pixels; on X11 this is usually physical pixels.
-  var windowSize: IntSize = IntSize(size.width, size.height)
+  var windowSize: IntSize = initialWindowSize
     private set
 
   // Cross-platform logical content-area size, matching the Compose density applied to the
@@ -115,7 +118,7 @@ internal class PlatformWindow(
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE)
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, if (options.transparentFramebuffer) GLFW_TRUE else GLFW_FALSE)
 
-    handle = glfwCreateWindow(size.width, size.height, title, NULL, NULL)
+    handle = glfwCreateWindow(initialWindowSize.width, initialWindowSize.height, title, NULL, NULL)
     check(handle != NULL) { "GLFW window creation failed: ${glfwGetError(null)}" }
     glfwSetInputMode(handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE)
     makeCurrent()
@@ -261,3 +264,14 @@ private fun PointerIcon.glfwCursorShape(): Int? =
     PointerIcon.Hand -> GLFW_POINTING_HAND_CURSOR
     else -> null
   }
+
+private fun DpSize.toGlfwWindowSize(): IntSize =
+  IntSize(
+    width = width.toGlfwWindowUnit("width"),
+    height = height.toGlfwWindowUnit("height"),
+  )
+
+private fun Dp.toGlfwWindowUnit(name: String): Int {
+  require(java.lang.Float.isFinite(value) && value > 0f) { "Window $name must be a positive finite Dp value" }
+  return value.roundToInt().coerceAtLeast(1)
+}

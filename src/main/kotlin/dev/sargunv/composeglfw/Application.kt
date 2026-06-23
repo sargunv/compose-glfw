@@ -1,6 +1,8 @@
 package dev.sargunv.composeglfw
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import dev.sargunv.composeglfw.internal.application.ApplicationHost
 
 public fun glfwApplication(configure: ApplicationScope.() -> Unit) {
@@ -13,7 +15,7 @@ public interface ApplicationScope {
   @Suppress("FunctionName")
   public fun Window(
     title: String,
-    size: WindowSize = WindowSize(960, 640),
+    size: DpSize = DpSize(960.dp, 640.dp),
     options: WindowOptions = WindowOptions(),
     content: @Composable HostWindowScope.() -> Unit,
   )
@@ -21,7 +23,7 @@ public interface ApplicationScope {
 
 internal data class WindowSpec(
   val title: String,
-  val size: WindowSize,
+  val size: DpSize,
   val options: WindowOptions,
   val content: @Composable HostWindowScope.() -> Unit,
 )
@@ -31,7 +33,7 @@ private class ApplicationScopeImpl : ApplicationScope {
 
   override fun Window(
     title: String,
-    size: WindowSize,
+    size: DpSize,
     options: WindowOptions,
     content: @Composable HostWindowScope.() -> Unit,
   ) {

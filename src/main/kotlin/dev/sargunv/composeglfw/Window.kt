@@ -2,13 +2,6 @@ package dev.sargunv.composeglfw
 
 import dev.sargunv.composeglfw.internal.platform.defaultTextToolbarContent
 
-public data class WindowSize(public val width: Int, public val height: Int) {
-  init {
-    require(width > 0) { "Window width must be positive" }
-    require(height > 0) { "Window height must be positive" }
-  }
-}
-
 public class WindowOptions private constructor(
   public val resizable: Boolean,
   public val transparentFramebuffer: Boolean,
