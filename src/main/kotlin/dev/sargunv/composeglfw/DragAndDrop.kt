@@ -12,8 +12,27 @@ import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.InspectorInfo
 import java.nio.file.Path
 
-public data class DroppedFiles(public val paths: List<Path>)
+/** Files dropped onto a Compose GLFW window. */
+public data class DroppedFiles(
+  /** Paths reported by GLFW for the current file drag or drop. */
+  public val paths: List<Path>
+)
 
+/**
+ * Adds a file drop target to this modifier chain.
+ *
+ * All callbacks receive the paths currently being dragged or dropped. The target only participates
+ * when [accept] returns true.
+ *
+ * @param accept returns true when this target should handle the dragged files.
+ * @param onStarted called when an accepted file drag starts.
+ * @param onEntered called when an accepted file drag enters this target.
+ * @param onMoved called when an accepted file drag moves over this target.
+ * @param onExited called when an accepted file drag exits this target.
+ * @param onChanged called when an accepted file drag changes.
+ * @param onEnded called when an accepted file drag ends.
+ * @param onDrop called when files are dropped on this target.
+ */
 public fun Modifier.fileDropTarget(
   accept: (DroppedFiles) -> Boolean = { true },
   onStarted: (DroppedFiles) -> Unit = {},
@@ -36,6 +55,7 @@ public fun Modifier.fileDropTarget(
       onDrop = onDrop,
     )
 
+/** Returns the dropped files carried by this event, or null if it is not a file drop event. */
 public fun DragAndDropEvent.droppedFilesOrNull(): DroppedFiles? = nativeEvent as? DroppedFiles
 
 private data class FileDropTargetElement(

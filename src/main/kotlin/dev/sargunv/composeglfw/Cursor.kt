@@ -4,6 +4,14 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.unit.IntOffset
 
+/**
+ * Creates a pointer icon from an image.
+ *
+ * The image must have a positive width and height. The hotspot is clamped to the image bounds.
+ *
+ * @param image image to use for the cursor.
+ * @param hotSpot pixel in the image that points at the target location.
+ */
 public fun cursorImagePointerIcon(
   image: ImageBitmap,
   hotSpot: IntOffset = IntOffset.Zero,
