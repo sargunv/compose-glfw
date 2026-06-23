@@ -169,23 +169,9 @@ For the current Linux/OpenGL backend, the important values are:
 - GL proc address function
 - `makeCurrent` callback for the host context
 
-That is enough for a renderer such as MapLibre Native to create or borrow a shared GL texture, render into it, and then let the Compose host wrap that texture as a Skia backend render target for drawing in a `Canvas`.
+That is enough for a renderer such as MapLibre Native to create or borrow a shared GL texture and render into it. Presentation can live outside this library: downstream code can use public Compose/Skia APIs such as `drawIntoCanvas`, `skiaCanvas`, `BackendRenderTarget.makeGL`, `Surface.makeFromBackendRenderTarget`, and `Image` snapshots to draw the texture in a `Canvas`.
 
-The draw helper can stay tiny and backend-specific:
-
-```kotlin
-fun DrawScope.drawGlTexture(
-  textureName: Int,
-  textureTarget: Int,
-  width: Int,
-  height: Int,
-  origin: GlfwTextureOrigin = GlfwTextureOrigin.BOTTOM_LEFT,
-)
-```
-
-Internally this helper can create a framebuffer for the texture, wrap it with `BackendRenderTarget.makeGL`, create a Skia `Surface`, snapshot it as an `Image`, and draw that image into the Compose canvas. It should retain snapshots long enough for recorded Compose frames, matching the pattern used by the MapLibre compose-map prototype.
-
-Keep this API explicitly expert-level. It exposes native handles, has thread/context affinity, and is only valid for the owning window/backend.
+This keeps the host API to one expert-level hook: access to the owning window's GPU context. Texture lifecycle, synchronization, snapshot retention, and renderer-specific target descriptors belong in the integration layer that owns the native renderer.
 
 ## Notes
 
