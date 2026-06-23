@@ -139,18 +139,20 @@ private fun MenuAnchor(
   var menuOpen by remember { mutableStateOf(false) }
 
   Box(Modifier.fillMaxWidth().height(48.dp), contentAlignment = alignment) {
-    OutlinedButton(onClick = { menuOpen = true }) {
-      Text("$label: $selection")
-    }
-    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-      listOf("Daily", "Weekly", "Monthly", "Custom").forEach { option ->
-        DropdownMenuItem(
-          text = { Text(option) },
-          onClick = {
-            onSelectionChange(option)
-            menuOpen = false
-          },
-        )
+    Box {
+      OutlinedButton(onClick = { menuOpen = true }) {
+        Text("$label: $selection")
+      }
+      DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+        listOf("Daily", "Weekly", "Monthly", "Custom").forEach { option ->
+          DropdownMenuItem(
+            text = { Text(option) },
+            onClick = {
+              onSelectionChange(option)
+              menuOpen = false
+            },
+          )
+        }
       }
     }
   }

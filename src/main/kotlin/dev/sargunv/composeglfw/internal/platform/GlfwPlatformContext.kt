@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.platform.WindowInfo
 import androidx.compose.ui.text.input.PlatformTextInputService
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
@@ -42,19 +41,19 @@ internal class GlfwPlatformContext(private val window: GlfwPlatformWindow) : Pla
   }
 
   override val hasNonTranslationComponents: Boolean
-    get() = window.framebufferSize != window.windowSize
+    get() = false
 
   override fun convertLocalToWindowPosition(localPosition: Offset): Offset =
-    localPosition.framebufferLocalToWindow(window)
+    localPosition
 
   override fun convertWindowToLocalPosition(positionInWindow: Offset): Offset =
-    positionInWindow.windowToFramebufferLocal(window)
+    positionInWindow
 
   override fun convertLocalToScreenPosition(localPosition: Offset): Offset =
-    localPosition.framebufferLocalToWindow(window) + window.screenOrigin()
+    localPosition + window.screenOrigin()
 
   override fun convertScreenToLocalPosition(positionOnScreen: Offset): Offset =
-    (positionOnScreen - window.screenOrigin()).windowToFramebufferLocal(window)
+    positionOnScreen - window.screenOrigin()
 
   override fun setPointerIcon(pointerIcon: PointerIcon) {
     window.setPointerIcon(pointerIcon)
@@ -152,26 +151,10 @@ private class GlfwComposeWindowInfo : WindowInfo {
   override var containerDpSize: DpSize by mutableStateOf(DpSize.Zero)
 }
 
-private fun IntOffset.toOffset(): Offset = Offset(x.toFloat(), y.toFloat())
-
 private fun GlfwPlatformWindow.screenOrigin(): Offset =
   if (supportsWindowPosition) {
-    windowPosition.toOffset()
+    error("Window position support must define screen conversion in framebuffer-pixel coordinates.")
   } else {
     // Wayland deliberately does not expose global window coordinates through GLFW.
     Offset.Zero
   }
-
-private fun Offset.scale(from: IntSize, to: IntSize): Offset =
-  Offset(
-    x = x * to.width / from.width,
-    y = y * to.height / from.height,
-  )
-
-// ComposeScene local positions are framebuffer pixels because scene.size is the framebuffer size.
-private fun Offset.framebufferLocalToWindow(window: GlfwPlatformWindow): Offset =
-  scale(from = window.framebufferSize, to = window.windowSize)
-
-// Position-in-window values are content-area-relative GLFW screen-coordinate units.
-private fun Offset.windowToFramebufferLocal(window: GlfwPlatformWindow): Offset =
-  scale(from = window.windowSize, to = window.framebufferSize)
