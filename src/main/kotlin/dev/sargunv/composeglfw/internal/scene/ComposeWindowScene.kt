@@ -41,7 +41,8 @@ internal class ComposeWindowScene(
     CanvasLayersComposeScene(
       density = Density(initialDensity),
       layoutDirection = LayoutDirection.Ltr,
-      // The scene is rendered directly into the Skia framebuffer target, so local coordinates are pixels.
+      // The scene is rendered directly into the Skia framebuffer target, so local coordinates are
+      // pixels.
       size = initialSize,
       platformContext = platformContext,
       coroutineContext = coroutineContext,

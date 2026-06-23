@@ -8,8 +8,7 @@ import org.freedesktop.dbus.types.Variant
 
 @DBusInterfaceName("org.freedesktop.portal.Settings")
 internal interface XdgPortalSettings : DBusInterface {
-  @DBusMemberName("ReadOne")
-  fun readOne(namespace: String, key: String): Variant<*>
+  @DBusMemberName("ReadOne") fun readOne(namespace: String, key: String): Variant<*>
 
   class SettingChanged(
     path: String,

@@ -2,7 +2,8 @@ package dev.sargunv.composeglfw
 
 import dev.sargunv.composeglfw.internal.platform.defaultTextToolbarContent
 
-public class WindowOptions private constructor(
+public class WindowOptions
+private constructor(
   public val resizable: Boolean,
   public val transparentFramebuffer: Boolean,
   public val textToolbar: TextToolbarContent,

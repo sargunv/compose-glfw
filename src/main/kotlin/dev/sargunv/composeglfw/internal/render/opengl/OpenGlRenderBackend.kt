@@ -122,7 +122,8 @@ internal class OpenGlRenderBackend(private val window: PlatformWindow) : RenderB
         object : GLProcAddressCallback() {
           override fun invoke(ctx: Long, name: Long): Long = nglfwGetProcAddress(name)
         }
-      val assembledInterface = GLAssembledInterface.createFromNativePointers(NULL, getProcAddress.address())
+      val assembledInterface =
+        GLAssembledInterface.createFromNativePointers(NULL, getProcAddress.address())
       glProcAddressCallback = getProcAddress
       glInterface = assembledInterface
       DirectContext.makeGLWithInterface(assembledInterface)
@@ -131,7 +132,9 @@ internal class OpenGlRenderBackend(private val window: PlatformWindow) : RenderB
   private fun getEglConfig(): Long =
     MemoryStack.stackPush().use { stack ->
       val config = stack.mallocPointer(1)
-      check(glfwGetEGLConfig(window.handle, config)) { "GLFW did not expose the EGLConfig for this window" }
+      check(glfwGetEGLConfig(window.handle, config)) {
+        "GLFW did not expose the EGLConfig for this window"
+      }
       config[0]
     }
 
@@ -148,7 +151,8 @@ internal class OpenGlRenderBackend(private val window: PlatformWindow) : RenderB
   }
 }
 
-private abstract class GLProcAddressCallback : Callback(GLProcAddressCallbackI.DESCRIPTOR), GLProcAddressCallbackI {
+private abstract class GLProcAddressCallback :
+  Callback(GLProcAddressCallbackI.DESCRIPTOR), GLProcAddressCallbackI {
   override fun address(): Long = super<Callback>.address()
 }
 
@@ -165,7 +169,10 @@ private fun interface GLProcAddressCallbackI : CallbackI {
   override fun getDescriptor(): Callback.Descriptor = DESCRIPTOR
 
   override fun callback(ret: Long, args: Long) {
-    memPutAddress(ret, invoke(memGetAddress(args), memGetAddress(memGetAddress(args + POINTER_SIZE))))
+    memPutAddress(
+      ret,
+      invoke(memGetAddress(args), memGetAddress(memGetAddress(args + POINTER_SIZE))),
+    )
   }
 
   fun invoke(ctx: Long, name: Long): Long

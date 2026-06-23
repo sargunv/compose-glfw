@@ -1,8 +1,27 @@
+[settings]
+experimental = true
+pin = true
+install_before = "3d"
+lockfile = true
+
 [tools]
-java = "zulu-25"
+"core:java" = "zulu-25"
+"aqua:jdx/hk" = "1.48.0"
+"aqua:dprint/dprint" = "0.54.0"
+"aqua:facebook/ktfmt" = "0.63"
+
+[tasks.check]
+run = "hk check --all"
+
+[tasks.fix]
+run = "hk fix --all"
 
 [tasks.build]
 run = "./gradlew build"
+
+[tasks._ktfmt]
+hide = true
+run = 'java -jar {{ tools["aqua:facebook/ktfmt"].path }}/ktfmt'
 
 [tasks.run]
 run = "./gradlew :compose-glfw-demo:run"
@@ -12,3 +31,6 @@ run = "./gradlew :compose-glfw-demo:runWayland"
 
 [tasks.run-x11]
 run = "./gradlew :compose-glfw-demo:runX11"
+
+[hooks]
+postinstall = ["hk install --mise"]

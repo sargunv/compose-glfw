@@ -1,13 +1,14 @@
 package dev.sargunv.composeglfw.internal.input
 
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerButtons
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import dev.sargunv.composeglfw.internal.platform.TextInputService
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
 import dev.sargunv.composeglfw.internal.window.PlatformWindow
+import java.nio.file.Path
 import org.lwjgl.glfw.GLFW.GLFW_KEY_CAPS_LOCK
 import org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT
 import org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL
@@ -33,18 +34,18 @@ import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_5
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 import org.lwjgl.glfw.GLFW.GLFW_REPEAT
+import org.lwjgl.glfw.GLFW.glfwGetCursorPos
 import org.lwjgl.glfw.GLFW.glfwSetCharCallback
 import org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback
 import org.lwjgl.glfw.GLFW.glfwSetDropCallback
 import org.lwjgl.glfw.GLFW.glfwSetKeyCallback
 import org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback
 import org.lwjgl.glfw.GLFW.glfwSetScrollCallback
-import org.lwjgl.glfw.GLFW.glfwGetCursorPos
 import org.lwjgl.glfw.GLFWDropCallback
 import org.lwjgl.system.MemoryStack
-import java.nio.file.Path
 
-// Compose's desktop scroll config normally sees AWT's scrollAmount, commonly 3 lines per wheel step.
+// Compose's desktop scroll config normally sees AWT's scrollAmount, commonly 3 lines per wheel
+// step.
 // GLFW gives unit offsets without that metadata, so apply the same baseline before forwarding.
 private const val ScrollAmount = 3f
 
@@ -70,7 +71,10 @@ internal class InputDispatcher(
       val pointerButton = button.toPointerButton()
       if (pointerButton != null && (action == GLFW_PRESS || action == GLFW_RELEASE)) {
         updateMouseButton(button, action == GLFW_PRESS)
-        sendPointer(if (action == GLFW_PRESS) PointerEventType.Press else PointerEventType.Release, pointerButton)
+        sendPointer(
+          if (action == GLFW_PRESS) PointerEventType.Press else PointerEventType.Release,
+          pointerButton,
+        )
       }
     }
     glfwSetScrollCallback(window.handle) { _, x, y ->
@@ -122,7 +126,8 @@ internal class InputDispatcher(
   private fun updateMousePosition(x: Double, y: Double) {
     val framebuffer = window.framebufferSize
     val windowSize = window.windowSize
-    // GLFW cursor positions are window screen coordinates; Compose local positions are framebuffer pixels.
+    // GLFW cursor positions are window screen coordinates; Compose local positions are framebuffer
+    // pixels.
     lastMouse =
       Offset(
         (x * framebuffer.width / windowSize.width).toFloat(),
@@ -196,7 +201,8 @@ internal class InputDispatcher(
     val pressedModifier = key.glfwPressedModifierMask()
     if (pressedModifier != null) {
       return when (action) {
-        GLFW_PRESS, GLFW_REPEAT -> mods or pressedModifier
+        GLFW_PRESS,
+        GLFW_REPEAT -> mods or pressedModifier
         GLFW_RELEASE -> mods and pressedModifier.inv()
         else -> mods
       }
@@ -224,10 +230,14 @@ private fun Int.toPointerButton(): PointerButton? =
 
 private fun Int.glfwPressedModifierMask(): Int? =
   when (this) {
-    GLFW_KEY_LEFT_SHIFT, GLFW_KEY_RIGHT_SHIFT -> GLFW_MOD_SHIFT
-    GLFW_KEY_LEFT_CONTROL, GLFW_KEY_RIGHT_CONTROL -> GLFW_MOD_CONTROL
-    GLFW_KEY_LEFT_ALT, GLFW_KEY_RIGHT_ALT -> GLFW_MOD_ALT
-    GLFW_KEY_LEFT_SUPER, GLFW_KEY_RIGHT_SUPER -> GLFW_MOD_SUPER
+    GLFW_KEY_LEFT_SHIFT,
+    GLFW_KEY_RIGHT_SHIFT -> GLFW_MOD_SHIFT
+    GLFW_KEY_LEFT_CONTROL,
+    GLFW_KEY_RIGHT_CONTROL -> GLFW_MOD_CONTROL
+    GLFW_KEY_LEFT_ALT,
+    GLFW_KEY_RIGHT_ALT -> GLFW_MOD_ALT
+    GLFW_KEY_LEFT_SUPER,
+    GLFW_KEY_RIGHT_SUPER -> GLFW_MOD_SUPER
     else -> null
   }
 

@@ -8,23 +8,24 @@ import androidx.compose.ui.unit.IntSize
 import dev.sargunv.composeglfw.CursorImagePointerIcon
 import dev.sargunv.composeglfw.WindowOptions
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
+import kotlin.math.roundToInt
+import org.lwjgl.glfw.GLFW.GLFW_ARROW_CURSOR
 import org.lwjgl.glfw.GLFW.GLFW_CLIENT_API
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_CREATION_API
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR
-import org.lwjgl.glfw.GLFW.GLFW_EGL_CONTEXT_API
-import org.lwjgl.glfw.GLFW.GLFW_ARROW_CURSOR
 import org.lwjgl.glfw.GLFW.GLFW_CROSSHAIR_CURSOR
-import org.lwjgl.glfw.GLFW.GLFW_FOCUSED
+import org.lwjgl.glfw.GLFW.GLFW_EGL_CONTEXT_API
 import org.lwjgl.glfw.GLFW.GLFW_FALSE
+import org.lwjgl.glfw.GLFW.GLFW_FOCUSED
 import org.lwjgl.glfw.GLFW.GLFW_IBEAM_CURSOR
 import org.lwjgl.glfw.GLFW.GLFW_LOCK_KEY_MODS
 import org.lwjgl.glfw.GLFW.GLFW_OPENGL_API
 import org.lwjgl.glfw.GLFW.GLFW_POINTING_HAND_CURSOR
 import org.lwjgl.glfw.GLFW.GLFW_RESIZABLE
 import org.lwjgl.glfw.GLFW.GLFW_SCALE_TO_MONITOR
-import org.lwjgl.glfw.GLFW.GLFW_TRUE
 import org.lwjgl.glfw.GLFW.GLFW_TRANSPARENT_FRAMEBUFFER
+import org.lwjgl.glfw.GLFW.GLFW_TRUE
 import org.lwjgl.glfw.GLFW.glfwCreateCursor
 import org.lwjgl.glfw.GLFW.glfwCreateStandardCursor
 import org.lwjgl.glfw.GLFW.glfwCreateWindow
@@ -34,8 +35,8 @@ import org.lwjgl.glfw.GLFW.glfwDestroyWindow
 import org.lwjgl.glfw.GLFW.glfwFocusWindow
 import org.lwjgl.glfw.GLFW.glfwGetError
 import org.lwjgl.glfw.GLFW.glfwGetFramebufferSize
-import org.lwjgl.glfw.GLFW.glfwGetWindowContentScale
 import org.lwjgl.glfw.GLFW.glfwGetWindowAttrib
+import org.lwjgl.glfw.GLFW.glfwGetWindowContentScale
 import org.lwjgl.glfw.GLFW.glfwGetWindowPos
 import org.lwjgl.glfw.GLFW.glfwGetWindowSize
 import org.lwjgl.glfw.GLFW.glfwMakeContextCurrent
@@ -51,7 +52,6 @@ import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.MemoryUtil.memAlloc
 import org.lwjgl.system.MemoryUtil.memFree
-import kotlin.math.roundToInt
 
 internal class PlatformWindow(
   title: String,
@@ -116,7 +116,10 @@ internal class PlatformWindow(
     // On X11, screen coordinates and pixels are 1:1, so GLFW needs this to create windows at
     // the requested logical size on scaled desktops. Wayland uses framebuffer scaling instead.
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE)
-    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, if (options.transparentFramebuffer) GLFW_TRUE else GLFW_FALSE)
+    glfwWindowHint(
+      GLFW_TRANSPARENT_FRAMEBUFFER,
+      if (options.transparentFramebuffer) GLFW_TRUE else GLFW_FALSE,
+    )
 
     handle = glfwCreateWindow(initialWindowSize.width, initialWindowSize.height, title, NULL, NULL)
     check(handle != NULL) { "GLFW window creation failed: ${glfwGetError(null)}" }
@@ -214,11 +217,12 @@ internal class PlatformWindow(
 
   private fun PointerIcon.standardCursor(): Long {
     val shape = glfwCursorShape() ?: return NULL
-    return standardCursors[shape] ?: glfwCreateStandardCursor(shape).also { cursor ->
-      if (cursor != NULL) {
-        standardCursors[shape] = cursor
+    return standardCursors[shape]
+      ?: glfwCreateStandardCursor(shape).also { cursor ->
+        if (cursor != NULL) {
+          standardCursors[shape] = cursor
+        }
       }
-    }
   }
 
   private fun createImageCursor(pointerIcon: CursorImagePointerIcon): Long {
@@ -239,11 +243,7 @@ internal class PlatformWindow(
       val cursor =
         MemoryStack.stackPush().use { stack ->
           val glfwImage =
-            GLFWImage
-              .malloc(stack)
-              .width(image.width)
-              .height(image.height)
-              .pixels(rgbaPixels)
+            GLFWImage.malloc(stack).width(image.width).height(image.height).pixels(rgbaPixels)
           glfwCreateCursor(glfwImage, pointerIcon.hotSpot.x, pointerIcon.hotSpot.y)
         }
       if (cursor != NULL) {
@@ -272,6 +272,8 @@ private fun DpSize.toGlfwWindowSize(): IntSize =
   )
 
 private fun Dp.toGlfwWindowUnit(name: String): Int {
-  require(java.lang.Float.isFinite(value) && value > 0f) { "Window $name must be a positive finite Dp value" }
+  require(java.lang.Float.isFinite(value) && value > 0f) {
+    "Window $name must be a positive finite Dp value"
+  }
   return value.roundToInt().coerceAtLeast(1)
 }

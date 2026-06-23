@@ -30,8 +30,7 @@ internal fun FileDropCard(modifier: Modifier = Modifier) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
       Text("File drop", style = MaterialTheme.typography.titleMedium)
       Column(
-        Modifier
-          .fillMaxWidth()
+        Modifier.fillMaxWidth()
           .heightIn(min = 112.dp)
           .fileDropTarget(
             onEntered = { active = true },
@@ -44,14 +43,15 @@ internal fun FileDropCard(modifier: Modifier = Modifier) {
           )
           .border(
             width = 1.dp,
-            color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+            color =
+              if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
           )
           .background(
             if (active) {
               MaterialTheme.colorScheme.primaryContainer
             } else {
               MaterialTheme.colorScheme.surfaceContainerHighest
-            },
+            }
           )
           .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -60,7 +60,10 @@ internal fun FileDropCard(modifier: Modifier = Modifier) {
           Text("Drop files here", style = MaterialTheme.typography.bodyMedium)
         } else {
           droppedFiles.take(4).forEach { path ->
-            Text(path.fileName?.toString() ?: path.toString(), style = MaterialTheme.typography.bodyMedium)
+            Text(
+              path.fileName?.toString() ?: path.toString(),
+              style = MaterialTheme.typography.bodyMedium,
+            )
           }
           if (droppedFiles.size > 4) {
             Text("+${droppedFiles.size - 4} more", style = MaterialTheme.typography.bodySmall)

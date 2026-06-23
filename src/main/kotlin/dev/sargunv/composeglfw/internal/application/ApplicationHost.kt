@@ -1,7 +1,7 @@
 package dev.sargunv.composeglfw.internal.application
 
-import dev.sargunv.composeglfw.WindowSpec
 import dev.sargunv.composeglfw.DisplayServer
+import dev.sargunv.composeglfw.WindowSpec
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
 import org.lwjgl.glfw.GLFW.GLFW_PLATFORM
 import org.lwjgl.glfw.GLFW.GLFW_PLATFORM_WAYLAND

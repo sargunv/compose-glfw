@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -140,16 +140,15 @@ private fun PointerEvent.describe(): String {
 }
 
 private fun ObservedModifiers.format(): String {
-  val active =
-    buildList {
-      if (ctrl) add("Ctrl")
-      if (shift) add("Shift")
-      if (alt) add("Alt")
-      if (meta) add("Meta")
-      if (altGraph) add("AltGraph")
-      if (capsLock) add("Caps")
-      if (numLock) add("Num")
-      if (scrollLock) add("Scroll")
-    }
+  val active = buildList {
+    if (ctrl) add("Ctrl")
+    if (shift) add("Shift")
+    if (alt) add("Alt")
+    if (meta) add("Meta")
+    if (altGraph) add("AltGraph")
+    if (capsLock) add("Caps")
+    if (numLock) add("Num")
+    if (scrollLock) add("Scroll")
+  }
   return active.joinToString().ifEmpty { "no modifiers" }
 }

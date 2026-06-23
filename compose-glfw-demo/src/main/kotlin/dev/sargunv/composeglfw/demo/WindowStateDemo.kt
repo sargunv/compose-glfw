@@ -53,8 +53,14 @@ internal fun WindowStateCard(
       }
 
       Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        MetricRow("Window size", "${windowInfo.windowWidth} x ${windowInfo.windowHeight} logical px")
-        MetricRow("Framebuffer size", "${windowInfo.framebufferWidth} x ${windowInfo.framebufferHeight} px")
+        MetricRow(
+          "Window size",
+          "${windowInfo.windowWidth} x ${windowInfo.windowHeight} logical px",
+        )
+        MetricRow(
+          "Framebuffer size",
+          "${windowInfo.framebufferWidth} x ${windowInfo.framebufferHeight} px",
+        )
         MetricRow(
           "Compose container",
           "${composeWindowInfo.containerSize.width} x ${composeWindowInfo.containerSize.height} px",
@@ -65,7 +71,10 @@ internal fun WindowStateCard(
             "${composeWindowInfo.containerDpSize.height.value.roundToInt()} dp",
         )
         MetricRow("Content scale", "${(windowInfo.contentScale * 100).roundToInt()}%")
-        MetricRow("Framebuffer scale", "${framebufferScaleX.formatScale()} x ${framebufferScaleY.formatScale()}")
+        MetricRow(
+          "Framebuffer scale",
+          "${framebufferScaleX.formatScale()} x ${framebufferScaleY.formatScale()}",
+        )
       }
 
       WindowModifierStatus(composeWindowInfo.keyboardModifiers)
@@ -75,9 +84,16 @@ internal fun WindowStateCard(
 
 @Composable
 private fun StatusValue(label: String, value: String) {
-  Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.surfaceContainerHighest) {
+  Surface(
+    shape = MaterialTheme.shapes.small,
+    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+  ) {
     Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-      Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+      Text(
+        label,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
       Text(value, style = MaterialTheme.typography.bodyMedium)
     }
   }
@@ -98,7 +114,10 @@ internal fun MetricRow(label: String, value: String, modifier: Modifier = Modifi
 
 @Composable
 private fun WindowModifierStatus(modifiers: PointerKeyboardModifiers) {
-  FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+  FlowRow(
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+  ) {
     ModifierStatusValue("Ctrl", modifiers.isCtrlPressed)
     ModifierStatusValue("Shift", modifiers.isShiftPressed)
     ModifierStatusValue("Alt", modifiers.isAltPressed)
@@ -116,8 +135,7 @@ private fun ModifierStatusValue(label: String, active: Boolean) {
   Text(
     text = "$label ${if (active) "on" else "off"}",
     modifier =
-      Modifier
-        .widthIn(min = 72.dp)
+      Modifier.widthIn(min = 72.dp)
         .background(if (active) colors.primaryContainer else colors.surfaceContainer)
         .padding(horizontal = 10.dp, vertical = 6.dp),
     style = MaterialTheme.typography.labelMedium,

@@ -19,8 +19,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
-import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 
 @Composable
@@ -31,11 +31,17 @@ internal fun LifecycleCard(modifier: Modifier = Modifier) {
   Card(modifier) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
       Text("Lifecycle", style = MaterialTheme.typography.titleMedium)
-      Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+      ) {
         Text("State", style = MaterialTheme.typography.labelLarge)
         Text(lifecycleState.name, style = MaterialTheme.typography.bodyMedium)
       }
-      Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+      ) {
         Button(onClick = model::increment) {
           Text("ViewModel ${model.count}")
         }
@@ -57,14 +63,12 @@ internal class LifecycleDemoViewModel : ViewModel() {
   internal companion object {
     private var nextId: Int = 1
 
-    internal val Factory: ViewModelProvider.Factory =
-      viewModelFactory {
-        initializer {
-          LifecycleDemoViewModel()
-        }
+    internal val Factory: ViewModelProvider.Factory = viewModelFactory {
+      initializer {
+        LifecycleDemoViewModel()
       }
+    }
 
-    fun nextInstanceId(): Int =
-      nextId++
+    fun nextInstanceId(): Int = nextId++
   }
 }

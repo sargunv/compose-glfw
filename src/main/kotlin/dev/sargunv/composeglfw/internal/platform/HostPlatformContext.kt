@@ -2,8 +2,8 @@
 
 package dev.sargunv.composeglfw.internal.platform
 
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.InternalComposeUiApi
@@ -11,19 +11,19 @@ import androidx.compose.ui.SystemTheme
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.InputModeManager
-import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import androidx.compose.ui.platform.DefaultArchitectureComponentsOwner
 import androidx.compose.ui.platform.PlatformArchitectureComponentsOwner
 import androidx.compose.ui.platform.PlatformContext
 import androidx.compose.ui.platform.PlatformDragAndDropManager
+import androidx.compose.ui.platform.PlatformRootForTest
 import androidx.compose.ui.platform.PlatformScreenReader
 import androidx.compose.ui.platform.PlatformTextInputMethodRequest
 import androidx.compose.ui.platform.PlatformWindowInsets
 import androidx.compose.ui.platform.TextToolbar
 import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.platform.WindowInfo
-import androidx.compose.ui.platform.PlatformRootForTest
 import androidx.compose.ui.semantics.SemanticsOwner
 import androidx.compose.ui.text.input.PlatformTextInputService
 import androidx.compose.ui.unit.DpSize
@@ -52,6 +52,7 @@ internal class HostPlatformContext(
   private var lifecycleDestroyed = false
   var systemTheme: SystemTheme by mutableStateOf(SystemTheme.Unknown)
     private set
+
   override val windowInfo: WindowInfo = mutableWindowInfo
 
   override suspend fun startInputMethod(request: PlatformTextInputMethodRequest): Nothing =
@@ -65,11 +66,9 @@ internal class HostPlatformContext(
   override val hasNonTranslationComponents: Boolean
     get() = false
 
-  override fun convertLocalToWindowPosition(localPosition: Offset): Offset =
-    localPosition
+  override fun convertLocalToWindowPosition(localPosition: Offset): Offset = localPosition
 
-  override fun convertWindowToLocalPosition(positionInWindow: Offset): Offset =
-    positionInWindow
+  override fun convertWindowToLocalPosition(positionInWindow: Offset): Offset = positionInWindow
 
   override fun convertLocalToScreenPosition(localPosition: Offset): Offset =
     localPosition + window.screenOrigin()
@@ -95,7 +94,8 @@ internal class HostPlatformContext(
   override val measureDrawLayerBounds: Boolean
     get() = fallbackContext.measureDrawLayerBounds
 
-  // GLFW does not expose host gesture timings or slop; Compose's Skiko defaults are appropriate here.
+  // GLFW does not expose host gesture timings or slop; Compose's Skiko defaults are appropriate
+  // here.
   override val viewConfiguration: ViewConfiguration
     get() = fallbackContext.viewConfiguration
 
@@ -103,7 +103,8 @@ internal class HostPlatformContext(
   override val inputModeManager: InputModeManager
     get() = fallbackContext.inputModeManager
 
-  // TODO: Legacy API; keep startInputMethod as the active path and implement IME/preedit separately.
+  // TODO: Legacy API; keep startInputMethod as the active path and implement IME/preedit
+  // separately.
   @Suppress("DEPRECATION")
   override val textInputService: PlatformTextInputService
     get() = fallbackContext.textInputService
@@ -196,7 +197,7 @@ internal class HostPlatformContext(
   private fun updateLifecycle() {
     if (!lifecycleDestroyed) {
       architectureOwner.setLifecycleState(
-        if (mutableWindowInfo.isWindowFocused) State.RESUMED else State.STARTED,
+        if (mutableWindowInfo.isWindowFocused) State.RESUMED else State.STARTED
       )
     }
   }
@@ -204,7 +205,8 @@ internal class HostPlatformContext(
 
 private class ComposeWindowInfoState : WindowInfo {
   override var isWindowFocused: Boolean by mutableStateOf(true)
-  override var keyboardModifiers: PointerKeyboardModifiers by mutableStateOf(PointerKeyboardModifiers())
+  override var keyboardModifiers: PointerKeyboardModifiers by
+    mutableStateOf(PointerKeyboardModifiers())
   override var containerSize: IntSize by mutableStateOf(IntSize.Zero)
   override var containerDpSize: DpSize by mutableStateOf(DpSize.Zero)
 }

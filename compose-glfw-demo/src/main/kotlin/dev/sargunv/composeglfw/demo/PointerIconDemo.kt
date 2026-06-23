@@ -34,7 +34,10 @@ internal fun PointerIconCard(modifier: Modifier = Modifier) {
   Card(modifier) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
       Text("Pointer icons", style = MaterialTheme.typography.titleMedium)
-      FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+      FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+      ) {
         PointerIconTarget("Default", PointerIcon.Default)
         PointerIconTarget("Hand", PointerIcon.Hand)
         PointerIconTarget("Text", PointerIcon.Text)
@@ -48,8 +51,7 @@ internal fun PointerIconCard(modifier: Modifier = Modifier) {
 @Composable
 private fun PointerIconTarget(label: String, pointerIcon: PointerIcon) {
   Column(
-    Modifier
-      .width(132.dp)
+    Modifier.width(132.dp)
       .height(72.dp)
       .background(MaterialTheme.colorScheme.surfaceContainerHighest)
       .pointerHoverIcon(pointerIcon)

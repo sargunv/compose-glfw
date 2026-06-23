@@ -1,7 +1,7 @@
 package dev.sargunv.composeglfw
 
-import org.lwjgl.glfw.GLFW.GLFW_PLATFORM_X11
 import org.lwjgl.glfw.GLFW.GLFW_PLATFORM_WAYLAND
+import org.lwjgl.glfw.GLFW.GLFW_PLATFORM_X11
 
 public enum class DisplayServer(
   internal val supportsWindowPosition: Boolean,

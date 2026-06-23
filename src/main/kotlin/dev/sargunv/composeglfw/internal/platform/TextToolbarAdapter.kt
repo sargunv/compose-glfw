@@ -90,9 +90,8 @@ internal val defaultTextToolbarContent: TextToolbarContent = { state, actions ->
     properties = PopupProperties(focusable = false, dismissOnClickOutside = true),
   ) {
     Row(
-      Modifier
-        .background(TextToolbarBackground, RoundedCornerShape(6.dp))
-        .padding(horizontal = 4.dp, vertical = 3.dp),
+      Modifier.background(TextToolbarBackground, RoundedCornerShape(6.dp))
+        .padding(horizontal = 4.dp, vertical = 3.dp)
     ) {
       TextToolbarAction("Cut", state.canCut, actions::cut)
       TextToolbarAction("Copy", state.canCopy, actions::copy)
@@ -110,10 +109,7 @@ private fun TextToolbarAction(label: String, enabled: Boolean, action: () -> Uni
   }
   BasicText(
     text = label,
-    modifier =
-      Modifier
-        .clickable(onClick = action)
-        .padding(horizontal = 10.dp, vertical = 7.dp),
+    modifier = Modifier.clickable(onClick = action).padding(horizontal = 10.dp, vertical = 7.dp),
     style = TextStyle(color = TextToolbarForeground),
   )
 }
@@ -186,10 +182,11 @@ private class TextToolbarPositionProvider(private val rect: Rect) : PopupPositio
     val above = rect.top.roundToInt() - popupContentSize.height
     val y =
       if (below + popupContentSize.height <= windowSize.height) {
-        below
-      } else {
-        above
-      }.fitWithin(windowSize.height, popupContentSize.height)
+          below
+        } else {
+          above
+        }
+        .fitWithin(windowSize.height, popupContentSize.height)
     return IntOffset(x, y)
   }
 }

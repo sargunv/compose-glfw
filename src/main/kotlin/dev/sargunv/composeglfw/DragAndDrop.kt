@@ -12,9 +12,7 @@ import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.platform.InspectorInfo
 import java.nio.file.Path
 
-public data class DroppedFiles(
-  public val paths: List<Path>,
-)
+public data class DroppedFiles(public val paths: List<Path>)
 
 public fun Modifier.fileDropTarget(
   accept: (DroppedFiles) -> Boolean = { true },
@@ -26,19 +24,19 @@ public fun Modifier.fileDropTarget(
   onEnded: (DroppedFiles) -> Unit = {},
   onDrop: (DroppedFiles) -> Unit,
 ): Modifier =
-  this then FileDropTargetElement(
-    accept = accept,
-    onStarted = onStarted,
-    onEntered = onEntered,
-    onMoved = onMoved,
-    onExited = onExited,
-    onChanged = onChanged,
-    onEnded = onEnded,
-    onDrop = onDrop,
-  )
+  this then
+    FileDropTargetElement(
+      accept = accept,
+      onStarted = onStarted,
+      onEntered = onEntered,
+      onMoved = onMoved,
+      onExited = onExited,
+      onChanged = onChanged,
+      onEnded = onEnded,
+      onDrop = onDrop,
+    )
 
-public fun DragAndDropEvent.droppedFilesOrNull(): DroppedFiles? =
-  nativeEvent as? DroppedFiles
+public fun DragAndDropEvent.droppedFilesOrNull(): DroppedFiles? = nativeEvent as? DroppedFiles
 
 private data class FileDropTargetElement(
   val accept: (DroppedFiles) -> Boolean,
@@ -95,7 +93,7 @@ private class FileDropTargetNode(
       DragAndDropTargetModifierNode(
         shouldStartDragAndDrop = { event -> event.droppedFilesOrNull()?.let(accept) == true },
         target = this,
-      ),
+      )
     )
   }
 

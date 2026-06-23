@@ -22,7 +22,8 @@ What works today:
 - [x] Compose `WindowInfo` focus, size, and keyboard modifier state
 - [x] Compose local/window coordinate conversion for framebuffer-scaled windows
 - [x] Basic popup/dropdown positioning through `PlatformContext`
-- [x] Linux system light/dark theme detection through XDG Desktop Portal settings
+- [x] Linux system light/dark theme detection through XDG Desktop Portal
+      settings
 - [x] Window focus requests from Compose
 - [x] Mouse move, press, and release
 - [x] Scroll wheel and trackpad events
@@ -45,18 +46,25 @@ Known gaps:
 
 Application composition and window model:
 
-- [ ] Compose-style `glfwApplication { Window(...) }` application composition, instead of the current static startup window list
-- [ ] Dynamic multi-window lifecycle: windows created and disposed as application composition changes
-- [ ] `WindowState` parity with Compose Desktop `WindowState`: position, size, minimized, maximized, fullscreen
-- [ ] Runtime window attribute updates from composition state: title, resizable, enabled/focusable where GLFW supports them
-- [ ] Close-request flow matching Compose Desktop: `onCloseRequest` lets the app decide whether to close one window or exit
+- [ ] Compose-style `glfwApplication { Window(...) }` application composition,
+      instead of the current static startup window list
+- [ ] Dynamic multi-window lifecycle: windows created and disposed as
+      application composition changes
+- [ ] `WindowState` parity with Compose Desktop `WindowState`: position, size,
+      minimized, maximized, fullscreen
+- [ ] Runtime window attribute updates from composition state: title, resizable,
+      enabled/focusable where GLFW supports them
+- [ ] Close-request flow matching Compose Desktop: `onCloseRequest` lets the app
+      decide whether to close one window or exit
 - [ ] Production-ready application lifecycle semantics
 
 OS/platform API wiring:
 
 - [ ] Wayland file drops through GLFW
-- [ ] Full native drag-and-drop parity beyond GLFW file drop callbacks: enter/move/action events, non-file payloads, and outgoing drags
-- [ ] IME/preedit integration: composition text, candidate positioning, and commit/cancel lifecycle
+- [ ] Full native drag-and-drop parity beyond GLFW file drop callbacks:
+      enter/move/action events, non-file payloads, and outgoing drags
+- [ ] IME/preedit integration: composition text, candidate positioning, and
+      commit/cancel lifecycle
 - [ ] Screen reader and accessibility integration
 - [ ] Keep-screen-on and frame-rate voting
 - [ ] Native menus, tray, dialogs, and file pickers
@@ -67,4 +75,5 @@ Packaging and platform expansion:
 - [ ] macOS backend/runtime modules
 - [ ] Windows backend/runtime modules
 
-Useful parity reference: [Compose Multiplatform desktop-only API](https://kotlinlang.org/docs/multiplatform/compose-desktop-components.html).
+Useful parity reference:
+[Compose Multiplatform desktop-only API](https://kotlinlang.org/docs/multiplatform/compose-desktop-components.html).

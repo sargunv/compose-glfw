@@ -1,20 +1,20 @@
 package dev.sargunv.composeglfw.internal.application
 
-import dev.sargunv.composeglfw.RenderBackend
 import dev.sargunv.composeglfw.HostWindowInfo
+import dev.sargunv.composeglfw.RenderBackend
 import dev.sargunv.composeglfw.WindowSpec
 import dev.sargunv.composeglfw.internal.input.InputDispatcher
 import dev.sargunv.composeglfw.internal.platform.HostPlatformContext
-import dev.sargunv.composeglfw.internal.platform.displayName
 import dev.sargunv.composeglfw.internal.platform.SystemThemeProvider
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
+import dev.sargunv.composeglfw.internal.platform.displayName
 import dev.sargunv.composeglfw.internal.render.opengl.OpenGlRenderBackend
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
 import dev.sargunv.composeglfw.internal.scene.WindowScopeImpl
 import dev.sargunv.composeglfw.internal.window.PlatformWindow
+import kotlin.coroutines.EmptyCoroutineContext
 import org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback
-import kotlin.coroutines.EmptyCoroutineContext
 
 internal class WindowHost(
   spec: WindowSpec,
@@ -27,11 +27,15 @@ internal class WindowHost(
   private var renderRequested = true
   private val systemThemeProvider =
     SystemThemeProvider.create { theme ->
-      uiDispatcher.dispatch(EmptyCoroutineContext,  {
-        platformContext.updateSystemTheme(theme)
-        requestRender()
-      })
-    }.also { platformContext.updateSystemTheme(it.systemTheme) }
+        uiDispatcher.dispatch(
+          EmptyCoroutineContext,
+          {
+            platformContext.updateSystemTheme(theme)
+            requestRender()
+          },
+        )
+      }
+      .also { platformContext.updateSystemTheme(it.systemTheme) }
   private val scene =
     ComposeWindowScene(
       initialDensity = window.contentScale,

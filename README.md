@@ -1,8 +1,17 @@
 # Compose GLFW
 
-Compose GLFW is a JVM Compose host that runs Compose UI in a GLFW window instead of the default AWT/Swing desktop host.
+This library provides a JVM Compose host that runs Compose UI in a GLFW window
+instead of the default AWT/Swing desktop host.
 
-I built this because the default Compose Desktop AWT/Swing host is a bad user experience, especially on Linux. Resize is slow, Wayland isn't supported, fractional scaling isn't supported, input functionality is limited, the GPU context isn't readily available for advanced rendering. Here I aim to fix all of that with a more robust windowing toolkit.
+I built this because the default Compose Desktop AWT/Swing host is a bad user
+experience, especially on Linux. Resize is slow, Wayland isn't supported,
+fractional scaling isn't supported, and the GPU context isn't readily available
+for advanced rendering. Here I fix all of that with a more robust windowing
+toolkit.
+
+Note that this project uses internal Compose APIs and may break with future
+Compose versions; pay attention to the Compose version listed in the release
+notes.
 
 ## Usage
 
@@ -19,15 +28,11 @@ Available runtime modules:
 
 - `compose-glfw-opengl-linux-x64`
 - `compose-glfw-opengl-linux-arm64`
+- macOS and Windows are TBD
 
 Then run your Compose content with `glfwApplication`:
 
 ```kotlin
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
-import dev.sargunv.composeglfw.*
-
 fun main() = glfwApplication {
   Window(
     title = "Example",
@@ -64,7 +69,8 @@ Window(
 
 ## Custom Cursors
 
-Use `cursorImagePointerIcon` when a Compose pointer hover modifier needs a backend-native cursor image:
+Use `cursorImagePointerIcon` with the `pointerHoverIcon` modifier to use a
+custom `ImageBitmap` cursor:
 
 ```kotlin
 Modifier.pointerHoverIcon(
@@ -74,7 +80,7 @@ Modifier.pointerHoverIcon(
 
 ## File Drops
 
-Use `fileDropTarget` to receive file drops delivered by the host:
+Use the `fileDropTarget` modifier to receive file drops delivered by the host:
 
 ```kotlin
 Modifier.fileDropTarget { files ->
@@ -86,7 +92,8 @@ Modifier.fileDropTarget { files ->
 
 ## GPU Interop
 
-Advanced renderers can access the host GPU context from the `Window` content scope:
+Advanced renderers can access the host GPU context from the `Window` content
+scope:
 
 ```kotlin
 Window(title = "Example") {
@@ -96,11 +103,16 @@ Window(title = "Example") {
 }
 ```
 
-`OpenGlInterop` exposes the Skia `DirectContext`, EGL handles, GL proc address lookup, and a `makeCurrent` callback. This is intended for integrations that need to share the host OpenGL context, such as map or video renderers that produce textures consumed by Compose UI.
+`OpenGlInterop` exposes the Skia `DirectContext`, EGL handles, GL proc address
+lookup, and a `makeCurrent` callback. This is intended for integrations that
+need to share the host OpenGL context, such as game, map, or video renderers
+that produce textures sampled into a Canvas.
 
 ## Display Server Selection (Linux)
 
-By default, the host prefers Wayland when `WAYLAND_DISPLAY` is set. You can force the GLFW display server backend with:
+By default, the host prefers Wayland when `WAYLAND_DISPLAY` is set. You can
+force the GLFW display server backend with:
+
 ```sh
 -Dcompose.glfw.platform=wayland
 -Dcompose.glfw.platform=x11
@@ -125,8 +137,11 @@ By default, the host prefers Wayland when `WAYLAND_DISPLAY` is set. You can forc
   - GLFW does not deliver enter, exit, drag, hover, move events.
   - GLFW does not currently deliver file drop callbacks to Wayland.
 - Text input routing
-  - Supports committed text from keyboard layouts, including normal text field editing.
-  - Complex input methods are not fully supported yet, such as composing accented characters before committing them, choosing characters from CJK input method popups, or canceling an in-progress composition.
+  - Supports committed text from keyboard layouts, including normal text field
+    editing.
+  - Complex input methods are not fully supported yet, such as composing
+    accented characters before committing them, choosing characters from CJK
+    input method popups, or canceling an in-progress composition.
 
 ## Not yet supported
 
@@ -134,4 +149,5 @@ By default, the host prefers Wayland when `WAYLAND_DISPLAY` is set. You can forc
 - Dynamic multi-window composition
 - Runtime window attribute mutation (`WindowState`)
 - Screen reader, native menus, tray, dialogs, or file pickers
-- Interop views like `SwingPanel`. Advanced users can instead use the host GPU context for integrating custom components.
+- Interop views like `SwingPanel`. Advanced users can instead use the host GPU
+  context for integrating custom components.

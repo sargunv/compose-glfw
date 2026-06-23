@@ -34,8 +34,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 
 @Composable
@@ -47,7 +47,10 @@ internal fun MaterialControlsCard(modifier: Modifier = Modifier) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
       Text("Material controls", style = MaterialTheme.typography.titleMedium)
 
-      Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+      Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
         Button(onClick = model::incrementClicks) {
           Text("Clicked ${model.clicks}")
         }
@@ -56,7 +59,10 @@ internal fun MaterialControlsCard(modifier: Modifier = Modifier) {
         }
       }
 
-      Row(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.CenterVertically) {
+      Row(
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
           Checkbox(checked = model.checked, onCheckedChange = model::updateChecked)
           Text("Checkbox")
@@ -68,14 +74,23 @@ internal fun MaterialControlsCard(modifier: Modifier = Modifier) {
       }
 
       Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Slider: ${(model.sliderValue * 100).toInt()}%", style = MaterialTheme.typography.bodyMedium)
+        Text(
+          "Slider: ${(model.sliderValue * 100).toInt()}%",
+          style = MaterialTheme.typography.bodyMedium,
+        )
         Slider(value = model.sliderValue, onValueChange = model::updateSliderValue)
       }
 
-      Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+      Row(
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
         listOf("Small", "Large").forEach { option ->
           Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(selected = model.radioSelection == option, onClick = { model.updateRadioSelection(option) })
+            RadioButton(
+              selected = model.radioSelection == option,
+              onClick = { model.updateRadioSelection(option) },
+            )
             Text(option)
           }
         }
@@ -89,7 +104,10 @@ internal fun MaterialControlsCard(modifier: Modifier = Modifier) {
         singleLine = true,
       )
 
-      Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+      Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
         OutlinedTextField(
           value = model.password,
           onValueChange = model::updatePassword,
@@ -130,18 +148,25 @@ internal fun MaterialControlsCard(modifier: Modifier = Modifier) {
 internal class MaterialControlsViewModel : ViewModel() {
   var clicks: Int by mutableIntStateOf(0)
     private set
+
   var enabled: Boolean by mutableStateOf(true)
     private set
+
   var checked: Boolean by mutableStateOf(false)
     private set
+
   var radioSelection: String by mutableStateOf("Small")
     private set
+
   var sliderValue: Float by mutableFloatStateOf(0.4f)
     private set
+
   var text: String by mutableStateOf("")
     private set
+
   var password: String by mutableStateOf("")
     private set
+
   var menuSelection: String by mutableStateOf("Daily")
     private set
 
@@ -182,12 +207,11 @@ internal class MaterialControlsViewModel : ViewModel() {
   }
 
   internal companion object {
-    internal val Factory: ViewModelProvider.Factory =
-      viewModelFactory {
-        initializer {
-          MaterialControlsViewModel()
-        }
+    internal val Factory: ViewModelProvider.Factory = viewModelFactory {
+      initializer {
+        MaterialControlsViewModel()
       }
+    }
   }
 }
 

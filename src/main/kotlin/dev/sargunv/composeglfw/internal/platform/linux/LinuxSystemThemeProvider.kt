@@ -12,11 +12,12 @@ import org.freedesktop.dbus.matchrules.DBusMatchRuleBuilder
 import org.freedesktop.dbus.types.UInt32
 import org.freedesktop.dbus.types.Variant
 
-internal fun createLinuxSystemThemeProvider(onSystemThemeChanged: (SystemTheme) -> Unit): SystemThemeProvider =
-  XdgPortalSystemThemeProvider(onSystemThemeChanged)
+internal fun createLinuxSystemThemeProvider(
+  onSystemThemeChanged: (SystemTheme) -> Unit
+): SystemThemeProvider = XdgPortalSystemThemeProvider(onSystemThemeChanged)
 
 private class XdgPortalSystemThemeProvider(
-  private val onSystemThemeChanged: (SystemTheme) -> Unit,
+  private val onSystemThemeChanged: (SystemTheme) -> Unit
 ) : SystemThemeProvider {
   private val connection: DBusConnection?
   private val signalSubscription: AutoCloseable?
@@ -27,11 +28,7 @@ private class XdgPortalSystemThemeProvider(
 
   init {
     val initialized = runCatching {
-      val dbusConnection =
-        DBusConnectionBuilder
-          .forSessionBus()
-          .withShared(false)
-          .build()
+      val dbusConnection = DBusConnectionBuilder.forSessionBus().withShared(false).build()
       val settings =
         dbusConnection.getRemoteObject(
           PortalBusName,
@@ -55,10 +52,11 @@ private class XdgPortalSystemThemeProvider(
   private fun XdgPortalSettings.readSystemTheme(): SystemTheme =
     readOne(AppearanceNamespace, ColorSchemeKey).toSystemTheme()
 
-  private fun DBusConnection.subscribeToColorSchemeChanges(settings: XdgPortalSettings): AutoCloseable {
+  private fun DBusConnection.subscribeToColorSchemeChanges(
+    settings: XdgPortalSettings
+  ): AutoCloseable {
     val rule =
-      DBusMatchRuleBuilder
-        .create()
+      DBusMatchRuleBuilder.create()
         .withType(XdgPortalSettings.SettingChanged::class.java)
         .withPath(settings.objectPath)
         .build()
