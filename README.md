@@ -2,6 +2,8 @@
 
 Compose GLFW is a JVM Compose host that runs Compose UI in a GLFW window instead of the default AWT/Swing desktop host.
 
+I built this because the default Compose Desktop AWT/Swing host is a bad user experience, especially on Linux. Resize is slow, Wayland isn't supported, fractional scaling isn't supported, input functionality is limited, the GPU context isn't readily available for advanced rendering. Here I aim to fix all of that with a more robust windowing toolkit.
+
 ## Usage
 
 Add the core library and the runtime modules you want to ship:
@@ -118,9 +120,10 @@ By default, the host prefers Wayland when `WAYLAND_DISPLAY` is set. You can forc
 
 ## Partially supported
 
-- File drops into Compose drag-and-drop targets
-  - Delivers the final dropped file list only; drag enter, hover, move, action negotiation, non-file payloads, and outgoing drags are not implemented.
-  - Works on X11. GLFW does not currently deliver file drop callbacks to Wayland.
+- Compose drag-and-drop targets
+  - Only file drops are supported, and only the final dropped file list event.
+  - GLFW does not deliver enter, exit, drag, hover, move events.
+  - GLFW does not currently deliver file drop callbacks to Wayland.
 - Text input routing
   - Supports committed text from keyboard layouts, including normal text field editing.
   - Complex input methods are not fully supported yet, such as composing accented characters before committing them, choosing characters from CJK input method popups, or canceling an in-progress composition.
@@ -131,3 +134,4 @@ By default, the host prefers Wayland when `WAYLAND_DISPLAY` is set. You can forc
 - Dynamic multi-window composition
 - Runtime window attribute mutation (`WindowState`)
 - Screen reader, native menus, tray, dialogs, or file pickers
+- Interop views like `SwingPanel`. Advanced users can instead use the host GPU context for integrating custom components.
