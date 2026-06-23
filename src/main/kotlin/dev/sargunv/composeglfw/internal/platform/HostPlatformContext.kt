@@ -13,6 +13,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.platform.DefaultArchitectureComponentsOwner
 import androidx.compose.ui.platform.PlatformArchitectureComponentsOwner
 import androidx.compose.ui.platform.PlatformContext
 import androidx.compose.ui.platform.PlatformDragAndDropManager
@@ -26,6 +27,8 @@ import androidx.compose.ui.text.input.PlatformTextInputService
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle.State
+import androidx.lifecycle.enableSavedStateHandles
 import dev.sargunv.composeglfw.TextToolbarContent
 import dev.sargunv.composeglfw.internal.window.PlatformWindow
 
@@ -37,6 +40,12 @@ internal class HostPlatformContext(
   val textInput: TextInputService = TextInputService()
   private val textToolbarAdapter = TextToolbarAdapter(textToolbarContent)
   private val mutableWindowInfo = ComposeWindowInfoState()
+  private val architectureOwner =
+    DefaultArchitectureComponentsOwner(enforceMainThread = false).apply {
+      enableSavedStateHandles()
+      setLifecycleState(State.CREATED)
+    }
+  private var lifecycleDestroyed = false
   var systemTheme: SystemTheme by mutableStateOf(SystemTheme.Unknown)
     private set
   override val windowInfo: WindowInfo = mutableWindowInfo
@@ -72,9 +81,8 @@ internal class HostPlatformContext(
   override val screenReader: PlatformScreenReader
     get() = fallbackContext.screenReader
 
-  // TODO: Provide real lifecycle and ViewModel owners from the GLFW window lifecycle.
   override val architectureComponentsOwner: PlatformArchitectureComponentsOwner
-    get() = fallbackContext.architectureComponentsOwner
+    get() = architectureOwner
 
   override val isWindowTransparent: Boolean
     get() = window.isTransparent
@@ -134,6 +142,7 @@ internal class HostPlatformContext(
 
   fun updateWindowInfo() {
     mutableWindowInfo.isWindowFocused = window.isFocused
+    updateLifecycle()
     // WindowInfo describes the Compose scene container, which we size to framebuffer pixels.
     mutableWindowInfo.containerSize = window.framebufferSize
     mutableWindowInfo.containerDpSize =
@@ -149,15 +158,31 @@ internal class HostPlatformContext(
 
   fun updateFocus(focused: Boolean) {
     mutableWindowInfo.isWindowFocused = focused
+    updateLifecycle()
   }
 
   fun updateSystemTheme(theme: SystemTheme) {
     systemTheme = theme
   }
 
+  fun destroyLifecycle() {
+    if (!lifecycleDestroyed) {
+      lifecycleDestroyed = true
+      architectureOwner.setLifecycleState(State.DESTROYED)
+    }
+  }
+
   @Composable
   fun TextToolbarContent() {
     textToolbarAdapter.Content()
+  }
+
+  private fun updateLifecycle() {
+    if (!lifecycleDestroyed) {
+      architectureOwner.setLifecycleState(
+        if (mutableWindowInfo.isWindowFocused) State.RESUMED else State.STARTED,
+      )
+    }
   }
 }
 

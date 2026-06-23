@@ -53,6 +53,7 @@ What works today:
 - [x] Per-window text selection toolbar customization
 - [x] Public `glfwApplication { Window { ... } }` API
 - [x] Per-window GPU interop hook for the current OpenGL context
+- [x] Platform lifecycle, ViewModel, saved-state, and navigation owners
 
 Known gaps:
 
@@ -76,7 +77,6 @@ OS/platform API wiring:
 
 Compose platform services:
 
-- [ ] Platform lifecycle/ViewModel owners
 - [ ] Test root and semantics owner listeners
 
 Packaging and platform expansion:

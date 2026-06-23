@@ -89,6 +89,7 @@ internal class WindowHost(
     glfwSetWindowFocusCallback(window.handle, null)?.free()
     systemThemeProvider.close()
     input.close()
+    platformContext.destroyLifecycle()
     scene.close()
     renderBackend.close()
     window.close()

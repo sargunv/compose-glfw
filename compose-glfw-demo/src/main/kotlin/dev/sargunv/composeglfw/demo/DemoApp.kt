@@ -36,6 +36,7 @@ internal fun ComposeGlfwApp(windowInfo: HostWindowInfo) {
         ) {
           DemoHeader(windowInfo)
           WindowStateCard(windowInfo, darkTheme, Modifier.fillMaxWidth())
+          LifecycleCard(Modifier.fillMaxWidth())
           PointerInputCard(Modifier.fillMaxWidth())
           PointerIconCard(Modifier.fillMaxWidth())
           FileDropCard(Modifier.fillMaxWidth())

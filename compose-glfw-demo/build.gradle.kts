@@ -40,7 +40,9 @@ kotlin {
       dependencies {
         implementation(project(":"))
         implementation(libs.composeMaterial3)
-        implementation(compose.components.resources)
+        implementation(libs.composeComponentsResources)
+        implementation(libs.lifecycleRuntimeCompose)
+        implementation(libs.lifecycleViewModelCompose)
         if (hostRuntimeModule != null) {
           runtimeOnly(project(hostRuntimeModule))
         }

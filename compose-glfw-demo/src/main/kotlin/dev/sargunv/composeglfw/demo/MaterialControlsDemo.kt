@@ -32,17 +32,15 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.viewModelFactory
 
 @Composable
 internal fun MaterialControlsCard(modifier: Modifier = Modifier) {
-  var clicks by remember { mutableIntStateOf(0) }
-  var enabled by remember { mutableStateOf(true) }
-  var checked by remember { mutableStateOf(false) }
-  var radioSelection by remember { mutableStateOf("Small") }
-  var sliderValue by remember { mutableFloatStateOf(0.4f) }
-  var text by remember { mutableStateOf("") }
-  var password by remember { mutableStateOf("") }
-  var menuSelection by remember { mutableStateOf("Daily") }
+  val model = viewModel<MaterialControlsViewModel>(factory = MaterialControlsViewModel.Factory)
   val textFocusRequester = remember { FocusRequester() }
 
   Card(modifier) {
@@ -50,42 +48,42 @@ internal fun MaterialControlsCard(modifier: Modifier = Modifier) {
       Text("Material controls", style = MaterialTheme.typography.titleMedium)
 
       Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Button(onClick = { clicks++ }) {
-          Text("Clicked $clicks")
+        Button(onClick = model::incrementClicks) {
+          Text("Clicked ${model.clicks}")
         }
-        OutlinedButton(onClick = { clicks = 0 }) {
+        OutlinedButton(onClick = model::resetClicks) {
           Text("Reset")
         }
       }
 
       Row(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-          Checkbox(checked = checked, onCheckedChange = { checked = it })
+          Checkbox(checked = model.checked, onCheckedChange = model::updateChecked)
           Text("Checkbox")
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-          Switch(checked = enabled, onCheckedChange = { enabled = it })
+          Switch(checked = model.enabled, onCheckedChange = model::updateEnabled)
           Text("Switch")
         }
       }
 
       Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Slider: ${(sliderValue * 100).toInt()}%", style = MaterialTheme.typography.bodyMedium)
-        Slider(value = sliderValue, onValueChange = { sliderValue = it })
+        Text("Slider: ${(model.sliderValue * 100).toInt()}%", style = MaterialTheme.typography.bodyMedium)
+        Slider(value = model.sliderValue, onValueChange = model::updateSliderValue)
       }
 
       Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
         listOf("Small", "Large").forEach { option ->
           Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(selected = radioSelection == option, onClick = { radioSelection = option })
+            RadioButton(selected = model.radioSelection == option, onClick = { model.updateRadioSelection(option) })
             Text(option)
           }
         }
       }
 
       OutlinedTextField(
-        value = text,
-        onValueChange = { text = it },
+        value = model.text,
+        onValueChange = model::updateText,
         modifier = Modifier.fillMaxWidth().focusRequester(textFocusRequester),
         label = { Text("Text input") },
         singleLine = true,
@@ -93,8 +91,8 @@ internal fun MaterialControlsCard(modifier: Modifier = Modifier) {
 
       Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
         OutlinedTextField(
-          value = password,
-          onValueChange = { password = it },
+          value = model.password,
+          onValueChange = model::updatePassword,
           modifier = Modifier.weight(1f),
           label = { Text("Password") },
           visualTransformation = PasswordVisualTransformation(),
@@ -108,24 +106,88 @@ internal fun MaterialControlsCard(modifier: Modifier = Modifier) {
       Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         MenuAnchor(
           label = "Start",
-          selection = menuSelection,
+          selection = model.menuSelection,
           alignment = Alignment.CenterStart,
-          onSelectionChange = { menuSelection = it },
+          onSelectionChange = model::updateMenuSelection,
         )
         MenuAnchor(
           label = "Center",
-          selection = menuSelection,
+          selection = model.menuSelection,
           alignment = Alignment.Center,
-          onSelectionChange = { menuSelection = it },
+          onSelectionChange = model::updateMenuSelection,
         )
         MenuAnchor(
           label = "End",
-          selection = menuSelection,
+          selection = model.menuSelection,
           alignment = Alignment.CenterEnd,
-          onSelectionChange = { menuSelection = it },
+          onSelectionChange = model::updateMenuSelection,
         )
       }
     }
+  }
+}
+
+internal class MaterialControlsViewModel : ViewModel() {
+  var clicks: Int by mutableIntStateOf(0)
+    private set
+  var enabled: Boolean by mutableStateOf(true)
+    private set
+  var checked: Boolean by mutableStateOf(false)
+    private set
+  var radioSelection: String by mutableStateOf("Small")
+    private set
+  var sliderValue: Float by mutableFloatStateOf(0.4f)
+    private set
+  var text: String by mutableStateOf("")
+    private set
+  var password: String by mutableStateOf("")
+    private set
+  var menuSelection: String by mutableStateOf("Daily")
+    private set
+
+  fun incrementClicks(): Unit {
+    clicks++
+  }
+
+  fun resetClicks(): Unit {
+    clicks = 0
+  }
+
+  fun updateEnabled(value: Boolean): Unit {
+    enabled = value
+  }
+
+  fun updateChecked(value: Boolean): Unit {
+    checked = value
+  }
+
+  fun updateRadioSelection(value: String): Unit {
+    radioSelection = value
+  }
+
+  fun updateSliderValue(value: Float): Unit {
+    sliderValue = value
+  }
+
+  fun updateText(value: String): Unit {
+    text = value
+  }
+
+  fun updatePassword(value: String): Unit {
+    password = value
+  }
+
+  fun updateMenuSelection(value: String): Unit {
+    menuSelection = value
+  }
+
+  internal companion object {
+    internal val Factory: ViewModelProvider.Factory =
+      viewModelFactory {
+        initializer {
+          MaterialControlsViewModel()
+        }
+      }
   }
 }
 

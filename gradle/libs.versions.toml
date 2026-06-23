@@ -1,10 +1,14 @@
 [versions]
 compose = "1.11.1"
+androidxLifecycle = "2.9.4"
 dbusJava = "5.2.0"
 javaRelease = "24"
 kotlin = "2.4.0"
+lifecycle = "2.9.6"
 lwjgl = "3.4.1"
 material3 = "1.11.0-alpha07"
+navigationEvent = "1.0.1"
+savedState = "1.4.0"
 skiko = "0.144.6"
 
 [plugins]
@@ -14,14 +18,21 @@ kotlinCompose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kot
 
 [libraries]
 composeFoundation = { module = "org.jetbrains.compose.foundation:foundation-desktop", version.ref = "compose" }
+composeComponentsResources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose" }
 composeMaterial3 = { module = "org.jetbrains.compose.material3:material3-desktop", version.ref = "material3" }
 composeUi = { module = "org.jetbrains.compose.ui:ui-desktop", version.ref = "compose" }
+lifecycleRuntimeCompose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidxLifecycle" }
 dbusJavaBom = { module = "com.github.hypfvieh:dbus-java-bom", version.ref = "dbusJava" }
 dbusJavaCore = { module = "com.github.hypfvieh:dbus-java-core" }
 dbusJavaTransportNativeUnixSocket = { module = "com.github.hypfvieh:dbus-java-transport-native-unixsocket" }
+lifecycleViewModel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycle" }
+lifecycleViewModelCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+lifecycleViewModelSavedState = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-savedstate", version.ref = "lifecycle" }
 lwjglBom = { module = "org.lwjgl:lwjgl-bom", version.ref = "lwjgl" }
 lwjgl = { module = "org.lwjgl:lwjgl" }
 lwjglGlfw = { module = "org.lwjgl:lwjgl-glfw" }
 lwjglOpenGl = { module = "org.lwjgl:lwjgl-opengl" }
+navigationEvent = { module = "androidx.navigationevent:navigationevent", version.ref = "navigationEvent" }
+savedState = { module = "androidx.savedstate:savedstate", version.ref = "savedState" }
 skikoAwtRuntimeLinuxArm64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-linux-arm64", version.ref = "skiko" }
 skikoAwtRuntimeLinuxX64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-linux-x64", version.ref = "skiko" }
