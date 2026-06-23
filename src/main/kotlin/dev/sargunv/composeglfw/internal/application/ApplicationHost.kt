@@ -11,7 +11,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.key.KeyEvent
 import dev.sargunv.composeglfw.ApplicationScope
 import dev.sargunv.composeglfw.DisplayServer
@@ -39,7 +38,6 @@ internal data class WindowRequest(
   val title: String,
   val state: WindowState,
   val visible: Boolean,
-  val icon: Painter?,
   val undecorated: Boolean,
   val transparent: Boolean,
   val resizable: Boolean,

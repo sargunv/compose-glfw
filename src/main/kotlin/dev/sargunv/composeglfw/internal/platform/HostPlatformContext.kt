@@ -90,7 +90,8 @@ internal class HostPlatformContext(
   override val isWindowTransparent: Boolean
     get() = window.isTransparent
 
-  // TODO: Revisit when platform views or layer diagnostics need out-of-layout draw bounds.
+  // GLFW content is rendered directly into the window framebuffer; no extra layer bounds are
+  // needed for the current host.
   override val measureDrawLayerBounds: Boolean
     get() = fallbackContext.measureDrawLayerBounds
 
@@ -99,12 +100,12 @@ internal class HostPlatformContext(
   override val viewConfiguration: ViewConfiguration
     get() = fallbackContext.viewConfiguration
 
-  // TODO: GLFW exposes keyboard/mouse events, but not rich touch/stylus input-mode changes.
+  // TODO: Implement touch/stylus input and switch InputMode when a backend can report those
+  // events. GLFW's mouse/keyboard event stream only supports keyboard-mode behavior here.
   override val inputModeManager: InputModeManager
     get() = fallbackContext.inputModeManager
 
-  // TODO: Legacy API; keep startInputMethod as the active path and implement IME/preedit
-  // separately.
+  // Legacy Compose API. The active text-input path is startInputMethod.
   @Suppress("DEPRECATION")
   override val textInputService: PlatformTextInputService
     get() = fallbackContext.textInputService
@@ -112,7 +113,9 @@ internal class HostPlatformContext(
   override val textToolbar: TextToolbar
     get() = textToolbarAdapter
 
-  // TODO: Revisit with multi-window and parent/owned popup focus behavior.
+  // Compose calls parentFocusManager when focus traversal leaves this scene, such as tabbing past
+  // the first/last focus target. A GLFW window is the root host, so there is no parent focus target
+  // to move into; traversal stops at the window boundary.
   override val parentFocusManager: FocusManager
     get() = fallbackContext.parentFocusManager
 
@@ -180,6 +183,10 @@ internal class HostPlatformContext(
 
   fun updateSystemTheme(theme: SystemTheme) {
     systemTheme = theme
+  }
+
+  fun updateTextToolbarContent(content: TextToolbarContent) {
+    textToolbarAdapter.updateContent(content)
   }
 
   fun destroyLifecycle() {

@@ -1,12 +1,12 @@
 package dev.sargunv.composeglfw.internal.application
 
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.sargunv.composeglfw.HostWindowInfo
 import dev.sargunv.composeglfw.RenderBackend
+import dev.sargunv.composeglfw.TextToolbarContent
 import dev.sargunv.composeglfw.WindowOptions
 import dev.sargunv.composeglfw.WindowPlacement
 import dev.sargunv.composeglfw.WindowPosition
@@ -49,10 +49,9 @@ internal class WindowHost(
   private val platformContext = HostPlatformContext(window, request.options.textToolbar)
   private val scope = WindowScopeImpl(currentInfo(), renderBackend.interop)
   private var state = request.state
-  private var options = request.options
+  private var lastTextToolbar: TextToolbarContent = request.options.textToolbar
   private var lastTitle = request.title
   private var lastVisible = request.visible
-  private var lastIcon = request.icon
   private var lastUndecorated = request.undecorated
   private var lastTransparent = request.transparent
   private var lastResizable = request.resizable
@@ -137,7 +136,6 @@ internal class WindowHost(
     title: String,
     state: WindowState,
     visible: Boolean,
-    icon: Painter?,
     undecorated: Boolean,
     transparent: Boolean,
     resizable: Boolean,
@@ -147,7 +145,6 @@ internal class WindowHost(
     options: WindowOptions,
   ) {
     this.state = state
-    this.options = options
     if (title != lastTitle) {
       window.setTitle(title)
       lastTitle = title
@@ -157,18 +154,13 @@ internal class WindowHost(
       lastVisible = visible
       requestRender()
     }
-    if (icon != lastIcon) {
-      // TODO: Convert Compose Painter icons into GLFW image buffers and call glfwSetWindowIcon
-      // where the display server supports per-window icons.
-      lastIcon = icon
-    }
     if (undecorated != lastUndecorated) {
       window.setDecorated(!undecorated)
       lastUndecorated = undecorated
     }
     if (transparent != lastTransparent) {
-      // TODO: Runtime transparency changes require recreating the GLFW window because
-      // GLFW_TRANSPARENT_FRAMEBUFFER is a creation hint.
+      // GLFW_TRANSPARENT_FRAMEBUFFER is read only by glfwCreateWindow. Runtime changes are tracked
+      // here so this update path settles, but they do not affect the existing native window.
       lastTransparent = transparent
     }
     if (resizable != lastResizable) {
@@ -187,8 +179,10 @@ internal class WindowHost(
       window.setAlwaysOnTop(alwaysOnTop)
       lastAlwaysOnTop = alwaysOnTop
     }
-    // TODO: Decide which WindowOptions are runtime-mutable. GLFW requires recreating the native
-    // window for some creation-time attributes, while text toolbar content can update.
+    if (options.textToolbar !== lastTextToolbar) {
+      platformContext.updateTextToolbarContent(options.textToolbar)
+      lastTextToolbar = options.textToolbar
+    }
     applyStateToWindow()
   }
 

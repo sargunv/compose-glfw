@@ -7,9 +7,13 @@ Known gaps:
 Application composition and window model:
 
 - [ ] Compose Desktop-style `DpSize.Unspecified` content-driven window sizing
-- [ ] Runtime window icon support
 - [ ] Runtime transparent-window changes via native window recreation
-- [ ] Production-ready application lifecycle semantics
+- [ ] Event loop waiting: use `glfwWaitEvents`/wakeups instead of polling every
+      loop when there is no pending Compose or GLFW work
+- [ ] Window lifecycle state for hidden and minimized windows; focus currently
+      maps to STARTED/RESUMED but visibility does not lower lifecycle state
+- [ ] Propagate recomposer/coroutine failures out of the application loop before
+      shutdown
 
 OS/platform API wiring:
 
@@ -18,6 +22,8 @@ OS/platform API wiring:
       enter/move/action events, non-file payloads, and outgoing drags
 - [ ] IME/preedit integration: composition text, candidate positioning, and
       commit/cancel lifecycle
+- [ ] Touch/stylus input routing and `InputModeManager` updates on backends that
+      can report non-mouse pointer devices
 - [ ] Screen reader and accessibility integration
 - [ ] Keep-screen-on and frame-rate voting
 - [ ] Native menus, tray, dialogs, and file pickers

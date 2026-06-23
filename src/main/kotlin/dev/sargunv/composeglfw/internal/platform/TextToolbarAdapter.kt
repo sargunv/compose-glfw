@@ -29,7 +29,8 @@ import dev.sargunv.composeglfw.TextToolbarContent
 import dev.sargunv.composeglfw.TextToolbarState
 import kotlin.math.roundToInt
 
-internal class TextToolbarAdapter(private val content: TextToolbarContent) : TextToolbar {
+internal class TextToolbarAdapter(content: TextToolbarContent) : TextToolbar {
+  private var content: TextToolbarContent by mutableStateOf(content)
   private var request: TextToolbarRequest? by mutableStateOf(null)
 
   override val status: TextToolbarStatus
@@ -74,6 +75,10 @@ internal class TextToolbarAdapter(private val content: TextToolbarContent) : Tex
 
   override fun hide() {
     request = null
+  }
+
+  fun updateContent(content: TextToolbarContent) {
+    this.content = content
   }
 
   @Composable

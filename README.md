@@ -112,6 +112,14 @@ You can force the GLFW display server backend with:
 -Dcompose.glfw.platform=x11
 ```
 
+### App icons
+
+Compose GLFW does not expose GLFW's `glfwSetWindowIcon` API. Modern Linux
+Wayland and macOS ignore that per-window API; app icons should come from
+platform app metadata instead. Use Freedesktop desktop-entry/icon-theme metadata
+on Linux, app bundle `Info.plist` icon metadata on macOS, and executable icon
+resources on Windows.
+
 ## Status and limitations
 
 The following features are supported:

@@ -7,7 +7,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.key.KeyEvent
 import dev.sargunv.composeglfw.internal.application.ApplicationHost
 import dev.sargunv.composeglfw.internal.application.ApplicationScopeImpl
@@ -40,7 +39,6 @@ public interface ApplicationScope {
  * @param state state used to control and observe runtime window attributes.
  * @param visible whether the native window is visible.
  * @param title title shown in the window decoration, when the display server provides one.
- * @param icon icon shown in the window decoration, when the display server supports it.
  * @param undecorated whether to request a window without native decorations.
  * @param transparent whether the window content framebuffer should include alpha. This is a native
  *   window creation hint and requires recreation to change at runtime.
@@ -50,8 +48,7 @@ public interface ApplicationScope {
  * @param alwaysOnTop whether the window stays above other normal windows.
  * @param onPreviewKeyEvent key event callback invoked before the event is sent to Compose content.
  * @param onKeyEvent key event callback invoked if Compose content does not consume the event.
- * @param options GLFW host options for this window. Some options are applied only when the native
- *   window is created.
+ * @param options GLFW host options for this window.
  * @param content Compose content shown inside the window.
  */
 @Composable
@@ -62,7 +59,6 @@ public fun ApplicationScope.Window(
   state: WindowState = rememberWindowState(),
   visible: Boolean = true,
   title: String = "Untitled",
-  icon: Painter? = null,
   undecorated: Boolean = false,
   transparent: Boolean = false,
   resizable: Boolean = true,
@@ -87,7 +83,6 @@ public fun ApplicationScope.Window(
           title = title,
           state = state,
           visible = visible,
-          icon = icon,
           undecorated = undecorated,
           transparent = transparent,
           resizable = resizable,
@@ -108,7 +103,6 @@ public fun ApplicationScope.Window(
       title = title,
       state = state,
       visible = visible,
-      icon = icon,
       undecorated = undecorated,
       transparent = transparent,
       resizable = resizable,
