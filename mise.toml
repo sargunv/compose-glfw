@@ -1,2 +1,11 @@
 [tools]
 java = "zulu-25"
+
+[tasks.build]
+run = "./gradlew build"
+
+[tasks.run]
+run = "./gradlew run"
+
+[tasks.smoke]
+run = "COMPOSE_GLFW_EXIT_AFTER_FRAMES=2 ./gradlew run"
