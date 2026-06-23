@@ -6,6 +6,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import dev.sargunv.composeglfw.CursorImagePointerIcon
+import dev.sargunv.composeglfw.DisplayServer
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
 import kotlin.math.roundToInt
 import org.lwjgl.glfw.GLFW.GLFW_ARROW_CURSOR
@@ -15,13 +16,16 @@ import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR
 import org.lwjgl.glfw.GLFW.GLFW_CROSSHAIR_CURSOR
 import org.lwjgl.glfw.GLFW.GLFW_DECORATED
+import org.lwjgl.glfw.GLFW.GLFW_DONT_CARE
 import org.lwjgl.glfw.GLFW.GLFW_EGL_CONTEXT_API
 import org.lwjgl.glfw.GLFW.GLFW_FALSE
 import org.lwjgl.glfw.GLFW.GLFW_FLOATING
 import org.lwjgl.glfw.GLFW.GLFW_FOCUSED
 import org.lwjgl.glfw.GLFW.GLFW_FOCUS_ON_SHOW
 import org.lwjgl.glfw.GLFW.GLFW_IBEAM_CURSOR
+import org.lwjgl.glfw.GLFW.GLFW_ICONIFIED
 import org.lwjgl.glfw.GLFW.GLFW_LOCK_KEY_MODS
+import org.lwjgl.glfw.GLFW.GLFW_MAXIMIZED
 import org.lwjgl.glfw.GLFW.GLFW_OPENGL_API
 import org.lwjgl.glfw.GLFW.GLFW_POINTING_HAND_CURSOR
 import org.lwjgl.glfw.GLFW.GLFW_RESIZABLE
@@ -38,8 +42,13 @@ import org.lwjgl.glfw.GLFW.glfwDestroyWindow
 import org.lwjgl.glfw.GLFW.glfwFocusWindow
 import org.lwjgl.glfw.GLFW.glfwGetError
 import org.lwjgl.glfw.GLFW.glfwGetFramebufferSize
+import org.lwjgl.glfw.GLFW.glfwGetMonitorWorkarea
+import org.lwjgl.glfw.GLFW.glfwGetMonitors
+import org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor
+import org.lwjgl.glfw.GLFW.glfwGetVideoMode
 import org.lwjgl.glfw.GLFW.glfwGetWindowAttrib
 import org.lwjgl.glfw.GLFW.glfwGetWindowContentScale
+import org.lwjgl.glfw.GLFW.glfwGetWindowMonitor
 import org.lwjgl.glfw.GLFW.glfwGetWindowPos
 import org.lwjgl.glfw.GLFW.glfwGetWindowSize
 import org.lwjgl.glfw.GLFW.glfwHideWindow
@@ -50,6 +59,8 @@ import org.lwjgl.glfw.GLFW.glfwRestoreWindow
 import org.lwjgl.glfw.GLFW.glfwSetCursor
 import org.lwjgl.glfw.GLFW.glfwSetInputMode
 import org.lwjgl.glfw.GLFW.glfwSetWindowAttrib
+import org.lwjgl.glfw.GLFW.glfwSetWindowMonitor
+import org.lwjgl.glfw.GLFW.glfwSetWindowPos
 import org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose
 import org.lwjgl.glfw.GLFW.glfwSetWindowSize
 import org.lwjgl.glfw.GLFW.glfwSetWindowTitle
@@ -60,6 +71,7 @@ import org.lwjgl.glfw.GLFW.glfwWindowHint
 import org.lwjgl.glfw.GLFW.glfwWindowShouldClose
 import org.lwjgl.glfw.GLFWImage
 import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.GLCapabilities
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.MemoryUtil.memAlloc
@@ -118,10 +130,20 @@ internal class PlatformWindow(
   val isFocused: Boolean
     get() = glfwGetWindowAttrib(handle, GLFW_FOCUSED) == GLFW_TRUE
 
+  val isIconified: Boolean
+    get() = glfwGetWindowAttrib(handle, GLFW_ICONIFIED) == GLFW_TRUE
+
+  val isMaximized: Boolean
+    get() = glfwGetWindowAttrib(handle, GLFW_MAXIMIZED) == GLFW_TRUE
+
+  val isFullscreen: Boolean
+    get() = glfwGetWindowMonitor(handle) != NULL
+
   val isTransparent: Boolean = transparent
 
   private val standardCursors = mutableMapOf<Int, Long>()
   private val imageCursors = mutableMapOf<CursorImagePointerIcon, Long>()
+  private var glCapabilities: GLCapabilities? = null
 
   init {
     glfwDefaultWindowHints()
@@ -141,10 +163,11 @@ internal class PlatformWindow(
 
     handle = glfwCreateWindow(initialWindowSize.width, initialWindowSize.height, title, NULL, NULL)
     check(handle != NULL) { "GLFW window creation failed: ${glfwGetError(null)}" }
+    setDecorated(!undecorated)
     glfwSetInputMode(handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE)
     makeCurrent()
     glfwSwapInterval(1)
-    GL.createCapabilities()
+    glCapabilities = GL.createCapabilities()
     refreshWindowPosition()
     readWindowSize()
     readFramebufferSize()
@@ -153,6 +176,7 @@ internal class PlatformWindow(
 
   fun makeCurrent() {
     glfwMakeContextCurrent(handle)
+    glCapabilities?.let(GL::setCapabilities)
   }
 
   fun swapBuffers() {
@@ -192,17 +216,62 @@ internal class PlatformWindow(
   }
 
   fun setSize(size: DpSize) {
-    val windowSize = size.toGlfwWindowSize()
+    val windowSize = size.toRuntimeGlfwWindowSize()
     glfwSetWindowSize(handle, windowSize.width, windowSize.height)
     refreshSizes()
   }
 
+  fun setPosition(position: IntOffset) {
+    if (supportsWindowPosition) {
+      glfwSetWindowPos(handle, position.x, position.y)
+      refreshWindowPosition()
+    }
+  }
+
+  fun setFullscreen() {
+    val monitor = currentMonitor()
+    val videoMode = glfwGetVideoMode(monitor) ?: error("GLFW monitor has no video mode")
+    glfwSetWindowMonitor(
+      handle,
+      monitor,
+      0,
+      0,
+      videoMode.width(),
+      videoMode.height(),
+      videoMode.refreshRate(),
+    )
+    refreshSizes()
+  }
+
+  fun setWindowed(bounds: PlatformWindowBounds) {
+    glfwSetWindowMonitor(
+      handle,
+      NULL,
+      bounds.position.x,
+      bounds.position.y,
+      bounds.size.width,
+      bounds.size.height,
+      GLFW_DONT_CARE,
+    )
+    refreshSizes()
+  }
+
+  fun currentWindowedBounds(): PlatformWindowBounds =
+    PlatformWindowBounds(
+      position = windowPosition,
+      size = windowSize,
+    )
+
+  fun currentMonitorWorkArea(): PlatformRect = monitorWorkArea(currentMonitor())
+
   fun maximize() {
     glfwMaximizeWindow(handle)
+    refreshSizes()
   }
 
   fun restore() {
     glfwRestoreWindow(handle)
+    refreshSizes()
   }
 
   fun iconify() {
@@ -266,6 +335,45 @@ internal class PlatformWindow(
     }
   }
 
+  private fun currentMonitor(): Long {
+    val fullscreenMonitor = glfwGetWindowMonitor(handle)
+    if (fullscreenMonitor != NULL) {
+      return fullscreenMonitor
+    }
+
+    val monitors = glfwGetMonitors()
+    if (monitors != null) {
+      val center =
+        IntOffset(
+          x = windowPosition.x + windowSize.width / 2,
+          y = windowPosition.y + windowSize.height / 2,
+        )
+      for (index in 0 until monitors.limit()) {
+        val monitor = monitors[index]
+        if (monitorWorkArea(monitor).contains(center)) {
+          return monitor
+        }
+      }
+    }
+
+    val primary = glfwGetPrimaryMonitor()
+    check(primary != NULL) { "GLFW did not report a primary monitor" }
+    return primary
+  }
+
+  private fun monitorWorkArea(monitor: Long): PlatformRect =
+    MemoryStack.stackPush().use { stack ->
+      val x = stack.mallocInt(1)
+      val y = stack.mallocInt(1)
+      val width = stack.mallocInt(1)
+      val height = stack.mallocInt(1)
+      glfwGetMonitorWorkarea(monitor, x, y, width, height)
+      PlatformRect(
+        position = IntOffset(x[0], y[0]),
+        size = IntSize(width[0].coerceAtLeast(1), height[0].coerceAtLeast(1)),
+      )
+    }
+
   override fun close() {
     if (handle != NULL) {
       standardCursors.values.forEach(::glfwDestroyCursor)
@@ -322,6 +430,37 @@ internal class PlatformWindow(
       memFree(rgbaPixels)
     }
   }
+
+  private fun DpSize.toRuntimeGlfwWindowSize(): IntSize {
+    val scale =
+      when (displayServer) {
+        DisplayServer.X11 -> contentScale
+        DisplayServer.WAYLAND -> 1f
+      }
+    return IntSize(
+      width = width.toGlfwWindowUnit("width", scale),
+      height = height.toGlfwWindowUnit("height", scale),
+    )
+  }
+}
+
+internal data class PlatformWindowBounds(
+  val position: IntOffset,
+  val size: IntSize,
+)
+
+internal data class PlatformRect(
+  val position: IntOffset,
+  val size: IntSize,
+) {
+  val right: Int
+    get() = position.x + size.width
+
+  val bottom: Int
+    get() = position.y + size.height
+
+  fun contains(point: IntOffset): Boolean =
+    point.x >= position.x && point.x < right && point.y >= position.y && point.y < bottom
 }
 
 private fun PointerIcon.glfwCursorShape(): Int? =
@@ -339,9 +478,9 @@ private fun DpSize.toGlfwWindowSize(): IntSize =
     height = height.toGlfwWindowUnit("height"),
   )
 
-private fun Dp.toGlfwWindowUnit(name: String): Int {
+private fun Dp.toGlfwWindowUnit(name: String, scale: Float = 1f): Int {
   require(java.lang.Float.isFinite(value) && value > 0f) {
     "Window $name must be a positive finite Dp value"
   }
-  return value.roundToInt().coerceAtLeast(1)
+  return (value * scale).roundToInt().coerceAtLeast(1)
 }

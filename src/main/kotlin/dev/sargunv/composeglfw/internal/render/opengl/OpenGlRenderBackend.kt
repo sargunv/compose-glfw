@@ -8,6 +8,7 @@ import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
 import dev.sargunv.composeglfw.internal.window.PlatformWindow
 import java.lang.invoke.MethodHandles
 import org.jetbrains.skia.BackendRenderTarget
+import org.jetbrains.skia.Color as SkiaColor
 import org.jetbrains.skia.ColorSpace
 import org.jetbrains.skia.DirectContext
 import org.jetbrains.skia.FramebufferFormat
@@ -77,12 +78,15 @@ internal class OpenGlRenderBackend(private val window: PlatformWindow) : RenderB
   override fun render(scene: ComposeWindowScene, frameTimeNanos: Long) {
     val target = skiaTarget ?: return
     window.makeCurrent()
+    val clearColor = if (window.isTransparent) SkiaColor.TRANSPARENT else SkiaColor.BLACK
+    target.surface.canvas.clear(clearColor)
     scene.render(target.surface.canvas.asComposeCanvas(), frameTimeNanos)
     target.surface.flushAndSubmit()
     window.swapBuffers()
   }
 
   override fun close() {
+    window.makeCurrent()
     skiaTarget?.close()
     skiaTarget = null
     directContext.close()

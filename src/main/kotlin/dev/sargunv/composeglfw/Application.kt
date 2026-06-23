@@ -41,8 +41,9 @@ public interface ApplicationScope {
  * @param visible whether the native window is visible.
  * @param title title shown in the window decoration, when the display server provides one.
  * @param icon icon shown in the window decoration, when the display server supports it.
- * @param undecorated whether to disable native window decorations.
- * @param transparent whether the window framebuffer should include alpha.
+ * @param undecorated whether to request a window without native decorations.
+ * @param transparent whether the window content framebuffer should include alpha. This is a native
+ *   window creation hint and requires recreation to change at runtime.
  * @param resizable whether the user can resize the window.
  * @param enabled whether the window reacts to input events.
  * @param focusOnShow whether the window should receive focus when shown.
@@ -73,7 +74,6 @@ public fun ApplicationScope.Window(
   options: WindowOptions = WindowOptions(),
   content: @Composable HostWindowScope.() -> Unit,
 ) {
-  require(!transparent || undecorated) { "Transparent windows must be undecorated" }
   val application =
     this as? ApplicationScopeImpl ?: error("Window must be used inside glfwApplication")
   val currentOnCloseRequest = rememberUpdatedState(onCloseRequest)

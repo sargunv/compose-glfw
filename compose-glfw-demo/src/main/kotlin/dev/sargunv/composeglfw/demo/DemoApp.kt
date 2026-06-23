@@ -22,11 +22,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.sargunv.composeglfw.HostWindowInfo
+import dev.sargunv.composeglfw.WindowState
 
 @Composable
-internal fun ComposeGlfwApp(windowInfo: HostWindowInfo) {
-  val darkTheme = isSystemInDarkTheme()
-  MaterialTheme(colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()) {
+internal fun ComposeGlfwApp(
+  windowInfo: HostWindowInfo,
+  windowState: WindowState,
+  showcaseState: WindowShowcaseState,
+  showcaseActions: WindowShowcaseActions,
+) {
+  DemoTheme {
     Surface(Modifier.fillMaxSize()) {
       val scrollState = rememberScrollState()
       Box(Modifier.fillMaxSize()) {
@@ -35,13 +40,18 @@ internal fun ComposeGlfwApp(windowInfo: HostWindowInfo) {
           verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
           DemoHeader(windowInfo)
-          WindowStateCard(windowInfo, darkTheme, Modifier.fillMaxWidth())
+          WindowStateCard(
+            windowInfo,
+            windowState,
+            darkTheme = isSystemInDarkTheme(),
+            Modifier.fillMaxWidth(),
+          )
+          WindowShowcaseCard(showcaseState, showcaseActions, Modifier.fillMaxWidth())
           LifecycleCard(Modifier.fillMaxWidth())
           PointerInputCard(Modifier.fillMaxWidth())
           PointerIconCard(Modifier.fillMaxWidth())
           FileDropCard(Modifier.fillMaxWidth())
           InputEventsCard(Modifier.fillMaxWidth())
-          MaterialControlsCard(Modifier.fillMaxWidth())
         }
 
         VerticalScrollbar(
@@ -50,6 +60,14 @@ internal fun ComposeGlfwApp(windowInfo: HostWindowInfo) {
         )
       }
     }
+  }
+}
+
+@Composable
+internal fun DemoTheme(content: @Composable () -> Unit) {
+  val darkTheme = isSystemInDarkTheme()
+  MaterialTheme(colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()) {
+    content()
   }
 }
 

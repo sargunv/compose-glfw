@@ -2,11 +2,14 @@ package dev.sargunv.composeglfw.internal.application
 
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.sargunv.composeglfw.HostWindowInfo
 import dev.sargunv.composeglfw.RenderBackend
 import dev.sargunv.composeglfw.WindowOptions
 import dev.sargunv.composeglfw.WindowPlacement
+import dev.sargunv.composeglfw.WindowPosition
 import dev.sargunv.composeglfw.WindowState
 import dev.sargunv.composeglfw.internal.input.InputDispatcher
 import dev.sargunv.composeglfw.internal.platform.HostPlatformContext
@@ -17,7 +20,9 @@ import dev.sargunv.composeglfw.internal.render.opengl.OpenGlRenderBackend
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
 import dev.sargunv.composeglfw.internal.scene.WindowScopeImpl
 import dev.sargunv.composeglfw.internal.window.PlatformWindow
+import dev.sargunv.composeglfw.internal.window.PlatformWindowBounds
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.math.roundToInt
 import org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowCloseCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback
@@ -57,8 +62,10 @@ internal class WindowHost(
   private var onPreviewKeyEvent = request.onPreviewKeyEvent
   private var onKeyEvent = request.onKeyEvent
   private var lastAppliedStateSize = request.state.size
+  private var lastAppliedPosition = request.state.position
   private var lastAppliedPlacement = request.state.placement
   private var lastAppliedMinimized = request.state.isMinimized
+  private var windowedBoundsBeforeFullscreen: PlatformWindowBounds? = null
   private var renderRequested = true
   private val systemThemeProvider =
     SystemThemeProvider.create { theme ->
@@ -117,13 +124,12 @@ internal class WindowHost(
       updateStateFromWindow()
     }
     glfwSetWindowIconifyCallback(window.handle) { _, iconified ->
-      state.isMinimized = iconified
-      lastAppliedMinimized = iconified
+      window.refreshSizes()
+      updateStateFromWindow()
     }
     glfwSetWindowMaximizeCallback(window.handle) { _, maximized ->
-      val placement = if (maximized) WindowPlacement.Maximized else WindowPlacement.Floating
-      state.placement = placement
-      lastAppliedPlacement = placement
+      window.refreshSizes()
+      updateStateFromWindow()
     }
   }
 
@@ -222,28 +228,23 @@ internal class WindowHost(
   private fun applyStateToWindow() {
     val requestedSize = state.size
     if (requestedSize != lastAppliedStateSize) {
+      // TODO: Support Compose Desktop-style DpSize.Unspecified by measuring content before
+      // choosing the native window size.
       window.setSize(requestedSize)
       lastAppliedStateSize = requestedSize
       requestRender()
     }
 
-    // TODO: Apply WindowState.position. GLFW cannot report or set reliable window positions on
-    // Wayland, so this needs platform-sensitive behavior rather than unconditional setters.
+    val requestedPosition = state.position
+    if (requestedPosition != lastAppliedPosition) {
+      applyPosition(requestedPosition)
+    }
 
-    // TODO: Synchronize WindowPlacement.Fullscreen with GLFW monitor APIs. Maximized is wired only
-    // through callbacks for now, because restoring fullscreen requires remembering pre-fullscreen
-    // bounds and choosing the target monitor.
     if (state.placement != lastAppliedPlacement) {
-      if (state.placement == WindowPlacement.Maximized) {
-        window.maximize()
-      } else if (state.placement == WindowPlacement.Floating) {
-        window.restore()
-      }
+      applyPlacement(state.placement)
       lastAppliedPlacement = state.placement
     }
 
-    // TODO: Fully synchronize iconify/restore state. GLFW exposes callbacks and setters, but the
-    // exact interaction with visibility and focus needs per-display-server verification.
     if (state.isMinimized != lastAppliedMinimized) {
       if (state.isMinimized) {
         window.iconify()
@@ -252,6 +253,60 @@ internal class WindowHost(
       }
       lastAppliedMinimized = state.isMinimized
     }
+  }
+
+  private fun applyPosition(position: WindowPosition) {
+    if (!window.supportsWindowPosition || window.isFullscreen) {
+      // TODO: Preserve or report unresolved requested positions on display servers that restrict
+      // window positioning, especially Wayland.
+      lastAppliedPosition = position
+      return
+    }
+
+    val absolutePosition =
+      when (position) {
+        is WindowPosition.Absolute -> position.toPlatformPosition()
+        is WindowPosition.Aligned -> position.toPlatformPosition()
+        WindowPosition.PlatformDefault -> {
+          lastAppliedPosition = position
+          return
+        }
+      }
+    window.setPosition(absolutePosition)
+    val resolvedPosition = absolutePosition.toWindowPosition()
+    lastAppliedPosition = resolvedPosition
+    if (state.position != resolvedPosition) {
+      state.position = resolvedPosition
+    }
+    requestRender()
+  }
+
+  private fun applyPlacement(placement: WindowPlacement) {
+    when (placement) {
+      WindowPlacement.Floating -> {
+        if (window.isFullscreen) {
+          window.setWindowed(windowedBoundsBeforeFullscreen ?: window.currentWindowedBounds())
+          windowedBoundsBeforeFullscreen = null
+        } else {
+          window.restore()
+        }
+      }
+      WindowPlacement.Maximized -> {
+        if (window.isFullscreen) {
+          window.setWindowed(windowedBoundsBeforeFullscreen ?: window.currentWindowedBounds())
+          windowedBoundsBeforeFullscreen = null
+        }
+        window.restore()
+        window.maximize()
+      }
+      WindowPlacement.Fullscreen -> {
+        if (!window.isFullscreen) {
+          windowedBoundsBeforeFullscreen = window.currentWindowedBounds()
+        }
+        window.setFullscreen()
+      }
+    }
+    requestRender()
   }
 
   private fun requestRender() {
@@ -277,12 +332,38 @@ internal class WindowHost(
 
   private fun updateStateFromWindow() {
     val size = DpSize(window.logicalWindowSize.width.dp, window.logicalWindowSize.height.dp)
-    if (size != state.size) {
+    if (
+      window.logicalWindowSize.width > 0 &&
+        window.logicalWindowSize.height > 0 &&
+        size != state.size
+    ) {
       lastAppliedStateSize = size
       state.size = size
     }
-    // TODO: Update WindowState.position from PlatformWindow.windowPosition on display servers that
-    // support window positioning. Keep unsupported platforms at PlatformDefault.
+
+    if (window.supportsWindowPosition && !window.isFullscreen) {
+      val position = window.windowPosition.toWindowPosition()
+      if (position != state.position) {
+        lastAppliedPosition = position
+        state.position = position
+      }
+    }
+
+    val placement =
+      when {
+        window.isFullscreen -> WindowPlacement.Fullscreen
+        window.isMaximized -> WindowPlacement.Maximized
+        else -> WindowPlacement.Floating
+      }
+    if (placement != state.placement) {
+      lastAppliedPlacement = placement
+      state.placement = placement
+    }
+
+    if (window.isIconified != state.isMinimized) {
+      lastAppliedMinimized = window.isIconified
+      state.isMinimized = window.isIconified
+    }
   }
 
   private fun currentInfo(): HostWindowInfo {
@@ -300,4 +381,23 @@ internal class WindowHost(
       contentScale = window.contentScale,
     )
   }
+
+  private fun WindowPosition.Absolute.toPlatformPosition(): IntOffset =
+    IntOffset(x.value.roundToInt(), y.value.roundToInt())
+
+  private fun WindowPosition.Aligned.toPlatformPosition(): IntOffset {
+    val workArea = window.currentMonitorWorkArea()
+    val offset =
+      alignment.align(
+        size = window.windowSize,
+        space = workArea.size,
+        layoutDirection = LayoutDirection.Ltr,
+      )
+    return workArea.position + offset
+  }
+
+  private fun IntOffset.toWindowPosition(): WindowPosition = WindowPosition(x.dp, y.dp)
 }
+
+private operator fun IntOffset.plus(offset: IntOffset): IntOffset =
+  IntOffset(x + offset.x, y + offset.y)

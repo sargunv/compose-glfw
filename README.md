@@ -112,11 +112,11 @@ You can force the GLFW display server backend with:
 -Dcompose.glfw.platform=x11
 ```
 
-## Status
+## Status and limitations
 
 The following features are supported:
 
-- Single window hosting for Compose UI on Linux with Wayland and X11
+- Application composition and window model
 - Fractional scaling
 - Resize, density, focus, and window info updates
 - Pointer, scroll, and keyboard events
@@ -138,12 +138,14 @@ The following features are partially supported:
   - Complex input methods are not fully supported yet, such as composing
     accented characters before committing them, choosing characters from CJK
     input method popups, or canceling an in-progress composition.
+- Window state
+  - Supports runtime size, minimize, maximize, fullscreen, and position updates.
+  - Window positioning is best-effort; Wayland restricts window positioning and
+    always-on-top.
 
 The following features are not yet supported:
 
 - Windows and macOS
-- Dynamic multi-window composition
-- Runtime window attribute mutation (`WindowState`)
 - Screen reader, native menus, tray, dialogs, or file pickers
 - Interop views like `SwingPanel`. Advanced users can instead use the host GPU
   context for integrating custom components.

@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,13 +28,18 @@ import androidx.compose.ui.input.pointer.isScrollLockOn
 import androidx.compose.ui.input.pointer.isShiftPressed
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import dev.sargunv.composeglfw.HostWindowInfo
+import dev.sargunv.composeglfw.WindowPlacement
+import dev.sargunv.composeglfw.WindowPosition
+import dev.sargunv.composeglfw.WindowState
 import kotlin.math.roundToInt
 
 @Composable
 internal fun WindowStateCard(
   windowInfo: HostWindowInfo,
+  windowState: WindowState,
   darkTheme: Boolean,
   modifier: Modifier = Modifier,
 ) {
@@ -75,8 +82,12 @@ internal fun WindowStateCard(
           "Framebuffer scale",
           "${framebufferScaleX.formatScale()} x ${framebufferScaleY.formatScale()}",
         )
+        MetricRow("WindowState placement", windowState.placement.toString())
+        MetricRow("WindowState minimized", windowState.isMinimized.toString())
+        MetricRow("WindowState position", windowState.position.toDisplayText())
       }
 
+      WindowStateControls(windowState)
       WindowModifierStatus(composeWindowInfo.keyboardModifiers)
     }
   }
@@ -130,6 +141,61 @@ private fun WindowModifierStatus(modifiers: PointerKeyboardModifiers) {
 }
 
 @Composable
+private fun WindowStateControls(windowState: WindowState) {
+  FlowRow(
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+  ) {
+    OutlinedButton(
+      onClick = {
+        windowState.isMinimized = false
+        windowState.placement = WindowPlacement.Floating
+        windowState.size = DpSize(960.dp, 640.dp)
+      }
+    ) {
+      Text("960 x 640")
+    }
+    OutlinedButton(onClick = { windowState.size = DpSize(1280.dp, 720.dp) }) {
+      Text("1280 x 720")
+    }
+    OutlinedButton(onClick = { windowState.position = WindowPosition(Alignment.Center) }) {
+      Text("Center")
+    }
+    Button(
+      onClick = {
+        windowState.isMinimized = false
+        windowState.placement =
+          if (windowState.placement == WindowPlacement.Maximized) {
+            WindowPlacement.Floating
+          } else {
+            WindowPlacement.Maximized
+          }
+      }
+    ) {
+      Text(if (windowState.placement == WindowPlacement.Maximized) "Restore" else "Maximize")
+    }
+    Button(
+      onClick = {
+        windowState.isMinimized = false
+        windowState.placement =
+          if (windowState.placement == WindowPlacement.Fullscreen) {
+            WindowPlacement.Floating
+          } else {
+            WindowPlacement.Fullscreen
+          }
+      }
+    ) {
+      Text(
+        if (windowState.placement == WindowPlacement.Fullscreen) "Exit fullscreen" else "Fullscreen"
+      )
+    }
+    OutlinedButton(onClick = { windowState.isMinimized = true }) {
+      Text("Minimize")
+    }
+  }
+}
+
+@Composable
 private fun ModifierStatusValue(label: String, active: Boolean) {
   val colors = MaterialTheme.colorScheme
   Text(
@@ -144,3 +210,10 @@ private fun ModifierStatusValue(label: String, active: Boolean) {
 }
 
 private fun Float.formatScale(): String = "${(this * 100).roundToInt()}%"
+
+private fun WindowPosition.toDisplayText(): String =
+  when (this) {
+    is WindowPosition.Absolute -> "${x.value.roundToInt()}, ${y.value.roundToInt()}"
+    is WindowPosition.Aligned -> "Aligned($alignment)"
+    WindowPosition.PlatformDefault -> "PlatformDefault"
+  }

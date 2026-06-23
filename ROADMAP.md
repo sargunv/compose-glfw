@@ -2,63 +2,13 @@
 
 This file tracks implementation status for Compose GLFW.
 
-## Current Status
-
-What works today:
-
-- [x] Linux runtime modules for OpenGL:
-  - `compose-glfw-opengl-linux-x64`
-  - `compose-glfw-opengl-linux-arm64`
-- [x] GLFW window creation
-- [x] Wayland-preferred GLFW platform selection
-- [x] X11 GLFW platform selection
-- [x] EGL/OpenGL context creation
-- [x] Skia `DirectContext` creation through the GLFW GL proc loader
-- [x] `CanvasLayersComposeScene` rendering into the GLFW backbuffer
-- [x] Host-owned Compose scene coroutine dispatch on the GLFW UI thread
-- [x] Resize handling
-- [x] Content scale/density handling
-- [x] Transparent framebuffer window option
-- [x] Compose `WindowInfo` focus, size, and keyboard modifier state
-- [x] Compose local/window coordinate conversion for framebuffer-scaled windows
-- [x] Basic popup/dropdown positioning through `PlatformContext`
-- [x] Linux system light/dark theme detection through XDG Desktop Portal
-      settings
-- [x] Window focus requests from Compose
-- [x] Mouse move, press, and release
-- [x] Scroll wheel and trackpad events
-- [x] Basic keyboard key down, key up, and repeat routing
-- [x] Keyboard modifier and lock-state propagation for pointer events
-- [x] GLFW key table audited against Compose desktop key codes
-- [x] Built-in pointer cursor shape updates
-- [x] Custom cursor images
-- [x] GLFW file drop callbacks into Compose drag-and-drop targets on X11
-- [x] Basic committed text input from keyboard layouts
-- [x] System text clipboard through Compose Desktop's clipboard implementation
-- [x] Basic Compose-rendered text selection toolbar
-- [x] Per-window text selection toolbar customization
-- [x] Public `glfwApplication { Window(onCloseRequest = ...) { ... } }` API
-- [x] Per-window GPU interop hook for the current OpenGL context
-- [x] Platform lifecycle, ViewModel, saved-state, and navigation owners
-- [x] Test root and semantics owner listener tracking
-
 Known gaps:
 
 Application composition and window model:
 
-- [x] Compose-style `glfwApplication { Window(...) }` application composition,
-      instead of a static startup window list
-- [x] Dynamic multi-window lifecycle: windows created and disposed as
-      application composition changes
-- [ ] Complete `WindowState` parity with Compose Desktop `WindowState`:
-      position, minimized, maximized, fullscreen
-- [x] Runtime window size updates through `WindowState.size`
-- [x] Runtime window title, visibility, decoration, resizable, enabled,
-      focus-on-show, and always-on-top updates from composition state
+- [ ] Compose Desktop-style `DpSize.Unspecified` content-driven window sizing
 - [ ] Runtime window icon support
 - [ ] Runtime transparent-window changes via native window recreation
-- [x] Close-request flow matching Compose Desktop: `onCloseRequest` lets the app
-      decide whether to close one window or exit
 - [ ] Production-ready application lifecycle semantics
 
 OS/platform API wiring:
