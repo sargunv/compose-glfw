@@ -157,11 +157,11 @@ internal fun glfwKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): KeyE
     isMetaPressed = mods has GLFW_MOD_SUPER,
     isAltPressed = mods has GLFW_MOD_ALT,
     isShiftPressed = mods has GLFW_MOD_SHIFT,
-    nativeEvent = GlfwKeyNativeEvent(key, scancode, action, mods),
+    nativeEvent = KeyNativeEvent(key, scancode, action, mods),
   )
 }
 
-internal data class GlfwKeyNativeEvent(val key: Int, val scancode: Int, val action: Int, val mods: Int)
+internal data class KeyNativeEvent(val key: Int, val scancode: Int, val action: Int, val mods: Int)
 
 internal fun glfwKeyboardModifiers(mods: Int, scrollLockOn: Boolean = false): PointerKeyboardModifiers =
   PointerKeyboardModifiers(

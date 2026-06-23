@@ -5,9 +5,9 @@ import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerButtons
 import androidx.compose.ui.input.pointer.PointerEventType
-import dev.sargunv.composeglfw.internal.platform.GlfwTextInputService
+import dev.sargunv.composeglfw.internal.platform.TextInputService
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
-import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
+import dev.sargunv.composeglfw.internal.window.PlatformWindow
 import org.lwjgl.glfw.GLFW.GLFW_KEY_CAPS_LOCK
 import org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT
 import org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL
@@ -41,12 +41,12 @@ import org.lwjgl.glfw.GLFW.glfwSetScrollCallback
 
 // Compose's desktop scroll config normally sees AWT's scrollAmount, commonly 3 lines per wheel step.
 // GLFW gives unit offsets without that metadata, so apply the same baseline before forwarding.
-private const val GlfwScrollAmount = 3f
+private const val ScrollAmount = 3f
 
-internal class GlfwInputDispatcher(
-  private val window: GlfwPlatformWindow,
+internal class InputDispatcher(
+  private val window: PlatformWindow,
   private val scene: ComposeWindowScene,
-  textInput: GlfwTextInputService,
+  textInput: TextInputService,
   private val onKeyboardModifiers: (PointerKeyboardModifiers) -> Unit,
   private val requestRender: () -> Unit,
 ) : AutoCloseable {
@@ -71,7 +71,7 @@ internal class GlfwInputDispatcher(
     glfwSetScrollCallback(window.handle) { _, x, y ->
       sendPointer(
         type = PointerEventType.Scroll,
-        scrollDelta = Offset(x.toFloat(), -y.toFloat()) * GlfwScrollAmount,
+        scrollDelta = Offset(x.toFloat(), -y.toFloat()) * ScrollAmount,
       )
     }
     glfwSetKeyCallback(window.handle) { _, key, scancode, action, mods ->

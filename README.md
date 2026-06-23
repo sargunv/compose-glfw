@@ -8,7 +8,7 @@ The current implementation is still early, but the intended library shape is in 
 fun main() = glfwApplication {
   Window(
     title = "Example",
-    options = GlfwWindowOptions {
+    options = WindowOptions {
       transparentFramebuffer = true
     },
   ) {
@@ -58,7 +58,7 @@ Application composition and window model:
 
 - [ ] Compose-style `glfwApplication { Window(...) }` application composition, instead of the current static startup window list
 - [ ] Dynamic multi-window lifecycle: windows created and disposed as application composition changes
-- [ ] `GlfwWindowState` parity with Compose Desktop `WindowState`: position, size, minimized, maximized, fullscreen
+- [ ] `WindowState` parity with Compose Desktop `WindowState`: position, size, minimized, maximized, fullscreen
 - [ ] Close-request flow matching Compose Desktop: `onCloseRequest` lets the app decide whether to close one window or exit
 - [ ] Production-ready application lifecycle semantics
 
@@ -147,7 +147,7 @@ Suggested internal contracts:
 ```kotlin
 internal interface PlatformWindow
 
-internal interface RenderBackend {
+internal interface RenderBackendDriver {
   fun configureWindowHints()
   fun attach(window: PlatformWindow): RenderTarget
   fun resize(target: RenderTarget, width: Int, height: Int): RenderTarget
@@ -171,26 +171,27 @@ Some apps need to render native GPU content, such as maps or video, into a textu
 This host should expose the minimum resources necessary and no larger framework:
 
 ```kotlin
-interface GlfwWindowScope {
-  val gpu: GlfwGpuInterop
+interface HostWindowScope {
+  val gpu: GpuInterop
 }
 
-sealed interface GlfwGpuInterop {
-  val backend: GlfwRenderBackend
+sealed interface GpuInterop {
+  val backend: RenderBackend
 }
 
-data class GlfwOpenGlInterop(
+data class OpenGlInterop(
   val directContext: DirectContext,
   val eglDisplay: Long,
   val eglConfig: Long,
   val eglContext: Long,
   val getProcAddress: Long,
+  val resolveProcAddress: (String) -> Long,
   val makeCurrent: () -> Unit,
-) : GlfwGpuInterop {
-  override val backend = GlfwRenderBackend.OPENGL
+) : GpuInterop {
+  override val backend = RenderBackend.OPENGL
 }
 
-enum class GlfwRenderBackend {
+enum class RenderBackend {
   OPENGL,
   METAL,
   DIRECT3D,

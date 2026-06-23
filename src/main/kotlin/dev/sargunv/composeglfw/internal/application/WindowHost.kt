@@ -1,29 +1,29 @@
 package dev.sargunv.composeglfw.internal.application
 
-import dev.sargunv.composeglfw.GlfwRenderBackend
-import dev.sargunv.composeglfw.GlfwWindowInfo
-import dev.sargunv.composeglfw.GlfwWindowSpec
-import dev.sargunv.composeglfw.internal.input.GlfwInputDispatcher
-import dev.sargunv.composeglfw.internal.platform.GlfwPlatformContext
-import dev.sargunv.composeglfw.internal.platform.glfwDisplayName
-import dev.sargunv.composeglfw.internal.platform.systemtheme.SystemThemeProvider
-import dev.sargunv.composeglfw.internal.platform.glfwPlatform
+import dev.sargunv.composeglfw.RenderBackend
+import dev.sargunv.composeglfw.HostWindowInfo
+import dev.sargunv.composeglfw.WindowSpec
+import dev.sargunv.composeglfw.internal.input.InputDispatcher
+import dev.sargunv.composeglfw.internal.platform.HostPlatformContext
+import dev.sargunv.composeglfw.internal.platform.displayName
+import dev.sargunv.composeglfw.internal.platform.SystemThemeProvider
+import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
 import dev.sargunv.composeglfw.internal.render.opengl.OpenGlRenderBackend
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
-import dev.sargunv.composeglfw.internal.scene.GlfwWindowScopeImpl
-import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
+import dev.sargunv.composeglfw.internal.scene.WindowScopeImpl
+import dev.sargunv.composeglfw.internal.window.PlatformWindow
 import org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback
 import kotlin.coroutines.EmptyCoroutineContext
 
-internal class GlfwWindowHost(
-  spec: GlfwWindowSpec,
-  uiDispatcher: GlfwUiDispatcher,
+internal class WindowHost(
+  spec: WindowSpec,
+  uiDispatcher: UiDispatcher,
 ) : AutoCloseable {
-  private val window = GlfwPlatformWindow(spec.title, spec.size, spec.options)
+  private val window = PlatformWindow(spec.title, spec.size, spec.options)
   private val renderBackend = OpenGlRenderBackend(window)
-  private val platformContext = GlfwPlatformContext(window, spec.options.textToolbar)
-  private val scope = GlfwWindowScopeImpl(currentInfo(), renderBackend.interop)
+  private val platformContext = HostPlatformContext(window, spec.options.textToolbar)
+  private val scope = WindowScopeImpl(currentInfo(), renderBackend.interop)
   private var renderRequested = true
   private val systemThemeProvider =
     SystemThemeProvider.create { theme ->
@@ -45,7 +45,7 @@ internal class GlfwWindowHost(
       checkThread = { operation -> uiDispatcher.checkOwnerThread(operation) },
     )
   private val input =
-    GlfwInputDispatcher(
+    InputDispatcher(
       window = window,
       scene = scene,
       textInput = platformContext.textInput,
@@ -115,12 +115,12 @@ internal class GlfwWindowHost(
     scope.updateInfo(currentInfo())
   }
 
-  private fun currentInfo(): GlfwWindowInfo {
-    val platform = glfwPlatform()
-    return GlfwWindowInfo(
-      platform = platform,
-      displayName = platform.glfwDisplayName(),
-      renderBackend = GlfwRenderBackend.OPENGL,
+  private fun currentInfo(): HostWindowInfo {
+    val displayServer = currentDisplayServer()
+    return HostWindowInfo(
+      displayServer = displayServer,
+      displayName = displayServer.displayName(),
+      renderBackend = RenderBackend.OPENGL,
       // Framebuffer dimensions are physical drawable pixels.
       framebufferWidth = window.framebufferSize.width,
       framebufferHeight = window.framebufferSize.height,

@@ -5,7 +5,7 @@ package dev.sargunv.composeglfw.internal.platform
 import androidx.compose.ui.platform.PlatformTextInputMethodRequest
 import kotlinx.coroutines.awaitCancellation
 
-internal class GlfwTextInputService {
+internal class TextInputService {
   private var currentInput: CurrentInput? = null
 
   suspend fun startInputMethod(request: PlatformTextInputMethodRequest): Nothing {

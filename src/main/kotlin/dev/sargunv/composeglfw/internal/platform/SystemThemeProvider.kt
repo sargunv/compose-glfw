@@ -1,6 +1,6 @@
 @file:OptIn(InternalComposeUiApi::class)
 
-package dev.sargunv.composeglfw.internal.platform.systemtheme
+package dev.sargunv.composeglfw.internal.platform
 
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.SystemTheme

@@ -2,11 +2,11 @@ package dev.sargunv.composeglfw
 
 import org.jetbrains.skia.DirectContext
 
-public sealed interface GlfwGpuInterop {
-  public val backend: GlfwRenderBackend
+public sealed interface GpuInterop {
+  public val backend: RenderBackend
 }
 
-public data class GlfwOpenGlInterop(
+public data class OpenGlInterop(
   public val directContext: DirectContext,
   public val eglDisplay: Long,
   public val eglConfig: Long,
@@ -14,6 +14,6 @@ public data class GlfwOpenGlInterop(
   public val getProcAddress: Long,
   public val resolveProcAddress: (String) -> Long,
   public val makeCurrent: () -> Unit,
-) : GlfwGpuInterop {
-  override val backend: GlfwRenderBackend = GlfwRenderBackend.OPENGL
+) : GpuInterop {
+  override val backend: RenderBackend = RenderBackend.OPENGL
 }

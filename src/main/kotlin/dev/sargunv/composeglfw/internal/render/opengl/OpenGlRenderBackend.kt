@@ -2,10 +2,10 @@ package dev.sargunv.composeglfw.internal.render.opengl
 
 import androidx.compose.ui.graphics.asComposeCanvas
 import androidx.compose.ui.unit.IntSize
-import dev.sargunv.composeglfw.GlfwOpenGlInterop
-import dev.sargunv.composeglfw.internal.render.RenderBackend
+import dev.sargunv.composeglfw.OpenGlInterop
+import dev.sargunv.composeglfw.internal.render.RenderBackendDriver
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
-import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
+import dev.sargunv.composeglfw.internal.window.PlatformWindow
 import java.lang.invoke.MethodHandles
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.ColorSpace
@@ -37,20 +37,20 @@ import org.lwjgl.system.MemoryUtil.memPutAddress
 import org.lwjgl.system.Pointer.POINTER_SIZE
 import org.lwjgl.system.libffi.LibFFI.ffi_type_pointer
 
-internal class OpenGlRenderBackend(private val window: GlfwPlatformWindow) : RenderBackend {
+internal class OpenGlRenderBackend(private val window: PlatformWindow) : RenderBackendDriver {
   private var glProcAddressCallback: GLProcAddressCallback? = null
   private var glInterface: GLAssembledInterface? = null
   private var skiaTarget: SkiaTarget? = null
   private val directContext: DirectContext
 
-  val interop: GlfwOpenGlInterop
+  val interop: OpenGlInterop
 
   init {
     window.makeCurrent()
     directContext = createDirectContext()
     skiaTarget = createSkiaTarget(window.framebufferSize)
     interop =
-      GlfwOpenGlInterop(
+      OpenGlInterop(
         directContext = directContext,
         eglDisplay = glfwGetEGLDisplay(),
         eglConfig = getEglConfig(),
@@ -117,7 +117,7 @@ internal class OpenGlRenderBackend(private val window: GlfwPlatformWindow) : Ren
   private fun createDirectContext(): DirectContext =
     try {
       DirectContext.makeGL()
-    } catch (error: RuntimeException) {
+    } catch (_: RuntimeException) {
       val getProcAddress =
         object : GLProcAddressCallback() {
           override fun invoke(ctx: Long, name: Long): Long = nglfwGetProcAddress(name)

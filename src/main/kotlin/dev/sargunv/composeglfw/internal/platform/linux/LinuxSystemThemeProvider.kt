@@ -4,7 +4,7 @@ package dev.sargunv.composeglfw.internal.platform.linux
 
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.SystemTheme
-import dev.sargunv.composeglfw.internal.platform.systemtheme.SystemThemeProvider
+import dev.sargunv.composeglfw.internal.platform.SystemThemeProvider
 import org.freedesktop.dbus.connections.impl.DBusConnection
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder
 import org.freedesktop.dbus.interfaces.DBusSigHandler

@@ -3,7 +3,7 @@ package dev.sargunv.composeglfw
 import org.lwjgl.glfw.GLFW.GLFW_PLATFORM_X11
 import org.lwjgl.glfw.GLFW.GLFW_PLATFORM_WAYLAND
 
-public enum class GlfwPlatform(
+public enum class DisplayServer(
   internal val supportsWindowPosition: Boolean,
   internal val reportsPreEventKeyModifiers: Boolean,
 ) {
@@ -23,7 +23,7 @@ public enum class GlfwPlatform(
     }
 
   internal companion object {
-    internal fun fromGlfwPlatform(platform: Int): GlfwPlatform =
+    internal fun fromGlfwPlatform(platform: Int): DisplayServer =
       when (platform) {
         GLFW_PLATFORM_WAYLAND -> WAYLAND
         GLFW_PLATFORM_X11 -> X11
@@ -32,7 +32,7 @@ public enum class GlfwPlatform(
   }
 }
 
-public enum class GlfwRenderBackend {
+public enum class RenderBackend {
   OPENGL;
 
   public override fun toString(): String =

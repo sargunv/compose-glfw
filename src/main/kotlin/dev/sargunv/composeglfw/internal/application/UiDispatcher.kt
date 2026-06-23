@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineDispatcher
 
-internal class GlfwUiDispatcher : CoroutineDispatcher() {
+internal class UiDispatcher : CoroutineDispatcher() {
   private val tasks = ConcurrentLinkedQueue<Runnable>()
   private var ownerThread: Thread? = null
 

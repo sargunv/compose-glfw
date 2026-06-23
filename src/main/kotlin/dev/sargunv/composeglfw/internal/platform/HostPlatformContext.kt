@@ -26,17 +26,17 @@ import androidx.compose.ui.text.input.PlatformTextInputService
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import dev.sargunv.composeglfw.GlfwTextToolbarContent
-import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
+import dev.sargunv.composeglfw.TextToolbarContent
+import dev.sargunv.composeglfw.internal.window.PlatformWindow
 
-internal class GlfwPlatformContext(
-  private val window: GlfwPlatformWindow,
-  textToolbarContent: GlfwTextToolbarContent,
+internal class HostPlatformContext(
+  private val window: PlatformWindow,
+  textToolbarContent: TextToolbarContent,
 ) : PlatformContext {
   private val fallbackContext = PlatformContext.Empty()
-  val textInput: GlfwTextInputService = GlfwTextInputService()
-  private val glfwTextToolbar = GlfwTextToolbar(textToolbarContent)
-  private val mutableWindowInfo = GlfwComposeWindowInfo()
+  val textInput: TextInputService = TextInputService()
+  private val textToolbarAdapter = TextToolbarAdapter(textToolbarContent)
+  private val mutableWindowInfo = ComposeWindowInfoState()
   var systemTheme: SystemTheme by mutableStateOf(SystemTheme.Unknown)
     private set
   override val windowInfo: WindowInfo = mutableWindowInfo
@@ -97,7 +97,7 @@ internal class GlfwPlatformContext(
     get() = fallbackContext.textInputService
 
   override val textToolbar: TextToolbar
-    get() = glfwTextToolbar
+    get() = textToolbarAdapter
 
   // TODO: Revisit with multi-window and parent/owned popup focus behavior.
   override val parentFocusManager: FocusManager
@@ -157,18 +157,18 @@ internal class GlfwPlatformContext(
 
   @Composable
   fun TextToolbarContent() {
-    glfwTextToolbar.Content()
+    textToolbarAdapter.Content()
   }
 }
 
-private class GlfwComposeWindowInfo : WindowInfo {
+private class ComposeWindowInfoState : WindowInfo {
   override var isWindowFocused: Boolean by mutableStateOf(true)
   override var keyboardModifiers: PointerKeyboardModifiers by mutableStateOf(PointerKeyboardModifiers())
   override var containerSize: IntSize by mutableStateOf(IntSize.Zero)
   override var containerDpSize: DpSize by mutableStateOf(DpSize.Zero)
 }
 
-private fun GlfwPlatformWindow.screenOrigin(): Offset =
+private fun PlatformWindow.screenOrigin(): Offset =
   if (supportsWindowPosition) {
     // GLFW exposes window position in screen coordinates, while this host sizes ComposeScene in
     // framebuffer pixels. Convert the origin with the same ratio used for pointer coordinates.

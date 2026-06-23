@@ -18,17 +18,17 @@ import androidx.compose.ui.scene.ComposeScene
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
-import dev.sargunv.composeglfw.GlfwWindowScope
-import dev.sargunv.composeglfw.internal.platform.GlfwPlatformContext
+import dev.sargunv.composeglfw.HostWindowScope
+import dev.sargunv.composeglfw.internal.platform.HostPlatformContext
 import kotlin.coroutines.CoroutineContext
 
 internal class ComposeWindowScene(
   initialDensity: Float,
   initialSize: IntSize,
-  private val platformContext: GlfwPlatformContext,
+  private val platformContext: HostPlatformContext,
   coroutineContext: CoroutineContext,
-  scope: GlfwWindowScope,
-  content: @Composable GlfwWindowScope.() -> Unit,
+  scope: HostWindowScope,
+  content: @Composable HostWindowScope.() -> Unit,
   invalidate: () -> Unit,
   private val checkThread: (String) -> Unit,
 ) : AutoCloseable {

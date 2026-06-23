@@ -24,12 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
-import dev.sargunv.composeglfw.GlfwTextToolbarActions
-import dev.sargunv.composeglfw.GlfwTextToolbarContent
-import dev.sargunv.composeglfw.GlfwTextToolbarState
+import dev.sargunv.composeglfw.TextToolbarActions
+import dev.sargunv.composeglfw.TextToolbarContent
+import dev.sargunv.composeglfw.TextToolbarState
 import kotlin.math.roundToInt
 
-internal class GlfwTextToolbar(private val content: GlfwTextToolbarContent) : TextToolbar {
+internal class TextToolbarAdapter(private val content: TextToolbarContent) : TextToolbar {
   private var request: TextToolbarRequest? by mutableStateOf(null)
 
   override val status: TextToolbarStatus
@@ -79,11 +79,11 @@ internal class GlfwTextToolbar(private val content: GlfwTextToolbarContent) : Te
   @Composable
   fun Content() {
     val currentRequest = request ?: return
-    content(currentRequest.toState(), TextToolbarActions(currentRequest, ::hide))
+    content(currentRequest.toState(), DefaultTextToolbarActions(currentRequest, ::hide))
   }
 }
 
-internal val defaultGlfwTextToolbarContent: GlfwTextToolbarContent = { state, actions ->
+internal val defaultTextToolbarContent: TextToolbarContent = { state, actions ->
   Popup(
     popupPositionProvider = TextToolbarPositionProvider(state.rect),
     onDismissRequest = actions::dismiss,
@@ -114,7 +114,7 @@ private fun TextToolbarAction(label: String, enabled: Boolean, action: () -> Uni
       Modifier
         .clickable(onClick = action)
         .padding(horizontal = 10.dp, vertical = 7.dp),
-    style = TextStyle(color = TextToolbarContent),
+    style = TextStyle(color = TextToolbarForeground),
   )
 }
 
@@ -127,8 +127,8 @@ private data class TextToolbarRequest(
   val onAutofillRequested: (() -> Unit)?,
 )
 
-private fun TextToolbarRequest.toState(): GlfwTextToolbarState =
-  GlfwTextToolbarState(
+private fun TextToolbarRequest.toState(): TextToolbarState =
+  TextToolbarState(
     rect = rect,
     canCopy = onCopyRequested != null,
     canPaste = onPasteRequested != null,
@@ -137,10 +137,10 @@ private fun TextToolbarRequest.toState(): GlfwTextToolbarState =
     canAutofill = onAutofillRequested != null,
   )
 
-private class TextToolbarActions(
+private class DefaultTextToolbarActions(
   private val request: TextToolbarRequest,
   private val hide: () -> Unit,
-) : GlfwTextToolbarActions {
+) : TextToolbarActions {
   override fun copy() {
     invokeAndHide(request.onCopyRequested)
   }
@@ -202,4 +202,4 @@ private fun Int.fitWithin(containerSize: Int, contentSize: Int): Int =
   }
 
 private val TextToolbarBackground = Color(0xFF2B2B2B)
-private val TextToolbarContent = Color(0xFFFFFFFF)
+private val TextToolbarForeground = Color(0xFFFFFFFF)

@@ -3,9 +3,9 @@ package dev.sargunv.composeglfw.internal.window
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import dev.sargunv.composeglfw.GlfwWindowOptions
-import dev.sargunv.composeglfw.GlfwWindowSize
-import dev.sargunv.composeglfw.internal.platform.glfwPlatform
+import dev.sargunv.composeglfw.WindowOptions
+import dev.sargunv.composeglfw.WindowSize
+import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
 import org.lwjgl.glfw.GLFW.GLFW_CLIENT_API
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_CREATION_API
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR
@@ -46,15 +46,15 @@ import org.lwjgl.opengl.GL
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.NULL
 
-internal class GlfwPlatformWindow(
+internal class PlatformWindow(
   title: String,
-  size: GlfwWindowSize,
-  options: GlfwWindowOptions,
+  size: WindowSize,
+  options: WindowOptions,
 ) : AutoCloseable {
   var handle: Long = NULL
     private set
 
-  private val platform = glfwPlatform()
+  private val displayServer = currentDisplayServer()
 
   // Drawable framebuffer size in physical pixels. This is the Skia target and ComposeScene size.
   var framebufferSize: IntSize = IntSize(size.width, size.height)
@@ -68,9 +68,9 @@ internal class GlfwPlatformWindow(
   var windowPosition: IntOffset = IntOffset.Zero
     private set
 
-  val supportsWindowPosition: Boolean = platform.supportsWindowPosition
+  val supportsWindowPosition: Boolean = displayServer.supportsWindowPosition
 
-  val reportsPreEventKeyModifiers: Boolean = platform.reportsPreEventKeyModifiers
+  val reportsPreEventKeyModifiers: Boolean = displayServer.reportsPreEventKeyModifiers
 
   // GLFW content scale, used as the Compose density for px-to-dp conversion.
   var contentScale: Float = 1f

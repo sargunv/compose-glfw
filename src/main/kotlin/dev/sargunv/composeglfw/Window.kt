@@ -1,31 +1,31 @@
 package dev.sargunv.composeglfw
 
-import dev.sargunv.composeglfw.internal.platform.defaultGlfwTextToolbarContent
+import dev.sargunv.composeglfw.internal.platform.defaultTextToolbarContent
 
-public data class GlfwWindowSize(public val width: Int, public val height: Int) {
+public data class WindowSize(public val width: Int, public val height: Int) {
   init {
     require(width > 0) { "Window width must be positive" }
     require(height > 0) { "Window height must be positive" }
   }
 }
 
-public class GlfwWindowOptions private constructor(
+public class WindowOptions private constructor(
   public val resizable: Boolean,
   public val transparentFramebuffer: Boolean,
-  public val textToolbar: GlfwTextToolbarContent,
+  public val textToolbar: TextToolbarContent,
 ) {
   public companion object {
-    public operator fun invoke(configure: Builder.() -> Unit = {}): GlfwWindowOptions =
+    public operator fun invoke(configure: Builder.() -> Unit = {}): WindowOptions =
       Builder().apply(configure).build()
   }
 
   public class Builder {
     public var resizable: Boolean = true
     public var transparentFramebuffer: Boolean = false
-    public var textToolbar: GlfwTextToolbarContent = defaultGlfwTextToolbarContent
+    public var textToolbar: TextToolbarContent = defaultTextToolbarContent
 
-    public fun build(): GlfwWindowOptions =
-      GlfwWindowOptions(
+    public fun build(): WindowOptions =
+      WindowOptions(
         resizable = resizable,
         transparentFramebuffer = transparentFramebuffer,
         textToolbar = textToolbar,
@@ -33,16 +33,16 @@ public class GlfwWindowOptions private constructor(
   }
 }
 
-public interface GlfwWindowScope {
-  public val windowInfo: GlfwWindowInfo
+public interface HostWindowScope {
+  public val windowInfo: HostWindowInfo
 
-  public val gpu: GlfwGpuInterop
+  public val gpu: GpuInterop
 }
 
-public data class GlfwWindowInfo(
-  public val platform: GlfwPlatform,
+public data class HostWindowInfo(
+  public val displayServer: DisplayServer,
   public val displayName: String?,
-  public val renderBackend: GlfwRenderBackend,
+  public val renderBackend: RenderBackend,
   /** Physical drawable pixels backing the Compose scene and Skia render target. */
   public val framebufferWidth: Int,
   /** Physical drawable pixels backing the Compose scene and Skia render target. */

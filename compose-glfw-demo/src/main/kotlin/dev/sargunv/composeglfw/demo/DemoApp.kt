@@ -21,10 +21,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import dev.sargunv.composeglfw.GlfwWindowInfo
+import dev.sargunv.composeglfw.HostWindowInfo
 
 @Composable
-internal fun ComposeGlfwApp(windowInfo: GlfwWindowInfo) {
+internal fun ComposeGlfwApp(windowInfo: HostWindowInfo) {
   val darkTheme = isSystemInDarkTheme()
   MaterialTheme(colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()) {
     Surface(Modifier.fillMaxSize()) {
@@ -52,14 +52,14 @@ internal fun ComposeGlfwApp(windowInfo: GlfwWindowInfo) {
 }
 
 @Composable
-private fun DemoHeader(windowInfo: GlfwWindowInfo) {
+private fun DemoHeader(windowInfo: HostWindowInfo) {
   Column(Modifier.fillMaxWidth()) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
       Column(Modifier.weight(1f)) {
         Text("Compose GLFW", style = MaterialTheme.typography.headlineMedium)
       }
       Column(horizontalAlignment = Alignment.End) {
-        Text(windowInfo.platform.toString(), style = MaterialTheme.typography.labelLarge)
+        Text(windowInfo.displayServer.toString(), style = MaterialTheme.typography.labelLarge)
         Text(
           windowInfo.renderBackend.toString(),
           style = MaterialTheme.typography.bodySmall,

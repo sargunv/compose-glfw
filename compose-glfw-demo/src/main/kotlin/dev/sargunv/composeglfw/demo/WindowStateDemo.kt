@@ -27,12 +27,12 @@ import androidx.compose.ui.input.pointer.isShiftPressed
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import dev.sargunv.composeglfw.GlfwWindowInfo
+import dev.sargunv.composeglfw.HostWindowInfo
 import kotlin.math.roundToInt
 
 @Composable
 internal fun WindowStateCard(
-  windowInfo: GlfwWindowInfo,
+  windowInfo: HostWindowInfo,
   darkTheme: Boolean,
   modifier: Modifier = Modifier,
 ) {
@@ -45,7 +45,7 @@ internal fun WindowStateCard(
       Text("Window state", style = MaterialTheme.typography.titleMedium)
 
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        StatusValue("Platform", windowInfo.platform.toString())
+        StatusValue("Display server", windowInfo.displayServer.toString())
         StatusValue("Renderer", windowInfo.renderBackend.toString())
         StatusValue("Display", windowInfo.displayName ?: "<unset>")
         StatusValue("Focus", if (composeWindowInfo.isWindowFocused) "Focused" else "Unfocused")
