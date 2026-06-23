@@ -40,8 +40,9 @@ Then run your Compose content with `glfwApplication`:
 ```kotlin
 fun main() = glfwApplication {
   Window(
+    onCloseRequest = ::exitApplication,
     title = "Example",
-    size = DpSize(960.dp, 640.dp),
+    state = rememberWindowState(size = DpSize(960.dp, 640.dp)),
   ) {
     App()
   }
@@ -57,10 +58,13 @@ Configure the GLFW window with `WindowOptions`:
 
 ```kotlin
 Window(
+  onCloseRequest = ::exitApplication,
   title = "Example",
+  undecorated = true,
+  transparent = true,
+  resizable = true,
+  focusOnShow = false,
   options = WindowOptions {
-    resizable = true
-    transparentFramebuffer = true
     textToolbar = { state, actions ->
       // Draw a custom text context menu / toolbar.
     }
@@ -93,7 +97,7 @@ Advanced renderers can access the host GPU context from the `Window` content
 scope:
 
 ```kotlin
-Window(title = "Example") {
+Window(onCloseRequest = ::exitApplication, title = "Example") {
   val openGl = gpu as? OpenGlInterop
 
   App()

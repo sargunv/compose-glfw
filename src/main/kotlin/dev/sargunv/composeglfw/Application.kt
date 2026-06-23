@@ -1,56 +1,125 @@
 package dev.sargunv.composeglfw
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.ComposableOpenTarget
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.key.KeyEvent
 import dev.sargunv.composeglfw.internal.application.ApplicationHost
+import dev.sargunv.composeglfw.internal.application.ApplicationScopeImpl
+import dev.sargunv.composeglfw.internal.application.WindowRequest
 
 /**
- * Starts a Compose GLFW application and runs until all windows are closed.
+ * Starts a Compose GLFW application and runs until the application exits.
  *
- * @param configure declares the windows that belong to the application.
+ * Windows are declared with [Window] inside the application composition. When a [Window] enters the
+ * composition, a native GLFW window is created; when it leaves, that window is closed.
+ *
+ * @param content application-level composition.
  */
-public fun glfwApplication(configure: ApplicationScope.() -> Unit) {
-  val scope = ApplicationScopeImpl()
-  scope.configure()
-  ApplicationHost(scope.windows).use { it.run() }
+public fun glfwApplication(content: @Composable ApplicationScope.() -> Unit) {
+  ApplicationHost(content).use { it.run() }
 }
 
-/** Scope used to declare the windows in a Compose GLFW application. */
+/** Scope used by [glfwApplication]. */
+@Stable
 public interface ApplicationScope {
-  /**
-   * Adds a GLFW window to the application.
-   *
-   * @param title title shown in the window decoration, when the display server provides one.
-   * @param size initial logical size of the window content area.
-   * @param options GLFW host options for this window.
-   * @param content Compose content shown inside the window.
-   */
-  @Suppress("FunctionName")
-  public fun Window(
-    title: String,
-    size: DpSize = DpSize(960.dp, 640.dp),
-    options: WindowOptions = WindowOptions(),
-    content: @Composable HostWindowScope.() -> Unit,
-  )
+  /** Closes all windows created by the application and stops application-level effects. */
+  public fun exitApplication()
 }
 
-internal data class WindowSpec(
-  val title: String,
-  val size: DpSize,
-  val options: WindowOptions,
-  val content: @Composable HostWindowScope.() -> Unit,
-)
+/**
+ * Composes a GLFW window in the current application composition.
+ *
+ * @param onCloseRequest called when the user requests that the native window should close. The
+ *   application decides whether to remove this [Window] from the composition or exit entirely.
+ * @param state state used to control and observe runtime window attributes.
+ * @param visible whether the native window is visible.
+ * @param title title shown in the window decoration, when the display server provides one.
+ * @param icon icon shown in the window decoration, when the display server supports it.
+ * @param undecorated whether to disable native window decorations.
+ * @param transparent whether the window framebuffer should include alpha.
+ * @param resizable whether the user can resize the window.
+ * @param enabled whether the window reacts to input events.
+ * @param focusOnShow whether the window should receive focus when shown.
+ * @param alwaysOnTop whether the window stays above other normal windows.
+ * @param onPreviewKeyEvent key event callback invoked before the event is sent to Compose content.
+ * @param onKeyEvent key event callback invoked if Compose content does not consume the event.
+ * @param options GLFW host options for this window. Some options are applied only when the native
+ *   window is created.
+ * @param content Compose content shown inside the window.
+ */
+@Composable
+@ComposableOpenTarget(-1)
+@Suppress("FunctionName")
+public fun ApplicationScope.Window(
+  onCloseRequest: () -> Unit,
+  state: WindowState = rememberWindowState(),
+  visible: Boolean = true,
+  title: String = "Untitled",
+  icon: Painter? = null,
+  undecorated: Boolean = false,
+  transparent: Boolean = false,
+  resizable: Boolean = true,
+  enabled: Boolean = true,
+  focusOnShow: Boolean = true,
+  alwaysOnTop: Boolean = false,
+  onPreviewKeyEvent: (KeyEvent) -> Boolean = { false },
+  onKeyEvent: (KeyEvent) -> Boolean = { false },
+  options: WindowOptions = WindowOptions(),
+  content: @Composable HostWindowScope.() -> Unit,
+) {
+  require(!transparent || undecorated) { "Transparent windows must be undecorated" }
+  val application =
+    this as? ApplicationScopeImpl ?: error("Window must be used inside glfwApplication")
+  val currentOnCloseRequest = rememberUpdatedState(onCloseRequest)
+  val currentOnPreviewKeyEvent = rememberUpdatedState(onPreviewKeyEvent)
+  val currentOnKeyEvent = rememberUpdatedState(onKeyEvent)
+  val currentContent = rememberUpdatedState(content)
+  val host =
+    remember(application) {
+      application.createWindow(
+        WindowRequest(
+          title = title,
+          state = state,
+          visible = visible,
+          icon = icon,
+          undecorated = undecorated,
+          transparent = transparent,
+          resizable = resizable,
+          enabled = enabled,
+          focusOnShow = focusOnShow,
+          alwaysOnTop = alwaysOnTop,
+          options = options,
+          onCloseRequest = { currentOnCloseRequest.value() },
+          onPreviewKeyEvent = { currentOnPreviewKeyEvent.value(it) },
+          onKeyEvent = { currentOnKeyEvent.value(it) },
+          content = { currentContent.value(this) },
+        )
+      )
+    }
 
-private class ApplicationScopeImpl : ApplicationScope {
-  val windows = mutableListOf<WindowSpec>()
+  SideEffect {
+    host.update(
+      title = title,
+      state = state,
+      visible = visible,
+      icon = icon,
+      undecorated = undecorated,
+      transparent = transparent,
+      resizable = resizable,
+      enabled = enabled,
+      focusOnShow = focusOnShow,
+      alwaysOnTop = alwaysOnTop,
+      options = options,
+    )
+  }
 
-  override fun Window(
-    title: String,
-    size: DpSize,
-    options: WindowOptions,
-    content: @Composable HostWindowScope.() -> Unit,
-  ) {
-    windows += WindowSpec(title, size, options, content)
+  DisposableEffect(host) {
+    onDispose { application.disposeWindow(host) }
   }
 }

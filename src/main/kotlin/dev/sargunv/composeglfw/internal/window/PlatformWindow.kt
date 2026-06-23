@@ -6,7 +6,6 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import dev.sargunv.composeglfw.CursorImagePointerIcon
-import dev.sargunv.composeglfw.WindowOptions
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
 import kotlin.math.roundToInt
 import org.lwjgl.glfw.GLFW.GLFW_ARROW_CURSOR
@@ -15,9 +14,12 @@ import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_CREATION_API
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR
 import org.lwjgl.glfw.GLFW.GLFW_CROSSHAIR_CURSOR
+import org.lwjgl.glfw.GLFW.GLFW_DECORATED
 import org.lwjgl.glfw.GLFW.GLFW_EGL_CONTEXT_API
 import org.lwjgl.glfw.GLFW.GLFW_FALSE
+import org.lwjgl.glfw.GLFW.GLFW_FLOATING
 import org.lwjgl.glfw.GLFW.GLFW_FOCUSED
+import org.lwjgl.glfw.GLFW.GLFW_FOCUS_ON_SHOW
 import org.lwjgl.glfw.GLFW.GLFW_IBEAM_CURSOR
 import org.lwjgl.glfw.GLFW.GLFW_LOCK_KEY_MODS
 import org.lwjgl.glfw.GLFW.GLFW_OPENGL_API
@@ -26,6 +28,7 @@ import org.lwjgl.glfw.GLFW.GLFW_RESIZABLE
 import org.lwjgl.glfw.GLFW.GLFW_SCALE_TO_MONITOR
 import org.lwjgl.glfw.GLFW.GLFW_TRANSPARENT_FRAMEBUFFER
 import org.lwjgl.glfw.GLFW.GLFW_TRUE
+import org.lwjgl.glfw.GLFW.GLFW_VISIBLE
 import org.lwjgl.glfw.GLFW.glfwCreateCursor
 import org.lwjgl.glfw.GLFW.glfwCreateStandardCursor
 import org.lwjgl.glfw.GLFW.glfwCreateWindow
@@ -39,9 +42,18 @@ import org.lwjgl.glfw.GLFW.glfwGetWindowAttrib
 import org.lwjgl.glfw.GLFW.glfwGetWindowContentScale
 import org.lwjgl.glfw.GLFW.glfwGetWindowPos
 import org.lwjgl.glfw.GLFW.glfwGetWindowSize
+import org.lwjgl.glfw.GLFW.glfwHideWindow
+import org.lwjgl.glfw.GLFW.glfwIconifyWindow
 import org.lwjgl.glfw.GLFW.glfwMakeContextCurrent
+import org.lwjgl.glfw.GLFW.glfwMaximizeWindow
+import org.lwjgl.glfw.GLFW.glfwRestoreWindow
 import org.lwjgl.glfw.GLFW.glfwSetCursor
 import org.lwjgl.glfw.GLFW.glfwSetInputMode
+import org.lwjgl.glfw.GLFW.glfwSetWindowAttrib
+import org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose
+import org.lwjgl.glfw.GLFW.glfwSetWindowSize
+import org.lwjgl.glfw.GLFW.glfwSetWindowTitle
+import org.lwjgl.glfw.GLFW.glfwShowWindow
 import org.lwjgl.glfw.GLFW.glfwSwapBuffers
 import org.lwjgl.glfw.GLFW.glfwSwapInterval
 import org.lwjgl.glfw.GLFW.glfwWindowHint
@@ -56,7 +68,12 @@ import org.lwjgl.system.MemoryUtil.memFree
 internal class PlatformWindow(
   title: String,
   size: DpSize,
-  options: WindowOptions,
+  visible: Boolean,
+  undecorated: Boolean,
+  transparent: Boolean,
+  resizable: Boolean,
+  focusOnShow: Boolean,
+  alwaysOnTop: Boolean,
 ) : AutoCloseable {
   private val initialWindowSize = size.toGlfwWindowSize()
 
@@ -101,7 +118,7 @@ internal class PlatformWindow(
   val isFocused: Boolean
     get() = glfwGetWindowAttrib(handle, GLFW_FOCUSED) == GLFW_TRUE
 
-  val isTransparent: Boolean = options.transparentFramebuffer
+  val isTransparent: Boolean = transparent
 
   private val standardCursors = mutableMapOf<Int, Long>()
   private val imageCursors = mutableMapOf<CursorImagePointerIcon, Long>()
@@ -112,14 +129,15 @@ internal class PlatformWindow(
     glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
-    glfwWindowHint(GLFW_RESIZABLE, if (options.resizable) GLFW_TRUE else GLFW_FALSE)
+    glfwWindowHint(GLFW_DECORATED, if (undecorated) GLFW_FALSE else GLFW_TRUE)
+    glfwWindowHint(GLFW_RESIZABLE, if (resizable) GLFW_TRUE else GLFW_FALSE)
+    glfwWindowHint(GLFW_FOCUS_ON_SHOW, if (focusOnShow) GLFW_TRUE else GLFW_FALSE)
+    glfwWindowHint(GLFW_FLOATING, if (alwaysOnTop) GLFW_TRUE else GLFW_FALSE)
     // On X11, screen coordinates and pixels are 1:1, so GLFW needs this to create windows at
     // the requested logical size on scaled desktops. Wayland uses framebuffer scaling instead.
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE)
-    glfwWindowHint(
-      GLFW_TRANSPARENT_FRAMEBUFFER,
-      if (options.transparentFramebuffer) GLFW_TRUE else GLFW_FALSE,
-    )
+    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, if (transparent) GLFW_TRUE else GLFW_FALSE)
+    glfwWindowHint(GLFW_VISIBLE, if (visible) GLFW_TRUE else GLFW_FALSE)
 
     handle = glfwCreateWindow(initialWindowSize.width, initialWindowSize.height, title, NULL, NULL)
     check(handle != NULL) { "GLFW window creation failed: ${glfwGetError(null)}" }
@@ -143,6 +161,56 @@ internal class PlatformWindow(
 
   fun requestFocus() {
     glfwFocusWindow(handle)
+  }
+
+  fun setTitle(title: String) {
+    glfwSetWindowTitle(handle, title)
+  }
+
+  fun setVisible(visible: Boolean) {
+    if (visible) {
+      glfwShowWindow(handle)
+    } else {
+      glfwHideWindow(handle)
+    }
+  }
+
+  fun setDecorated(decorated: Boolean) {
+    glfwSetWindowAttrib(handle, GLFW_DECORATED, if (decorated) GLFW_TRUE else GLFW_FALSE)
+  }
+
+  fun setResizable(resizable: Boolean) {
+    glfwSetWindowAttrib(handle, GLFW_RESIZABLE, if (resizable) GLFW_TRUE else GLFW_FALSE)
+  }
+
+  fun setAlwaysOnTop(alwaysOnTop: Boolean) {
+    glfwSetWindowAttrib(handle, GLFW_FLOATING, if (alwaysOnTop) GLFW_TRUE else GLFW_FALSE)
+  }
+
+  fun setFocusOnShow(focusOnShow: Boolean) {
+    glfwSetWindowAttrib(handle, GLFW_FOCUS_ON_SHOW, if (focusOnShow) GLFW_TRUE else GLFW_FALSE)
+  }
+
+  fun setSize(size: DpSize) {
+    val windowSize = size.toGlfwWindowSize()
+    glfwSetWindowSize(handle, windowSize.width, windowSize.height)
+    refreshSizes()
+  }
+
+  fun maximize() {
+    glfwMaximizeWindow(handle)
+  }
+
+  fun restore() {
+    glfwRestoreWindow(handle)
+  }
+
+  fun iconify() {
+    glfwIconifyWindow(handle)
+  }
+
+  fun cancelCloseRequest() {
+    glfwSetWindowShouldClose(handle, false)
   }
 
   fun setPointerIcon(pointerIcon: PointerIcon) {

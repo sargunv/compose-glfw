@@ -1,6 +1,7 @@
 package dev.sargunv.composeglfw.internal.input
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerButtons
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -54,8 +55,11 @@ internal class InputDispatcher(
   private val scene: ComposeWindowScene,
   textInput: TextInputService,
   private val onKeyboardModifiers: (PointerKeyboardModifiers) -> Unit,
+  private val onPreviewKeyEvent: (KeyEvent) -> Boolean,
+  private val onKeyEvent: (KeyEvent) -> Boolean,
   private val requestRender: () -> Unit,
 ) : AutoCloseable {
+  var enabled: Boolean = true
   private var pressedMouseButtons = 0
   private var lastMouse = Offset.Zero
   private var currentMods = 0
@@ -63,10 +67,12 @@ internal class InputDispatcher(
 
   init {
     glfwSetCursorPosCallback(window.handle) { _, x, y ->
+      if (!enabled) return@glfwSetCursorPosCallback
       updateMousePosition(x, y)
       sendPointer(PointerEventType.Move)
     }
     glfwSetMouseButtonCallback(window.handle) { _, button, action, mods ->
+      if (!enabled) return@glfwSetMouseButtonCallback
       updateKeyboardModifiers(mods)
       val pointerButton = button.toPointerButton()
       if (pointerButton != null && (action == GLFW_PRESS || action == GLFW_RELEASE)) {
@@ -78,23 +84,26 @@ internal class InputDispatcher(
       }
     }
     glfwSetScrollCallback(window.handle) { _, x, y ->
+      if (!enabled) return@glfwSetScrollCallback
       sendPointer(
         type = PointerEventType.Scroll,
         scrollDelta = Offset(x.toFloat(), -y.toFloat()) * ScrollAmount,
       )
     }
     glfwSetKeyCallback(window.handle) { _, key, scancode, action, mods ->
+      if (!enabled) return@glfwSetKeyCallback
       if (key == GLFW_KEY_SCROLL_LOCK && action == GLFW_PRESS) {
         scrollLockOn = !scrollLockOn
       }
       val normalizedMods = updateKeyEventModifiers(key, action, mods)
       val event = glfwKeyEvent(key, scancode, action, normalizedMods)
       if (event != null) {
-        scene.sendKeyEvent(event)
+        onPreviewKeyEvent(event) || scene.sendKeyEvent(event) || onKeyEvent(event)
         requestRender()
       }
     }
     glfwSetCharCallback(window.handle) { _, codePoint ->
+      if (!enabled) return@glfwSetCharCallback
       if (textInput.commit(codePoint)) {
         requestRender()
       }
@@ -104,6 +113,7 @@ internal class InputDispatcher(
     // Full drag-and-drop parity is blocked upstream:
     // https://github.com/glfw/glfw/issues/1898
     glfwSetDropCallback(window.handle) { _, count, names ->
+      if (!enabled) return@glfwSetDropCallback
       readMousePosition()
       val paths =
         List(count) { index ->

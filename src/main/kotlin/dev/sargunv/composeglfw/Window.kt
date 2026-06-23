@@ -3,18 +3,11 @@ package dev.sargunv.composeglfw
 import dev.sargunv.composeglfw.internal.platform.defaultTextToolbarContent
 
 /**
- * Options used when creating a GLFW window.
+ * Host-specific options used when creating a GLFW window.
  *
- * @property resizable whether the user can resize the window.
- * @property transparentFramebuffer whether the window framebuffer should include alpha.
  * @property textToolbar content used for the text editing toolbar.
  */
-public class WindowOptions
-private constructor(
-  public val resizable: Boolean,
-  public val transparentFramebuffer: Boolean,
-  public val textToolbar: TextToolbarContent,
-) {
+public class WindowOptions private constructor(public val textToolbar: TextToolbarContent) {
   /** Factory for [WindowOptions]. */
   public companion object {
     /** Creates window options using the builder DSL. */
@@ -24,22 +17,11 @@ private constructor(
 
   /** Builder for [WindowOptions]. */
   public class Builder {
-    /** Whether the user can resize the window. */
-    public var resizable: Boolean = true
-
-    /** Whether the window framebuffer should include alpha. */
-    public var transparentFramebuffer: Boolean = false
-
     /** Content used for the text editing toolbar. */
     public var textToolbar: TextToolbarContent = defaultTextToolbarContent
 
     /** Builds immutable window options from the current builder values. */
-    public fun build(): WindowOptions =
-      WindowOptions(
-        resizable = resizable,
-        transparentFramebuffer = transparentFramebuffer,
-        textToolbar = textToolbar,
-      )
+    public fun build(): WindowOptions = WindowOptions(textToolbar = textToolbar)
   }
 }
 

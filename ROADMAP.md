@@ -37,7 +37,7 @@ What works today:
 - [x] System text clipboard through Compose Desktop's clipboard implementation
 - [x] Basic Compose-rendered text selection toolbar
 - [x] Per-window text selection toolbar customization
-- [x] Public `glfwApplication { Window { ... } }` API
+- [x] Public `glfwApplication { Window(onCloseRequest = ...) { ... } }` API
 - [x] Per-window GPU interop hook for the current OpenGL context
 - [x] Platform lifecycle, ViewModel, saved-state, and navigation owners
 - [x] Test root and semantics owner listener tracking
@@ -46,15 +46,18 @@ Known gaps:
 
 Application composition and window model:
 
-- [ ] Compose-style `glfwApplication { Window(...) }` application composition,
-      instead of the current static startup window list
-- [ ] Dynamic multi-window lifecycle: windows created and disposed as
+- [x] Compose-style `glfwApplication { Window(...) }` application composition,
+      instead of a static startup window list
+- [x] Dynamic multi-window lifecycle: windows created and disposed as
       application composition changes
-- [ ] `WindowState` parity with Compose Desktop `WindowState`: position, size,
-      minimized, maximized, fullscreen
-- [ ] Runtime window attribute updates from composition state: title, resizable,
-      enabled/focusable where GLFW supports them
-- [ ] Close-request flow matching Compose Desktop: `onCloseRequest` lets the app
+- [ ] Complete `WindowState` parity with Compose Desktop `WindowState`:
+      position, minimized, maximized, fullscreen
+- [x] Runtime window size updates through `WindowState.size`
+- [x] Runtime window title, visibility, decoration, resizable, enabled,
+      focus-on-show, and always-on-top updates from composition state
+- [ ] Runtime window icon support
+- [ ] Runtime transparent-window changes via native window recreation
+- [x] Close-request flow matching Compose Desktop: `onCloseRequest` lets the app
       decide whether to close one window or exit
 - [ ] Production-ready application lifecycle semantics
 
