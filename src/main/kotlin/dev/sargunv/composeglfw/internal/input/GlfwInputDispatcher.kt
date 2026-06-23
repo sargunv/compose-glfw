@@ -8,7 +8,23 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import dev.sargunv.composeglfw.internal.platform.GlfwTextInputService
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
 import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
+import org.lwjgl.glfw.GLFW.GLFW_KEY_CAPS_LOCK
+import org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT
+import org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL
+import org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT
+import org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SUPER
+import org.lwjgl.glfw.GLFW.GLFW_KEY_NUM_LOCK
+import org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_ALT
+import org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_CONTROL
+import org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT
+import org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SUPER
 import org.lwjgl.glfw.GLFW.GLFW_KEY_SCROLL_LOCK
+import org.lwjgl.glfw.GLFW.GLFW_MOD_ALT
+import org.lwjgl.glfw.GLFW.GLFW_MOD_CAPS_LOCK
+import org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL
+import org.lwjgl.glfw.GLFW.GLFW_MOD_NUM_LOCK
+import org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT
+import org.lwjgl.glfw.GLFW.GLFW_MOD_SUPER
 import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_1
 import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_2
 import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_3
@@ -16,6 +32,7 @@ import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_4
 import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_5
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
+import org.lwjgl.glfw.GLFW.GLFW_REPEAT
 import org.lwjgl.glfw.GLFW.glfwSetCharCallback
 import org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback
 import org.lwjgl.glfw.GLFW.glfwSetKeyCallback
@@ -61,8 +78,8 @@ internal class GlfwInputDispatcher(
       if (key == GLFW_KEY_SCROLL_LOCK && action == GLFW_PRESS) {
         scrollLockOn = !scrollLockOn
       }
-      updateKeyboardModifiers(mods)
-      val event = glfwKeyEvent(key, scancode, action, mods)
+      val normalizedMods = updateKeyEventModifiers(key, action, mods)
+      val event = glfwKeyEvent(key, scancode, action, normalizedMods)
       if (event != null) {
         scene.sendKeyEvent(event)
         requestRender()
@@ -132,9 +149,38 @@ internal class GlfwInputDispatcher(
   private fun isMouseButtonPressed(button: Int): Boolean =
     pressedMouseButtons and (1 shl button) != 0
 
-  private fun updateKeyboardModifiers(mods: Int) {
+  private fun updateKeyboardModifiers(mods: Int): Int {
     currentMods = mods
     onKeyboardModifiers(glfwKeyboardModifiers(currentMods, scrollLockOn))
+    return currentMods
+  }
+
+  private fun updateKeyEventModifiers(key: Int, action: Int, mods: Int): Int =
+    updateKeyboardModifiers(normalizedKeyEventModifiers(key, action, mods))
+
+  private fun normalizedKeyEventModifiers(key: Int, action: Int, mods: Int): Int {
+    if (!window.reportsPreEventKeyModifiers) {
+      return mods
+    }
+
+    // X11 reports the modifier state from just before key events. Compose wants the effective
+    // state after the current event, so apply the key action to GLFW's event metadata.
+    val pressedModifier = key.glfwPressedModifierMask()
+    if (pressedModifier != null) {
+      return when (action) {
+        GLFW_PRESS, GLFW_REPEAT -> mods or pressedModifier
+        GLFW_RELEASE -> mods and pressedModifier.inv()
+        else -> mods
+      }
+    }
+
+    val lockModifier = key.glfwLockModifierMask()
+    return when {
+      lockModifier == null -> mods
+      action == GLFW_PRESS -> mods xor lockModifier
+      action == GLFW_RELEASE -> mods.withModifier(lockModifier, currentMods has lockModifier)
+      else -> mods
+    }
   }
 }
 
@@ -147,3 +193,28 @@ private fun Int.toPointerButton(): PointerButton? =
     GLFW_MOUSE_BUTTON_5 -> PointerButton.Forward
     else -> null
   }
+
+private fun Int.glfwPressedModifierMask(): Int? =
+  when (this) {
+    GLFW_KEY_LEFT_SHIFT, GLFW_KEY_RIGHT_SHIFT -> GLFW_MOD_SHIFT
+    GLFW_KEY_LEFT_CONTROL, GLFW_KEY_RIGHT_CONTROL -> GLFW_MOD_CONTROL
+    GLFW_KEY_LEFT_ALT, GLFW_KEY_RIGHT_ALT -> GLFW_MOD_ALT
+    GLFW_KEY_LEFT_SUPER, GLFW_KEY_RIGHT_SUPER -> GLFW_MOD_SUPER
+    else -> null
+  }
+
+private fun Int.glfwLockModifierMask(): Int? =
+  when (this) {
+    GLFW_KEY_CAPS_LOCK -> GLFW_MOD_CAPS_LOCK
+    GLFW_KEY_NUM_LOCK -> GLFW_MOD_NUM_LOCK
+    else -> null
+  }
+
+private fun Int.withModifier(mask: Int, enabled: Boolean): Int =
+  if (enabled) {
+    this or mask
+  } else {
+    this and mask.inv()
+  }
+
+private infix fun Int.has(mask: Int): Boolean = (this and mask) != 0

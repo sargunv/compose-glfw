@@ -42,10 +42,36 @@ kotlin {
   }
 }
 
-tasks.register<JavaExec>("run") {
-  group = "application"
-  description = "Runs the local GLFW Compose demo."
-  mainClass = "dev.sargunv.composeglfw.demo.MainKt"
-  classpath = files(tasks.named("jvmJar")) + configurations.named("jvmRuntimeClasspath").get()
-  jvmArgs("--enable-native-access=ALL-UNNAMED")
+fun registerDemoRunTask(
+  name: String,
+  description: String,
+  platform: String? = null,
+) {
+  tasks.register<JavaExec>(name) {
+    group = "application"
+    this.description = description
+    mainClass = "dev.sargunv.composeglfw.demo.MainKt"
+    classpath = files(tasks.named("jvmJar")) + configurations.named("jvmRuntimeClasspath").get()
+    jvmArgs("--enable-native-access=ALL-UNNAMED")
+    if (platform != null) {
+      systemProperty("compose.glfw.platform", platform)
+    }
+  }
 }
+
+registerDemoRunTask(
+  name = "run",
+  description = "Runs the local GLFW Compose demo.",
+)
+
+registerDemoRunTask(
+  name = "runWayland",
+  description = "Runs the local GLFW Compose demo on Wayland.",
+  platform = "wayland",
+)
+
+registerDemoRunTask(
+  name = "runX11",
+  description = "Runs the local GLFW Compose demo on X11.",
+  platform = "x11",
+)

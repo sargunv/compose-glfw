@@ -5,6 +5,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import dev.sargunv.composeglfw.GlfwWindowOptions
 import dev.sargunv.composeglfw.GlfwWindowSize
+import dev.sargunv.composeglfw.internal.platform.glfwDisplayName
 import dev.sargunv.composeglfw.internal.platform.glfwPlatform
 import org.lwjgl.glfw.GLFW.GLFW_CLIENT_API
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_CREATION_API
@@ -20,6 +21,7 @@ import org.lwjgl.glfw.GLFW.GLFW_LOCK_KEY_MODS
 import org.lwjgl.glfw.GLFW.GLFW_OPENGL_API
 import org.lwjgl.glfw.GLFW.GLFW_POINTING_HAND_CURSOR
 import org.lwjgl.glfw.GLFW.GLFW_RESIZABLE
+import org.lwjgl.glfw.GLFW.GLFW_SCALE_TO_MONITOR
 import org.lwjgl.glfw.GLFW.GLFW_TRUE
 import org.lwjgl.glfw.GLFW.GLFW_TRANSPARENT_FRAMEBUFFER
 import org.lwjgl.glfw.GLFW.glfwCreateStandardCursor
@@ -33,6 +35,7 @@ import org.lwjgl.glfw.GLFW.glfwGetFramebufferSize
 import org.lwjgl.glfw.GLFW.glfwGetVersionString
 import org.lwjgl.glfw.GLFW.glfwGetWindowContentScale
 import org.lwjgl.glfw.GLFW.glfwGetWindowAttrib
+import org.lwjgl.glfw.GLFW.glfwGetWindowPos
 import org.lwjgl.glfw.GLFW.glfwGetWindowSize
 import org.lwjgl.glfw.GLFW.glfwMakeContextCurrent
 import org.lwjgl.glfw.GLFW.glfwSetCursor
@@ -63,11 +66,13 @@ internal class GlfwPlatformWindow(
   var windowSize: IntSize = IntSize(size.width, size.height)
     private set
 
-  // GLFW window position in screen coordinates. Wayland does not expose this, so it remains zero there.
+  // GLFW window position in screen coordinates. Platforms that do not expose it keep this at zero.
   var windowPosition: IntOffset = IntOffset.Zero
     private set
 
   val supportsWindowPosition: Boolean = platform.supportsWindowPosition
+
+  val reportsPreEventKeyModifiers: Boolean = platform.reportsPreEventKeyModifiers
 
   // GLFW content scale, used as the Compose density for px-to-dp conversion.
   var contentScale: Float = 1f
@@ -90,6 +95,9 @@ internal class GlfwPlatformWindow(
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
     glfwWindowHint(GLFW_RESIZABLE, if (options.resizable) GLFW_TRUE else GLFW_FALSE)
+    // On X11, screen coordinates and pixels are 1:1, so GLFW needs this to create windows at
+    // the requested logical size on scaled desktops. Wayland uses framebuffer scaling instead.
+    glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE)
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, if (options.transparentFramebuffer) GLFW_TRUE else GLFW_FALSE)
 
     handle = glfwCreateWindow(size.width, size.height, title, NULL, NULL)
@@ -105,7 +113,7 @@ internal class GlfwPlatformWindow(
 
     println("GLFW ${glfwGetVersionString()}")
     println("GLFW platform: $platform")
-    println("Wayland display: ${System.getenv("WAYLAND_DISPLAY") ?: "<unset>"}")
+    println("GLFW display: ${platform.glfwDisplayName() ?: "<unset>"}")
   }
 
   fun makeCurrent() {
@@ -148,7 +156,12 @@ internal class GlfwPlatformWindow(
       return
     }
 
-    // No currently supported platform exposes this. Add the glfwGetWindowPos call when one does.
+    MemoryStack.stackPush().use { stack ->
+      val x = stack.mallocInt(1)
+      val y = stack.mallocInt(1)
+      glfwGetWindowPos(handle, x, y)
+      windowPosition = IntOffset(x[0], y[0])
+    }
   }
 
   fun readFramebufferSize() {

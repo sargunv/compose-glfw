@@ -170,7 +170,12 @@ private class GlfwComposeWindowInfo : WindowInfo {
 
 private fun GlfwPlatformWindow.screenOrigin(): Offset =
   if (supportsWindowPosition) {
-    error("Window position support must define screen conversion in framebuffer-pixel coordinates.")
+    // GLFW exposes window position in screen coordinates, while this host sizes ComposeScene in
+    // framebuffer pixels. Convert the origin with the same ratio used for pointer coordinates.
+    Offset(
+      x = windowPosition.x * framebufferSize.width.toFloat() / windowSize.width,
+      y = windowPosition.y * framebufferSize.height.toFloat() / windowSize.height,
+    )
   } else {
     // Wayland deliberately does not expose global window coordinates through GLFW.
     Offset.Zero

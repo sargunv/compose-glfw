@@ -26,6 +26,7 @@ What works today:
   - `compose-glfw-opengl-linux-arm64`
 - [x] GLFW window creation
 - [x] Wayland-preferred GLFW platform selection
+- [x] X11 GLFW platform selection
 - [x] EGL/OpenGL context creation
 - [x] Skia `DirectContext` creation through the GLFW GL proc loader
 - [x] `CanvasLayersComposeScene` rendering into the GLFW backbuffer
@@ -63,7 +64,6 @@ Application composition and window model:
 
 Straightforward GLFW wiring:
 
-- [ ] X11 platform support
 - [ ] Custom cursor images
 - [ ] Drag and drop, including GLFW file drop callbacks
 - [ ] Runtime window attribute updates: title, resizable, enabled/focusable where GLFW supports them
@@ -79,7 +79,6 @@ Compose platform services:
 
 - [ ] Platform lifecycle/ViewModel owners
 - [ ] Test root and semantics owner listeners
-- [ ] Full key-event modifier payload for AltGraph and lock states
 
 Packaging and platform expansion:
 
@@ -96,9 +95,15 @@ This runs the current visual demo app for manual verification:
 ```sh
 mise run build
 mise run run
+mise run run-wayland
+mise run run-x11
 ```
 
-`Failed to load plugin 'libdecor-gtk.so': failed to init` can appear on startup; GLFW still creates and runs the Wayland window.
+`mise run run` uses the host default, preferring Wayland when `WAYLAND_DISPLAY` is set. Use
+`mise run run-wayland` or `mise run run-x11` to force a platform. Applications can use the same
+selector with `-Dcompose.glfw.platform=wayland|x11`.
+
+`Failed to load plugin 'libdecor-gtk.so': failed to init` can appear on Wayland startup; GLFW still creates and runs the window.
 
 ## Module Shape
 

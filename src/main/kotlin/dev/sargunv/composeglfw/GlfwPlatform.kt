@@ -1,22 +1,33 @@
 package dev.sargunv.composeglfw
 
+import org.lwjgl.glfw.GLFW.GLFW_PLATFORM_X11
 import org.lwjgl.glfw.GLFW.GLFW_PLATFORM_WAYLAND
 
 public enum class GlfwPlatform(
   internal val supportsWindowPosition: Boolean,
+  internal val reportsPreEventKeyModifiers: Boolean,
 ) {
-  WAYLAND(supportsWindowPosition = false);
+  WAYLAND(
+    supportsWindowPosition = false,
+    reportsPreEventKeyModifiers = false,
+  ),
+  X11(
+    supportsWindowPosition = true,
+    reportsPreEventKeyModifiers = true,
+  );
 
   public override fun toString(): String =
     when (this) {
       WAYLAND -> "Wayland"
+      X11 -> "X11"
     }
 
   internal companion object {
     internal fun fromGlfwPlatform(platform: Int): GlfwPlatform =
       when (platform) {
         GLFW_PLATFORM_WAYLAND -> WAYLAND
-        else -> error("Only GLFW Wayland is supported; GLFW selected platform id $platform")
+        GLFW_PLATFORM_X11 -> X11
+        else -> error("Unsupported GLFW platform id $platform")
       }
   }
 }

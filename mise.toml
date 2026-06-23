@@ -6,3 +6,9 @@ run = "./gradlew build"
 
 [tasks.run]
 run = "./gradlew :compose-glfw-demo:run"
+
+[tasks.run-wayland]
+run = "./gradlew :compose-glfw-demo:runWayland"
+
+[tasks.run-x11]
+run = "./gradlew :compose-glfw-demo:runX11"

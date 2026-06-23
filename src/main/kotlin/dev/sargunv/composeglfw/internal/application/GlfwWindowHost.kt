@@ -5,6 +5,7 @@ import dev.sargunv.composeglfw.GlfwWindowInfo
 import dev.sargunv.composeglfw.GlfwWindowSpec
 import dev.sargunv.composeglfw.internal.input.GlfwInputDispatcher
 import dev.sargunv.composeglfw.internal.platform.GlfwPlatformContext
+import dev.sargunv.composeglfw.internal.platform.glfwDisplayName
 import dev.sargunv.composeglfw.internal.platform.systemtheme.SystemThemeProvider
 import dev.sargunv.composeglfw.internal.platform.glfwPlatform
 import dev.sargunv.composeglfw.internal.render.opengl.OpenGlRenderBackend
@@ -113,10 +114,11 @@ internal class GlfwWindowHost(
     scope.updateInfo(currentInfo())
   }
 
-  private fun currentInfo(): GlfwWindowInfo =
-    GlfwWindowInfo(
-      platform = glfwPlatform(),
-      displayName = System.getenv("WAYLAND_DISPLAY"),
+  private fun currentInfo(): GlfwWindowInfo {
+    val platform = glfwPlatform()
+    return GlfwWindowInfo(
+      platform = platform,
+      displayName = platform.glfwDisplayName(),
       renderBackend = GlfwRenderBackend.OPENGL,
       // Framebuffer dimensions are physical drawable pixels.
       framebufferWidth = window.framebufferSize.width,
@@ -126,4 +128,5 @@ internal class GlfwWindowHost(
       windowHeight = window.windowSize.height,
       contentScale = window.contentScale,
     )
+  }
 }
