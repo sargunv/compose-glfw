@@ -28,6 +28,9 @@ What works today:
 - [x] Resize handling
 - [x] Content scale/density handling
 - [x] Compose `WindowInfo` focus, size, and keyboard modifier state
+- [x] Compose local/window coordinate conversion for framebuffer-scaled windows
+- [x] Basic popup/dropdown positioning through `PlatformContext`
+- [x] Window focus requests from Compose
 - [x] Mouse move, press, and release
 - [x] Scroll wheel and trackpad events
 - [x] Basic keyboard key down, key up, and repeat routing
@@ -44,15 +47,20 @@ Known gaps:
 - [ ] Multi-window lifecycle beyond the current static startup window list
 - [ ] Full key-event modifier payload for AltGraph and lock states
 - [ ] IME/preedit integration: composition text, candidate positioning, and commit/cancel lifecycle
-- [ ] Resize and custom cursor shapes
-- [ ] Pointer enter/leave events at the window boundary
+- [ ] Custom cursor images
 - [ ] Clipboard
+- [ ] Text selection toolbar
+- [ ] Drag and drop, including GLFW file drop callbacks
+- [ ] Transparent framebuffer/window option
+- [ ] Platform lifecycle/ViewModel owners
+- [ ] Test root and semantics owner listeners
+- [ ] Screen reader and accessibility integration
+- [ ] Window insets
+- [ ] Keep-screen-on and frame-rate voting
 - [ ] Window state APIs: position, minimize, maximize, fullscreen, close requests
 - [ ] Window decorations and styling controls
-- [ ] Popups, tooltips, and layered windows
-- [ ] Drag and drop
+- [ ] Tooltips and layered windows
 - [ ] Menus, tray, dialogs, and file pickers
-- [ ] Accessibility
 - [ ] Packaging/publishing metadata and documented consumer setup
 - [ ] macOS backend/runtime modules
 - [ ] Windows backend/runtime modules
