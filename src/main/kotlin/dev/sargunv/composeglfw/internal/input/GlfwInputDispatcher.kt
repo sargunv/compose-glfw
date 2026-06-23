@@ -10,6 +10,7 @@ import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_1
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 import org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback
+import org.lwjgl.glfw.GLFW.glfwSetKeyCallback
 import org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback
 import org.lwjgl.glfw.GLFW.glfwSetScrollCallback
 
@@ -42,12 +43,20 @@ internal class GlfwInputDispatcher(
         scrollDelta = Offset(x.toFloat(), -y.toFloat()) * GlfwScrollAmount,
       )
     }
+    glfwSetKeyCallback(window.handle) { _, key, scancode, action, mods ->
+      val event = glfwKeyEvent(key, scancode, action, mods)
+      if (event != null) {
+        scene.sendKeyEvent(event)
+        requestRender()
+      }
+    }
   }
 
   override fun close() {
     glfwSetCursorPosCallback(window.handle, null)?.free()
     glfwSetMouseButtonCallback(window.handle, null)?.free()
     glfwSetScrollCallback(window.handle, null)?.free()
+    glfwSetKeyCallback(window.handle, null)?.free()
   }
 
   private fun updateMousePosition(x: Double, y: Double) {

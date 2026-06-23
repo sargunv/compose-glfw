@@ -28,6 +28,7 @@ What works today:
 - [x] Content scale/density handling
 - [x] Mouse move, press, and release
 - [x] Scroll wheel and trackpad events
+- [x] Basic keyboard key down, key up, and repeat routing
 - [x] Public `glfwApplication { Window { ... } }` API
 - [x] Per-window GPU interop hook for the current OpenGL context
 
@@ -35,8 +36,9 @@ Known gaps:
 
 - [ ] Production-ready application lifecycle semantics
 - [ ] Multi-window lifecycle beyond the current static startup window list
-- [ ] Keyboard events and key mapping
-- [ ] Text input and IME
+- [ ] Complete keyboard mapping: all keys, locations, modifiers, lock states, and repeat semantics
+- [ ] Basic committed text input from keyboard layouts
+- [ ] IME/preedit integration: composition text, candidate positioning, and commit/cancel lifecycle
 - [ ] Platform cursor shape updates: pointer, text, resize, and custom cursors
 - [ ] Pointer enter/leave events at the window boundary
 - [ ] Clipboard

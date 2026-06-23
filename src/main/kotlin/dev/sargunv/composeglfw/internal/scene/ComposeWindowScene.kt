@@ -49,6 +49,8 @@ internal class ComposeWindowScene(
     }
   }
 
+  fun sendKeyEvent(event: androidx.compose.ui.input.key.KeyEvent): Boolean = scene.sendKeyEvent(event)
+
   fun sendPointerEvent(
     event: androidx.compose.ui.input.pointer.PointerEventType,
     position: androidx.compose.ui.geometry.Offset,
