@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalComposeUiApi::class)
-
 package dev.sargunv.composeglfw.demo
 
 import androidx.compose.foundation.background
@@ -18,16 +16,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draganddrop.DragAndDropEvent
-import androidx.compose.ui.draganddrop.DragAndDropTarget
-import androidx.compose.ui.draganddrop.DragAndDropTargetModifierNode
-import androidx.compose.ui.node.ModifierNodeElement
-import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.dp
-import dev.sargunv.composeglfw.DroppedFiles
-import dev.sargunv.composeglfw.droppedFilesOrNull
+import dev.sargunv.composeglfw.fileDropTarget
 import java.nio.file.Path
 
 @Composable
@@ -77,49 +68,5 @@ internal fun FileDropCard(modifier: Modifier = Modifier) {
         }
       }
     }
-  }
-}
-
-@Composable
-private fun Modifier.fileDropTarget(
-  onEntered: () -> Unit,
-  onEnded: () -> Unit,
-  onDrop: (DroppedFiles) -> Unit,
-): Modifier {
-  val target =
-    remember {
-      object : DragAndDropTarget {
-        override fun onEntered(event: DragAndDropEvent) {
-          onEntered()
-        }
-
-        override fun onEnded(event: DragAndDropEvent) {
-          onEnded()
-        }
-
-        override fun onDrop(event: DragAndDropEvent): Boolean {
-          val droppedFiles = event.droppedFilesOrNull() ?: return false
-          onDrop(droppedFiles)
-          return true
-        }
-      }
-    }
-  return this then FileDropTargetElement(
-    shouldStart = { event -> event.droppedFilesOrNull() != null },
-    target = target,
-  )
-}
-
-private data class FileDropTargetElement(
-  val shouldStart: (DragAndDropEvent) -> Boolean,
-  val target: DragAndDropTarget,
-) : ModifierNodeElement<Modifier.Node>() {
-  override fun create(): Modifier.Node =
-    DragAndDropTargetModifierNode(shouldStart, target) as Modifier.Node
-
-  override fun update(node: Modifier.Node) = Unit
-
-  override fun InspectorInfo.inspectableProperties() {
-    name = "fileDropTarget"
   }
 }
