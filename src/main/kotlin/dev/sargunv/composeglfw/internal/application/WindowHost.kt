@@ -2,6 +2,7 @@ package dev.sargunv.composeglfw.internal.application
 
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.sargunv.composeglfw.HostWindowInfo
@@ -29,107 +30,81 @@ import org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowIconifyCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowMaximizeCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowPosCallback
+import org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback
 
 internal class WindowHost(
   request: WindowRequest,
   private val uiDispatcher: UiDispatcher,
 ) : AutoCloseable {
-  private val window =
-    PlatformWindow(
+  private val onCloseRequest = request.onCloseRequest
+  private var state = request.state
+  private var lastTextToolbar: TextToolbarContent = request.options.textToolbar
+  private var config =
+    WindowPeerConfig(
       title = request.title,
       size = request.state.size,
       visible = request.visible,
       undecorated = request.undecorated,
       transparent = request.transparent,
       resizable = request.resizable,
+      enabled = request.enabled,
       focusOnShow = request.focusOnShow,
       alwaysOnTop = request.alwaysOnTop,
     )
-  private val renderBackend = OpenGlRenderBackend(window)
-  private val platformContext = HostPlatformContext(window, request.options.textToolbar)
-  private val scope = WindowScopeImpl(currentInfo(), renderBackend.interop)
-  private var state = request.state
-  private var lastTextToolbar: TextToolbarContent = request.options.textToolbar
-  private var lastTitle = request.title
-  private var lastVisible = request.visible
-  private var lastUndecorated = request.undecorated
-  private var lastTransparent = request.transparent
-  private var lastResizable = request.resizable
-  private var lastEnabled = request.enabled
-  private var lastFocusOnShow = request.focusOnShow
-  private var lastAlwaysOnTop = request.alwaysOnTop
   private var onPreviewKeyEvent = request.onPreviewKeyEvent
   private var onKeyEvent = request.onKeyEvent
   private var lastAppliedStateSize = request.state.size
+  private var pendingStateSize: DpSize? = request.state.size
+  private var isApplyingStateSize = false
   private var lastAppliedPosition = request.state.position
   private var lastAppliedPlacement = request.state.placement
   private var lastAppliedMinimized = request.state.isMinimized
   private var windowedBoundsBeforeFullscreen: PlatformWindowBounds? = null
   private var renderRequested = true
-  private val systemThemeProvider =
-    SystemThemeProvider.create { theme ->
-        uiDispatcher.dispatch(
-          EmptyCoroutineContext,
-          {
-            platformContext.updateSystemTheme(theme)
-            requestRender()
-          },
-        )
-      }
-      .also { platformContext.updateSystemTheme(it.systemTheme) }
-  private val scene =
-    ComposeWindowScene(
-      initialDensity = window.contentScale,
-      // Compose layout/rendering uses framebuffer pixels to match the OpenGL/Skia target.
-      initialSize = window.framebufferSize,
-      platformContext = platformContext,
-      coroutineContext = uiDispatcher,
-      scope = scope,
-      content = request.content,
-      invalidate = ::requestRender,
-      checkThread = { operation -> uiDispatcher.checkOwnerThread(operation) },
-    )
-  private val input =
-    InputDispatcher(
-        window = window,
-        scene = scene,
-        textInput = platformContext.textInput,
-        onKeyboardModifiers = platformContext::updateKeyboardModifiers,
-        onPreviewKeyEvent = { onPreviewKeyEvent(it) },
-        onKeyEvent = { onKeyEvent(it) },
-        requestRender = ::requestRender,
-      )
-      .also { it.enabled = request.enabled }
-  private var lastFramebufferSize = window.framebufferSize
-  private var lastContentScale = window.contentScale
+
+  private val platformContext: HostPlatformContext
+  private val scope: WindowScopeImpl
+  private val systemThemeProvider: SystemThemeProvider
+  private val scene: ComposeWindowScene
+  private var peer: WindowPeer
+  private var lastFramebufferSize: IntSize
+  private var lastContentScale: Float
+
+  private val window: PlatformWindow
+    get() = peer.window
 
   init {
+    val initialWindow = createPlatformWindow(config)
+    val initialRenderBackend = OpenGlRenderBackend(initialWindow)
+    platformContext = HostPlatformContext(initialWindow, request.options.textToolbar)
+    scope = WindowScopeImpl(currentInfo(initialWindow), initialRenderBackend.interop)
+    systemThemeProvider =
+      SystemThemeProvider.create { theme ->
+          uiDispatcher.dispatch(
+            EmptyCoroutineContext,
+            {
+              platformContext.systemTheme = theme
+              requestRender()
+            },
+          )
+        }
+        .also { platformContext.systemTheme = it.systemTheme }
+    scene =
+      ComposeWindowScene(
+        initialDensity = initialWindow.contentScale,
+        // Compose layout/rendering uses framebuffer pixels to match the OpenGL/Skia target.
+        initialSize = initialWindow.framebufferSize,
+        platformContext = platformContext,
+        coroutineContext = uiDispatcher,
+        scope = scope,
+        content = request.content,
+        invalidate = ::requestRender,
+        checkThread = { operation -> uiDispatcher.checkOwnerThread(operation) },
+      )
+    peer = attachPeer(initialWindow, initialRenderBackend, config.enabled)
+    lastFramebufferSize = initialWindow.framebufferSize
+    lastContentScale = initialWindow.contentScale
     platformContext.updateWindowInfo()
-    glfwSetFramebufferSizeCallback(window.handle) { _, _, _ ->
-      window.refreshSizes()
-      updateSceneMetrics()
-      requestRender()
-    }
-    glfwSetWindowFocusCallback(window.handle) { _, focused ->
-      platformContext.updateFocus(focused)
-      requestRender()
-    }
-    glfwSetWindowCloseCallback(window.handle) { _ ->
-      window.cancelCloseRequest()
-      request.onCloseRequest()
-    }
-    glfwSetWindowPosCallback(window.handle) { _, _, _ ->
-      window.refreshSizes()
-      updateStateFromWindow()
-    }
-    glfwSetWindowIconifyCallback(window.handle) { _, iconified ->
-      window.refreshSizes()
-      updateStateFromWindow()
-    }
-    glfwSetWindowMaximizeCallback(window.handle) { _, maximized ->
-      window.refreshSizes()
-      updateStateFromWindow()
-    }
   }
 
   fun update(
@@ -145,44 +120,56 @@ internal class WindowHost(
     options: WindowOptions,
   ) {
     this.state = state
-    if (title != lastTitle) {
-      window.setTitle(title)
-      lastTitle = title
-    }
-    if (visible != lastVisible) {
-      window.setVisible(visible)
-      lastVisible = visible
-      requestRender()
-    }
-    if (undecorated != lastUndecorated) {
-      window.setDecorated(!undecorated)
-      lastUndecorated = undecorated
-    }
-    if (transparent != lastTransparent) {
-      // GLFW_TRANSPARENT_FRAMEBUFFER is read only by glfwCreateWindow. Runtime changes are tracked
-      // here so this update path settles, but they do not affect the existing native window.
-      lastTransparent = transparent
-    }
-    if (resizable != lastResizable) {
-      window.setResizable(resizable)
-      lastResizable = resizable
-    }
-    if (enabled != lastEnabled) {
-      input.enabled = enabled
-      lastEnabled = enabled
-    }
-    if (focusOnShow != lastFocusOnShow) {
-      window.setFocusOnShow(focusOnShow)
-      lastFocusOnShow = focusOnShow
-    }
-    if (alwaysOnTop != lastAlwaysOnTop) {
-      window.setAlwaysOnTop(alwaysOnTop)
-      lastAlwaysOnTop = alwaysOnTop
-    }
     if (options.textToolbar !== lastTextToolbar) {
       platformContext.updateTextToolbarContent(options.textToolbar)
       lastTextToolbar = options.textToolbar
     }
+
+    val nextConfig =
+      WindowPeerConfig(
+        title = title,
+        size = state.size,
+        visible = visible,
+        undecorated = undecorated,
+        transparent = transparent,
+        resizable = resizable,
+        enabled = enabled,
+        focusOnShow = focusOnShow,
+        alwaysOnTop = alwaysOnTop,
+      )
+
+    if (nextConfig.transparent != config.transparent) {
+      // GLFW reads transparency only when creating the window, so changing it needs a new native
+      // window.
+      config = nextConfig
+      recreatePeer(config)
+      applyStateToWindow(forceSize = true)
+      return
+    }
+
+    if (nextConfig.title != config.title) {
+      window.setTitle(nextConfig.title)
+    }
+    if (nextConfig.visible != config.visible) {
+      window.setVisible(nextConfig.visible)
+      requestRender()
+    }
+    if (nextConfig.undecorated != config.undecorated) {
+      window.setDecorated(!nextConfig.undecorated)
+    }
+    if (nextConfig.resizable != config.resizable) {
+      window.setResizable(nextConfig.resizable)
+    }
+    if (nextConfig.enabled != config.enabled) {
+      peer.input.enabled = nextConfig.enabled
+    }
+    if (nextConfig.focusOnShow != config.focusOnShow) {
+      window.setFocusOnShow(nextConfig.focusOnShow)
+    }
+    if (nextConfig.alwaysOnTop != config.alwaysOnTop) {
+      window.setAlwaysOnTop(nextConfig.alwaysOnTop)
+    }
+    config = nextConfig
     applyStateToWindow()
   }
 
@@ -191,7 +178,7 @@ internal class WindowHost(
     window.refreshSizes()
     updateSceneMetrics()
     updateStateFromWindow()
-    if (!lastVisible) {
+    if (!config.visible) {
       return
     }
     if (window.framebufferSize.width <= 0 || window.framebufferSize.height <= 0) {
@@ -201,31 +188,123 @@ internal class WindowHost(
       return
     }
     renderRequested = false
-    renderBackend.render(scene, System.nanoTime())
+    peer.renderBackend.render(scene, System.nanoTime())
   }
 
   override fun close() {
+    // GLFW can deliver callbacks while a window is being destroyed.
+    peer.detachInput()
+    systemThemeProvider.close()
+    platformContext.destroyLifecycle()
+    scene.close()
+    peer.closeNative()
+  }
+
+  private fun recreatePeer(config: WindowPeerConfig) {
+    // Only the native pieces are replaced. The Compose scene survives, so UI state survives too.
+    peer.close()
+    val newWindow = createPlatformWindow(config)
+    val newRenderBackend = OpenGlRenderBackend(newWindow)
+    platformContext.updateWindow(newWindow)
+    scope.gpu = newRenderBackend.interop
+    peer = attachPeer(newWindow, newRenderBackend, config.enabled)
+    lastFramebufferSize = newWindow.framebufferSize
+    lastContentScale = newWindow.contentScale
+    resetAppliedStateForNewPeer()
+    scene.resize(newWindow.framebufferSize)
+    scene.updateDensity(newWindow.contentScale)
+    updateSceneMetrics()
+    scope.windowInfo = currentInfo()
+    requestRender()
+  }
+
+  private fun createPlatformWindow(config: WindowPeerConfig): PlatformWindow =
+    PlatformWindow(
+      title = config.title,
+      size = config.size,
+      visible = config.visible,
+      undecorated = config.undecorated,
+      transparent = config.transparent,
+      resizable = config.resizable,
+      focusOnShow = config.focusOnShow,
+      alwaysOnTop = config.alwaysOnTop,
+    )
+
+  private fun attachPeer(
+    window: PlatformWindow,
+    renderBackend: OpenGlRenderBackend,
+    enabled: Boolean,
+  ): WindowPeer {
+    val input =
+      InputDispatcher(
+          window = window,
+          scene = scene,
+          textInput = platformContext.textInput,
+          onKeyboardModifiers = platformContext::updateKeyboardModifiers,
+          onPreviewKeyEvent = { onPreviewKeyEvent(it) },
+          onKeyEvent = { onKeyEvent(it) },
+          requestRender = ::requestRender,
+        )
+        .also { it.enabled = enabled }
+    installWindowCallbacks(window)
+    return WindowPeer(window, renderBackend, input)
+  }
+
+  private fun installWindowCallbacks(window: PlatformWindow) {
+    glfwSetFramebufferSizeCallback(window.handle) { _, _, _ ->
+      window.refreshSizes()
+      updateSceneMetrics()
+      if (!isApplyingStateSize) {
+        settlePendingStateSize()
+      }
+      requestRender()
+    }
+    glfwSetWindowSizeCallback(window.handle) { _, _, _ ->
+      window.refreshSizes()
+      updateSceneMetrics()
+      if (!isApplyingStateSize && !settlePendingStateSize()) {
+        updateStateSizeFromWindow()
+      }
+      requestRender()
+    }
+    glfwSetWindowFocusCallback(window.handle) { _, focused ->
+      platformContext.updateFocus(focused)
+      requestRender()
+    }
+    glfwSetWindowCloseCallback(window.handle) { _ ->
+      window.cancelCloseRequest()
+      onCloseRequest()
+    }
+    glfwSetWindowPosCallback(window.handle) { _, _, _ ->
+      window.refreshSizes()
+      updateStateFromWindow()
+    }
+    glfwSetWindowIconifyCallback(window.handle) { _, _ ->
+      window.refreshSizes()
+      updateStateFromWindow()
+    }
+    glfwSetWindowMaximizeCallback(window.handle) { _, _ ->
+      window.refreshSizes()
+      updateStateFromWindow()
+    }
+  }
+
+  private fun clearWindowCallbacks(window: PlatformWindow) {
     glfwSetFramebufferSizeCallback(window.handle, null)?.free()
+    glfwSetWindowSizeCallback(window.handle, null)?.free()
     glfwSetWindowFocusCallback(window.handle, null)?.free()
     glfwSetWindowCloseCallback(window.handle, null)?.free()
     glfwSetWindowPosCallback(window.handle, null)?.free()
     glfwSetWindowIconifyCallback(window.handle, null)?.free()
     glfwSetWindowMaximizeCallback(window.handle, null)?.free()
-    systemThemeProvider.close()
-    input.close()
-    platformContext.destroyLifecycle()
-    scene.close()
-    renderBackend.close()
-    window.close()
   }
 
-  private fun applyStateToWindow() {
+  private fun applyStateToWindow(forceSize: Boolean = false) {
     val requestedSize = state.size
-    if (requestedSize != lastAppliedStateSize) {
+    if (forceSize || requestedSize != lastAppliedStateSize) {
       // TODO: Support Compose Desktop-style DpSize.Unspecified by measuring content before
       // choosing the native window size.
-      window.setSize(requestedSize)
-      lastAppliedStateSize = requestedSize
+      applyNativeStateSize(requestedSize)
       requestRender()
     }
 
@@ -303,6 +382,14 @@ internal class WindowHost(
     requestRender()
   }
 
+  private fun resetAppliedStateForNewPeer() {
+    lastAppliedStateSize = state.size
+    pendingStateSize = state.size
+    lastAppliedPosition = WindowPosition.PlatformDefault
+    lastAppliedPlacement = WindowPlacement.Floating
+    lastAppliedMinimized = false
+  }
+
   private fun requestRender() {
     renderRequested = true
   }
@@ -311,7 +398,7 @@ internal class WindowHost(
     val framebuffer = window.framebufferSize
     if (framebuffer != lastFramebufferSize) {
       lastFramebufferSize = framebuffer
-      renderBackend.resize(framebuffer)
+      peer.renderBackend.resize(framebuffer)
       scene.resize(framebuffer)
       requestRender()
     }
@@ -321,20 +408,10 @@ internal class WindowHost(
       requestRender()
     }
     platformContext.updateWindowInfo()
-    scope.updateInfo(currentInfo())
+    scope.windowInfo = currentInfo()
   }
 
   private fun updateStateFromWindow() {
-    val size = DpSize(window.logicalWindowSize.width.dp, window.logicalWindowSize.height.dp)
-    if (
-      window.logicalWindowSize.width > 0 &&
-        window.logicalWindowSize.height > 0 &&
-        size != state.size
-    ) {
-      lastAppliedStateSize = size
-      state.size = size
-    }
-
     if (window.supportsWindowPosition && !window.isFullscreen) {
       val position = window.windowPosition.toWindowPosition()
       if (position != state.position) {
@@ -360,7 +437,52 @@ internal class WindowHost(
     }
   }
 
-  private fun currentInfo(): HostWindowInfo {
+  private fun updateStateSizeFromWindow() {
+    val size = currentWindowStateSize() ?: return
+    if (size != state.size) {
+      lastAppliedStateSize = size
+      state.size = size
+      config = config.copy(size = size)
+    }
+  }
+
+  private fun settlePendingStateSize(): Boolean {
+    // Wayland can report a compositor-adjusted size after the first buffer swap. Until GLFW reports
+    // the app-requested size, keep that size authoritative instead of feeding the adjustment back
+    // into WindowState.
+    val pendingSize = pendingStateSize
+    if (pendingSize != null) {
+      if (currentWindowStateSize() == pendingSize) {
+        pendingStateSize = null
+      } else {
+        applyNativeStateSize(pendingSize)
+      }
+      return true
+    }
+    return false
+  }
+
+  private fun applyNativeStateSize(size: DpSize) {
+    // Mark the synchronous GLFW resize as app-driven so callbacks fired inside glfwSetWindowSize do
+    // not get mistaken for user/native resize.
+    isApplyingStateSize = true
+    try {
+      window.setSize(size)
+      lastAppliedStateSize = size
+      pendingStateSize = size
+    } finally {
+      isApplyingStateSize = false
+    }
+  }
+
+  private fun currentWindowStateSize(): DpSize? =
+    if (window.logicalWindowSize.width > 0 && window.logicalWindowSize.height > 0) {
+      DpSize(window.logicalWindowSize.width.dp, window.logicalWindowSize.height.dp)
+    } else {
+      null
+    }
+
+  private fun currentInfo(window: PlatformWindow = this.window): HostWindowInfo {
     val displayServer = currentDisplayServer()
     return HostWindowInfo(
       displayServer = displayServer,
@@ -391,7 +513,49 @@ internal class WindowHost(
   }
 
   private fun IntOffset.toWindowPosition(): WindowPosition = WindowPosition(x.dp, y.dp)
+
+  private inner class WindowPeer(
+    val window: PlatformWindow,
+    val renderBackend: OpenGlRenderBackend,
+    val input: InputDispatcher,
+  ) : AutoCloseable {
+    private var inputDetached = false
+    private var nativeClosed = false
+
+    fun detachInput() {
+      if (!inputDetached) {
+        clearWindowCallbacks(window)
+        input.close()
+        inputDetached = true
+      }
+    }
+
+    fun closeNative() {
+      if (!nativeClosed) {
+        renderBackend.close()
+        window.close()
+        nativeClosed = true
+      }
+    }
+
+    override fun close() {
+      detachInput()
+      closeNative()
+    }
+  }
 }
+
+private data class WindowPeerConfig(
+  val title: String,
+  val size: DpSize,
+  val visible: Boolean,
+  val undecorated: Boolean,
+  val transparent: Boolean,
+  val resizable: Boolean,
+  val enabled: Boolean,
+  val focusOnShow: Boolean,
+  val alwaysOnTop: Boolean,
+)
 
 private operator fun IntOffset.plus(offset: IntOffset): IntOffset =
   IntOffset(x + offset.x, y + offset.y)

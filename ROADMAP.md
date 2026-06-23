@@ -7,7 +7,6 @@ Known gaps:
 Application composition and window model:
 
 - [ ] Compose Desktop-style `DpSize.Unspecified` content-driven window sizing
-- [ ] Runtime transparent-window changes via native window recreation
 - [ ] Event loop waiting: use `glfwWaitEvents`/wakeups instead of polling every
       loop when there is no pending Compose or GLFW work
 - [ ] Window lifecycle state for hidden and minimized windows; focus currently

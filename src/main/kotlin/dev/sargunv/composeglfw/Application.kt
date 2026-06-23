@@ -40,8 +40,7 @@ public interface ApplicationScope {
  * @param visible whether the native window is visible.
  * @param title title shown in the window decoration, when the display server provides one.
  * @param undecorated whether to request a window without native decorations.
- * @param transparent whether the window content framebuffer should include alpha. This is a native
- *   window creation hint and requires recreation to change at runtime.
+ * @param transparent whether the window content framebuffer should include alpha.
  * @param resizable whether the user can resize the window.
  * @param enabled whether the window reacts to input events.
  * @param focusOnShow whether the window should receive focus when shown.

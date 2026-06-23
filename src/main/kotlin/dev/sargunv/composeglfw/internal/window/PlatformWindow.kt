@@ -103,14 +103,18 @@ internal class PlatformWindow(
   var windowSize: IntSize = initialWindowSize
     private set
 
-  // Cross-platform logical content-area size, matching the Compose density applied to the
-  // framebuffer-backed scene.
+  // Cross-platform logical content-area size. Wayland already reports this in window units; X11
+  // needs conversion from physical framebuffer pixels on scaled desktops.
   val logicalWindowSize: IntSize
     get() =
-      IntSize(
-        (framebufferSize.width / contentScale).roundToInt().coerceAtLeast(0),
-        (framebufferSize.height / contentScale).roundToInt().coerceAtLeast(0),
-      )
+      when (displayServer) {
+        DisplayServer.WAYLAND -> windowSize
+        DisplayServer.X11 ->
+          IntSize(
+            (framebufferSize.width / contentScale).roundToInt().coerceAtLeast(0),
+            (framebufferSize.height / contentScale).roundToInt().coerceAtLeast(0),
+          )
+      }
 
   // GLFW window position in screen coordinates. Platforms that do not expose it keep this at zero.
   var windowPosition: IntOffset = IntOffset.Zero

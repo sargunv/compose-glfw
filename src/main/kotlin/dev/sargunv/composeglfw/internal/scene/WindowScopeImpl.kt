@@ -9,12 +9,9 @@ import dev.sargunv.composeglfw.HostWindowScope
 
 internal class WindowScopeImpl(
   initialInfo: HostWindowInfo,
-  override val gpu: GpuInterop,
+  initialGpu: GpuInterop,
 ) : HostWindowScope {
   override var windowInfo: HostWindowInfo by mutableStateOf(initialInfo)
-    private set
 
-  fun updateInfo(info: HostWindowInfo) {
-    windowInfo = info
-  }
+  override var gpu: GpuInterop by mutableStateOf(initialGpu)
 }

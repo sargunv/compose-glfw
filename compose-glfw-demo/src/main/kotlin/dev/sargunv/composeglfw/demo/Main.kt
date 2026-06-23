@@ -1,7 +1,6 @@
 package dev.sargunv.composeglfw.demo
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -81,38 +80,36 @@ internal fun main(): Unit {
     }
 
     if (hudOpen) {
-      key(hudTransparent) {
-        Window(
-          onCloseRequest = { hudOpen = false },
-          title = "Transparent HUD",
-          state = hudWindowState,
-          undecorated = hudUndecorated,
-          transparent = hudTransparent,
-          resizable = hudResizable,
-          alwaysOnTop = hudAlwaysOnTop,
-          focusOnShow = false,
-        ) {
-          TransparentHudWindowContent(
-            windowInfo = windowInfo,
-            windowState = hudWindowState,
-            state =
-              HudWindowControlState(
-                transparent = hudTransparent,
-                undecorated = hudUndecorated,
-                alwaysOnTop = hudAlwaysOnTop,
-                resizable = hudResizable,
-              ),
-            actions =
-              HudWindowControlActions(
-                setTransparent = {
-                  hudTransparent = it
-                },
-                setUndecorated = { hudUndecorated = it },
-                setAlwaysOnTop = { hudAlwaysOnTop = it },
-                setResizable = { hudResizable = it },
-              ),
-          )
-        }
+      Window(
+        onCloseRequest = { hudOpen = false },
+        title = "Transparent HUD",
+        state = hudWindowState,
+        undecorated = hudUndecorated,
+        transparent = hudTransparent,
+        resizable = hudResizable,
+        alwaysOnTop = hudAlwaysOnTop,
+        focusOnShow = false,
+      ) {
+        TransparentHudWindowContent(
+          windowInfo = windowInfo,
+          windowState = hudWindowState,
+          state =
+            HudWindowControlState(
+              transparent = hudTransparent,
+              undecorated = hudUndecorated,
+              alwaysOnTop = hudAlwaysOnTop,
+              resizable = hudResizable,
+            ),
+          actions =
+            HudWindowControlActions(
+              setTransparent = {
+                hudTransparent = it
+              },
+              setUndecorated = { hudUndecorated = it },
+              setAlwaysOnTop = { hudAlwaysOnTop = it },
+              setResizable = { hudResizable = it },
+            ),
+        )
       }
     }
 

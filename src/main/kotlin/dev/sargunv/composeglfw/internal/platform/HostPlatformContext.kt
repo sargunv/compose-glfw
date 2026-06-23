@@ -35,7 +35,7 @@ import dev.sargunv.composeglfw.TextToolbarContent
 import dev.sargunv.composeglfw.internal.window.PlatformWindow
 
 internal class HostPlatformContext(
-  private val window: PlatformWindow,
+  private var window: PlatformWindow,
   textToolbarContent: TextToolbarContent,
 ) : PlatformContext {
   private val fallbackContext = PlatformContext.Empty()
@@ -51,7 +51,6 @@ internal class HostPlatformContext(
     }
   private var lifecycleDestroyed = false
   var systemTheme: SystemTheme by mutableStateOf(SystemTheme.Unknown)
-    private set
 
   override val windowInfo: WindowInfo = mutableWindowInfo
 
@@ -181,12 +180,13 @@ internal class HostPlatformContext(
     updateLifecycle()
   }
 
-  fun updateSystemTheme(theme: SystemTheme) {
-    systemTheme = theme
-  }
-
   fun updateTextToolbarContent(content: TextToolbarContent) {
     textToolbarAdapter.updateContent(content)
+  }
+
+  fun updateWindow(window: PlatformWindow) {
+    this.window = window
+    updateWindowInfo()
   }
 
   fun destroyLifecycle() {
