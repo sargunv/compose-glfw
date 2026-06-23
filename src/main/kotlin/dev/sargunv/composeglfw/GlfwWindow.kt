@@ -1,5 +1,7 @@
 package dev.sargunv.composeglfw
 
+import dev.sargunv.composeglfw.internal.platform.defaultGlfwTextToolbarContent
+
 public data class GlfwWindowSize(public val width: Int, public val height: Int) {
   init {
     require(width > 0) { "Window width must be positive" }
@@ -7,7 +9,10 @@ public data class GlfwWindowSize(public val width: Int, public val height: Int) 
   }
 }
 
-public data class GlfwWindowOptions(public val resizable: Boolean = true)
+public data class GlfwWindowOptions(
+  public val resizable: Boolean = true,
+  public val textToolbar: GlfwTextToolbarContent = defaultGlfwTextToolbarContent,
+)
 
 public interface GlfwWindowScope {
   public val windowInfo: GlfwWindowInfo

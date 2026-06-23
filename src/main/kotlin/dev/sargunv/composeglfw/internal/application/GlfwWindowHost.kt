@@ -19,7 +19,7 @@ internal class GlfwWindowHost(
 ) : AutoCloseable {
   private val window = GlfwPlatformWindow(spec.title, spec.size, spec.options)
   private val renderBackend = OpenGlRenderBackend(window)
-  private val platformContext = GlfwPlatformContext(window)
+  private val platformContext = GlfwPlatformContext(window, spec.options.textToolbar)
   private val scope = GlfwWindowScopeImpl(currentInfo(), renderBackend.interop)
   private val scene =
     ComposeWindowScene(

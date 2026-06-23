@@ -25,12 +25,16 @@ import androidx.compose.ui.text.input.PlatformTextInputService
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import dev.sargunv.composeglfw.GlfwTextToolbarContent
 import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
 
-internal class GlfwPlatformContext(private val window: GlfwPlatformWindow) : PlatformContext {
+internal class GlfwPlatformContext(
+  private val window: GlfwPlatformWindow,
+  textToolbarContent: GlfwTextToolbarContent,
+) : PlatformContext {
   private val fallbackContext = PlatformContext.Empty()
   val textInput: GlfwTextInputService = GlfwTextInputService()
-  private val glfwTextToolbar = GlfwTextToolbar()
+  private val glfwTextToolbar = GlfwTextToolbar(textToolbarContent)
   private val mutableWindowInfo = GlfwComposeWindowInfo()
   override val windowInfo: WindowInfo = mutableWindowInfo
 
