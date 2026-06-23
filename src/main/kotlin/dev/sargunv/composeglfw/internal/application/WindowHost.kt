@@ -124,9 +124,9 @@ internal class WindowHost(
       // Framebuffer dimensions are physical drawable pixels.
       framebufferWidth = window.framebufferSize.width,
       framebufferHeight = window.framebufferSize.height,
-      // Window dimensions are GLFW screen-coordinate content-area units.
-      windowWidth = window.windowSize.width,
-      windowHeight = window.windowSize.height,
+      // Window dimensions are cross-platform logical content-area units.
+      windowWidth = window.logicalWindowSize.width,
+      windowHeight = window.logicalWindowSize.height,
       contentScale = window.contentScale,
     )
   }

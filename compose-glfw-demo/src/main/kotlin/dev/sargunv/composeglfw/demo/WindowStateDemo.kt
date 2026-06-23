@@ -53,7 +53,7 @@ internal fun WindowStateCard(
       }
 
       Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        MetricRow("Window size", "${windowInfo.windowWidth} x ${windowInfo.windowHeight} px")
+        MetricRow("Window size", "${windowInfo.windowWidth} x ${windowInfo.windowHeight} logical px")
         MetricRow("Framebuffer size", "${windowInfo.framebufferWidth} x ${windowInfo.framebufferHeight} px")
         MetricRow(
           "Compose container",

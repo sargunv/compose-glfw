@@ -47,9 +47,9 @@ public data class HostWindowInfo(
   public val framebufferWidth: Int,
   /** Physical drawable pixels backing the Compose scene and Skia render target. */
   public val framebufferHeight: Int,
-  /** GLFW content-area width in screen coordinates. */
+  /** Logical content-area width after applying host display scaling. */
   public val windowWidth: Int,
-  /** GLFW content-area height in screen coordinates. */
+  /** Logical content-area height after applying host display scaling. */
   public val windowHeight: Int,
   /** GLFW content scale used as the Compose density. */
   public val contentScale: Float,

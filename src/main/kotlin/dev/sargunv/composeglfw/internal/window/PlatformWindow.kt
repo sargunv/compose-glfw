@@ -45,6 +45,7 @@ import org.lwjgl.glfw.GLFW.glfwWindowShouldClose
 import org.lwjgl.opengl.GL
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.NULL
+import kotlin.math.roundToInt
 
 internal class PlatformWindow(
   title: String,
@@ -61,8 +62,18 @@ internal class PlatformWindow(
     private set
 
   // GLFW content-area size in screen coordinates. Cursor positions use this same coordinate space.
+  // On Wayland this is usually logical pixels; on X11 this is usually physical pixels.
   var windowSize: IntSize = IntSize(size.width, size.height)
     private set
+
+  // Cross-platform logical content-area size, matching the Compose density applied to the
+  // framebuffer-backed scene.
+  val logicalWindowSize: IntSize
+    get() =
+      IntSize(
+        (framebufferSize.width / contentScale).roundToInt().coerceAtLeast(0),
+        (framebufferSize.height / contentScale).roundToInt().coerceAtLeast(0),
+      )
 
   // GLFW window position in screen coordinates. Platforms that do not expose it keep this at zero.
   var windowPosition: IntOffset = IntOffset.Zero
