@@ -9,6 +9,8 @@ lockfile = true
 "aqua:jdx/hk" = "1.48.0"
 "aqua:dprint/dprint" = "0.54.0"
 "aqua:facebook/ktfmt" = "0.63"
+"aqua:rhysd/actionlint" = "1.7.12"
+"aqua:koalaman/shellcheck" = "0.11.0"
 
 [tasks.check]
 run = "hk check --all"
@@ -18,6 +20,14 @@ run = "hk fix --all"
 
 [tasks.build]
 run = "./gradlew build"
+
+[tasks."ci:lint"]
+run = [
+  "hk fix --all",
+  "git update-index -q --refresh",
+  "git diff --exit-code -- . ':(exclude)mise.lock'",
+  "git diff --cached --exit-code -- . ':(exclude)mise.lock'",
+]
 
 [tasks._ktfmt]
 hide = true

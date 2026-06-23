@@ -3,6 +3,10 @@ import "package://github.com/jdx/hk/releases/download/v1.48.0/hk@1.48.0#/Builtin
 
 local lintSteps = new Mapping<String, Step> {
   ["dprint"] = Builtins.dprint
+  ["actionlint"] {
+    glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml")
+    check = "actionlint {{files}}"
+  }
 }
 
 hooks {
