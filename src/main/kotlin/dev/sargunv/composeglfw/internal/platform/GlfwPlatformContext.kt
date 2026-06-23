@@ -3,6 +3,7 @@
 package dev.sargunv.composeglfw.internal.platform
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.InternalComposeUiApi
@@ -29,6 +30,7 @@ import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
 internal class GlfwPlatformContext(private val window: GlfwPlatformWindow) : PlatformContext {
   private val fallbackContext = PlatformContext.Empty()
   val textInput: GlfwTextInputService = GlfwTextInputService()
+  private val glfwTextToolbar = GlfwTextToolbar()
   private val mutableWindowInfo = GlfwComposeWindowInfo()
   override val windowInfo: WindowInfo = mutableWindowInfo
 
@@ -88,9 +90,8 @@ internal class GlfwPlatformContext(private val window: GlfwPlatformWindow) : Pla
   override val textInputService: PlatformTextInputService
     get() = fallbackContext.textInputService
 
-  // TODO: Needs selection toolbar UI and clipboard actions; GLFW does not provide toolbar widgets.
   override val textToolbar: TextToolbar
-    get() = fallbackContext.textToolbar
+    get() = glfwTextToolbar
 
   // TODO: Revisit with multi-window and parent/owned popup focus behavior.
   override val parentFocusManager: FocusManager
@@ -141,6 +142,11 @@ internal class GlfwPlatformContext(private val window: GlfwPlatformWindow) : Pla
 
   fun updateFocus(focused: Boolean) {
     mutableWindowInfo.isWindowFocused = focused
+  }
+
+  @Composable
+  fun TextToolbarContent() {
+    glfwTextToolbar.Content()
   }
 }
 

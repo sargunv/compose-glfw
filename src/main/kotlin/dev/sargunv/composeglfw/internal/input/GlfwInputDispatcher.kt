@@ -10,6 +10,10 @@ import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
 import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
 import org.lwjgl.glfw.GLFW.GLFW_KEY_SCROLL_LOCK
 import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_1
+import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_2
+import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_3
+import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_4
+import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_5
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 import org.lwjgl.glfw.GLFW.glfwSetCharCallback
@@ -29,7 +33,7 @@ internal class GlfwInputDispatcher(
   private val onKeyboardModifiers: (PointerKeyboardModifiers) -> Unit,
   private val requestRender: () -> Unit,
 ) : AutoCloseable {
-  private var mousePressed = false
+  private var pressedMouseButtons = 0
   private var lastMouse = Offset.Zero
   private var currentMods = 0
   private var scrollLockOn = false
@@ -41,9 +45,10 @@ internal class GlfwInputDispatcher(
     }
     glfwSetMouseButtonCallback(window.handle) { _, button, action, mods ->
       updateKeyboardModifiers(mods)
-      if (button == GLFW_MOUSE_BUTTON_1 && (action == GLFW_PRESS || action == GLFW_RELEASE)) {
-        mousePressed = action == GLFW_PRESS
-        sendPointer(if (mousePressed) PointerEventType.Press else PointerEventType.Release, PointerButton.Primary)
+      val pointerButton = button.toPointerButton()
+      if (pointerButton != null && (action == GLFW_PRESS || action == GLFW_RELEASE)) {
+        updateMouseButton(button, action == GLFW_PRESS)
+        sendPointer(if (action == GLFW_PRESS) PointerEventType.Press else PointerEventType.Release, pointerButton)
       }
     }
     glfwSetScrollCallback(window.handle) { _, x, y ->
@@ -99,14 +104,46 @@ internal class GlfwInputDispatcher(
       position = lastMouse,
       scrollDelta = scrollDelta,
       button = button,
-      buttons = PointerButtons(if (mousePressed) 1 else 0),
+      buttons = pointerButtons(),
       keyboardModifiers = glfwKeyboardModifiers(currentMods, scrollLockOn),
     )
     requestRender()
   }
+
+  private fun updateMouseButton(button: Int, pressed: Boolean) {
+    val mask = 1 shl button
+    pressedMouseButtons =
+      if (pressed) {
+        pressedMouseButtons or mask
+      } else {
+        pressedMouseButtons and mask.inv()
+      }
+  }
+
+  private fun pointerButtons(): PointerButtons =
+    PointerButtons(
+      isPrimaryPressed = isMouseButtonPressed(GLFW_MOUSE_BUTTON_1),
+      isSecondaryPressed = isMouseButtonPressed(GLFW_MOUSE_BUTTON_2),
+      isTertiaryPressed = isMouseButtonPressed(GLFW_MOUSE_BUTTON_3),
+      isBackPressed = isMouseButtonPressed(GLFW_MOUSE_BUTTON_4),
+      isForwardPressed = isMouseButtonPressed(GLFW_MOUSE_BUTTON_5),
+    )
+
+  private fun isMouseButtonPressed(button: Int): Boolean =
+    pressedMouseButtons and (1 shl button) != 0
 
   private fun updateKeyboardModifiers(mods: Int) {
     currentMods = mods
     onKeyboardModifiers(glfwKeyboardModifiers(currentMods, scrollLockOn))
   }
 }
+
+private fun Int.toPointerButton(): PointerButton? =
+  when (this) {
+    GLFW_MOUSE_BUTTON_1 -> PointerButton.Primary
+    GLFW_MOUSE_BUTTON_2 -> PointerButton.Secondary
+    GLFW_MOUSE_BUTTON_3 -> PointerButton.Tertiary
+    GLFW_MOUSE_BUTTON_4 -> PointerButton.Back
+    GLFW_MOUSE_BUTTON_5 -> PointerButton.Forward
+    else -> null
+  }

@@ -38,6 +38,7 @@ What works today:
 - [x] GLFW key table audited against Compose desktop key codes
 - [x] Built-in pointer cursor shape updates
 - [x] Basic committed text input from keyboard layouts
+- [x] Basic Compose-rendered text selection toolbar
 - [x] Public `glfwApplication { Window { ... } }` API
 - [x] Per-window GPU interop hook for the current OpenGL context
 
@@ -49,7 +50,6 @@ Known gaps:
 - [ ] IME/preedit integration: composition text, candidate positioning, and commit/cancel lifecycle
 - [ ] Custom cursor images
 - [ ] Clipboard
-- [ ] Text selection toolbar
 - [ ] Drag and drop, including GLFW file drop callbacks
 - [ ] Transparent framebuffer/window option
 - [ ] Platform lifecycle/ViewModel owners

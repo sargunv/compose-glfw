@@ -23,7 +23,7 @@ import kotlin.coroutines.CoroutineContext
 internal class ComposeWindowScene(
   initialDensity: Float,
   initialSize: IntSize,
-  platformContext: GlfwPlatformContext,
+  private val platformContext: GlfwPlatformContext,
   coroutineContext: CoroutineContext,
   scope: GlfwWindowScope,
   content: @Composable GlfwWindowScope.() -> Unit,
@@ -41,7 +41,10 @@ internal class ComposeWindowScene(
     )
 
   init {
-    scene.setContent { scope.content() }
+    scene.setContent {
+      scope.content()
+      platformContext.TextToolbarContent()
+    }
   }
 
   val hasInvalidations: Boolean
