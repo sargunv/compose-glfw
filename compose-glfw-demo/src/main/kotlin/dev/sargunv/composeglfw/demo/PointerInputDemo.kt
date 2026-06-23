@@ -4,7 +4,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -13,7 +12,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -21,13 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 
 @Composable
 internal fun PointerInputCard(modifier: Modifier = Modifier) {
   var pointer by remember { mutableStateOf(Offset.Zero) }
   var pressed by remember { mutableStateOf(false) }
-  var events by remember { mutableIntStateOf(0) }
   val colorScheme = MaterialTheme.colorScheme
 
   Card(modifier) {
@@ -45,7 +41,6 @@ internal fun PointerInputCard(modifier: Modifier = Modifier) {
                 if (change != null) {
                   pointer = change.position
                   pressed = change.pressed
-                  events++
                 }
               }
             }
@@ -73,21 +68,6 @@ internal fun PointerInputCard(modifier: Modifier = Modifier) {
         drawCircle(targetColor.copy(alpha = 0.18f), radius = 34f, center = target)
         drawCircle(targetColor, radius = if (pressed) 12f else 9f, center = target)
       }
-
-      Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        PointerMetric("x", pointer.x.roundToInt().toString(), Modifier.weight(1f))
-        PointerMetric("y", pointer.y.roundToInt().toString(), Modifier.weight(1f))
-        PointerMetric("button", if (pressed) "down" else "up", Modifier.weight(1f))
-        PointerMetric("events", events.toString(), Modifier.weight(1f))
-      }
     }
-  }
-}
-
-@Composable
-private fun PointerMetric(label: String, value: String, modifier: Modifier = Modifier) {
-  Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-    Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    Text(value, style = MaterialTheme.typography.bodyMedium)
   }
 }

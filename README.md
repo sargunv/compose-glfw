@@ -27,6 +27,7 @@ What works today:
 - [x] Resize handling
 - [x] Content scale/density handling
 - [x] Mouse move, press, and release
+- [x] Scroll wheel and trackpad events
 - [x] Public `glfwApplication { Window { ... } }` API
 - [x] Per-window GPU interop hook for the current OpenGL context
 
@@ -36,7 +37,8 @@ Known gaps:
 - [ ] Multi-window lifecycle beyond the current static startup window list
 - [ ] Keyboard events and key mapping
 - [ ] Text input and IME
-- [ ] Scroll, hover, cursor icons
+- [ ] Platform cursor shape updates: pointer, text, resize, and custom cursors
+- [ ] Pointer enter/leave events at the window boundary
 - [ ] Clipboard
 - [ ] Window state APIs: position, minimize, maximize, fullscreen, close requests
 - [ ] Window decorations and styling controls

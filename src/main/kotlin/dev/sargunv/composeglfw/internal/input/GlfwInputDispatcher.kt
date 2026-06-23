@@ -11,6 +11,11 @@ import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 import org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback
 import org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback
+import org.lwjgl.glfw.GLFW.glfwSetScrollCallback
+
+// Compose's desktop scroll config normally sees AWT's scrollAmount, commonly 3 lines per wheel step.
+// GLFW gives unit offsets without that metadata, so apply the same baseline before forwarding.
+private const val GlfwScrollAmount = 3f
 
 internal class GlfwInputDispatcher(
   private val window: GlfwPlatformWindow,
@@ -31,11 +36,18 @@ internal class GlfwInputDispatcher(
         sendPointer(if (mousePressed) PointerEventType.Press else PointerEventType.Release, PointerButton.Primary)
       }
     }
+    glfwSetScrollCallback(window.handle) { _, x, y ->
+      sendPointer(
+        type = PointerEventType.Scroll,
+        scrollDelta = Offset(x.toFloat(), -y.toFloat()) * GlfwScrollAmount,
+      )
+    }
   }
 
   override fun close() {
     glfwSetCursorPosCallback(window.handle, null)?.free()
     glfwSetMouseButtonCallback(window.handle, null)?.free()
+    glfwSetScrollCallback(window.handle, null)?.free()
   }
 
   private fun updateMousePosition(x: Double, y: Double) {
@@ -48,10 +60,15 @@ internal class GlfwInputDispatcher(
       )
   }
 
-  private fun sendPointer(type: PointerEventType, button: PointerButton? = null) {
+  private fun sendPointer(
+    type: PointerEventType,
+    button: PointerButton? = null,
+    scrollDelta: Offset = Offset.Zero,
+  ) {
     scene.sendPointerEvent(
       event = type,
       position = lastMouse,
+      scrollDelta = scrollDelta,
       button = button,
       buttons = PointerButtons(if (mousePressed) 1 else 0),
     )

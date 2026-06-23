@@ -35,6 +35,7 @@ internal fun ComposeGlfwApp(windowInfo: GlfwWindowInfo) {
           DemoHeader(windowInfo)
           WindowStateCard(windowInfo, Modifier.fillMaxWidth())
           PointerInputCard(Modifier.fillMaxWidth())
+          ScrollPanCard(Modifier.fillMaxWidth())
           MaterialControlsCard(Modifier.fillMaxWidth())
         }
 

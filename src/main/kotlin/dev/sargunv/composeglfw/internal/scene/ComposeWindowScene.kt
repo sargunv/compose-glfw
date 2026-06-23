@@ -52,12 +52,14 @@ internal class ComposeWindowScene(
   fun sendPointerEvent(
     event: androidx.compose.ui.input.pointer.PointerEventType,
     position: androidx.compose.ui.geometry.Offset,
+    scrollDelta: androidx.compose.ui.geometry.Offset = androidx.compose.ui.geometry.Offset.Zero,
     button: androidx.compose.ui.input.pointer.PointerButton?,
     buttons: androidx.compose.ui.input.pointer.PointerButtons,
   ) {
     scene.sendPointerEvent(
       eventType = event,
       position = position,
+      scrollDelta = scrollDelta,
       timeMillis = System.currentTimeMillis(),
       type = androidx.compose.ui.input.pointer.PointerType.Mouse,
       buttons = buttons,
