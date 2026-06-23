@@ -4,7 +4,7 @@ import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-  application
+  `java-library`
   alias(libs.plugins.kotlinJvm)
   alias(libs.plugins.kotlinCompose)
 }
@@ -14,41 +14,53 @@ repositories {
   mavenCentral()
 }
 
-val hostOs = OperatingSystem.current()
-val hostArch = System.getProperty("os.arch")
+val hostOs = OperatingSystem.current()!!
+val hostArch = System.getProperty("os.arch")!!
 val lwjglNativeClassifier =
   when {
     hostOs.isLinux && hostArch == "aarch64" -> "natives-linux-arm64"
     hostOs.isLinux -> "natives-linux"
-    else -> error("This proof of concept is currently wired for Linux hosts only")
+    else -> null
   }
+val skikoRuntime =
+  when {
+    hostOs.isLinux && hostArch == "aarch64" -> libs.skikoAwtRuntimeLinuxArm64
+    hostOs.isLinux -> libs.skikoAwtRuntimeLinuxX64
+    else -> null
+  }
+
+val demoRuntimeOnly = configurations.create("demoRuntimeOnly") {
+  isCanBeConsumed = false
+  isCanBeResolved = true
+  extendsFrom(configurations.runtimeClasspath.get())
+}
 
 kotlin { compilerOptions { jvmTarget.set(JvmTarget.fromTarget(libs.versions.javaRelease.get())) } }
 
-application {
-  mainClass = "dev.sargunv.composeglfw.MainKt"
-  applicationDefaultJvmArgs = listOf("--enable-native-access=ALL-UNNAMED")
-}
-
 dependencies {
-  implementation(platform(libs.lwjglBom))
-  implementation(libs.composeFoundation)
-  implementation(libs.composeUi)
+  api(libs.composeFoundation)
+  api(libs.composeUi)
+  api(platform(libs.lwjglBom))
   implementation(libs.lwjgl)
   implementation(libs.lwjglGlfw)
   implementation(libs.lwjglOpenGl)
-  runtimeOnly(variantOf(libs.lwjgl) { classifier(lwjglNativeClassifier) })
-  runtimeOnly(variantOf(libs.lwjglGlfw) { classifier(lwjglNativeClassifier) })
-  runtimeOnly(variantOf(libs.lwjglOpenGl) { classifier(lwjglNativeClassifier) })
-  runtimeOnly(
-    if (hostArch == "aarch64") libs.skikoAwtRuntimeLinuxArm64 else libs.skikoAwtRuntimeLinuxX64
-  )
+
+  if (lwjglNativeClassifier != null && skikoRuntime != null) {
+    demoRuntimeOnly(variantOf(libs.lwjgl) { classifier(lwjglNativeClassifier) })
+    demoRuntimeOnly(variantOf(libs.lwjglGlfw) { classifier(lwjglNativeClassifier) })
+    demoRuntimeOnly(variantOf(libs.lwjglOpenGl) { classifier(lwjglNativeClassifier) })
+    demoRuntimeOnly(skikoRuntime)
+  }
 }
 
 tasks.withType<JavaCompile>().configureEach {
   options.release = libs.versions.javaRelease.get().toInt()
 }
 
-tasks.withType<JavaExec>().configureEach {
+tasks.register<JavaExec>("run") {
+  group = "application"
+  description = "Runs the local GLFW Compose demo."
+  mainClass = "dev.sargunv.composeglfw.MainKt"
+  classpath = sourceSets.main.get().output + demoRuntimeOnly
   jvmArgs("--enable-native-access=ALL-UNNAMED")
 }
