@@ -11,12 +11,10 @@ internal class GlfwWindowScopeImpl(
   initialInfo: GlfwWindowInfo,
   override val gpu: GlfwGpuInterop,
 ) : GlfwWindowScope {
-  private var currentInfo by mutableStateOf(initialInfo)
-
-  override val windowInfo: GlfwWindowInfo
-    get() = currentInfo
+  override var windowInfo: GlfwWindowInfo by mutableStateOf(initialInfo)
+    private set
 
   fun updateInfo(info: GlfwWindowInfo) {
-    currentInfo = info
+    windowInfo = info
   }
 }

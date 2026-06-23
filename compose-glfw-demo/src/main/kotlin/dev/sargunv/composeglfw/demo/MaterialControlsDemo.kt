@@ -1,9 +1,11 @@
 package dev.sargunv.composeglfw.demo
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -26,6 +28,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -33,11 +38,12 @@ internal fun MaterialControlsCard(modifier: Modifier = Modifier) {
   var clicks by remember { mutableIntStateOf(0) }
   var enabled by remember { mutableStateOf(true) }
   var checked by remember { mutableStateOf(false) }
-  var radioSelection by remember { mutableStateOf("Wayland") }
+  var radioSelection by remember { mutableStateOf("Small") }
   var sliderValue by remember { mutableFloatStateOf(0.4f) }
   var text by remember { mutableStateOf("") }
-  var menuOpen by remember { mutableStateOf(false) }
-  var menuSelection by remember { mutableStateOf("OpenGL") }
+  var password by remember { mutableStateOf("") }
+  var menuSelection by remember { mutableStateOf("Daily") }
+  val textFocusRequester = remember { FocusRequester() }
 
   Card(modifier) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -69,7 +75,7 @@ internal fun MaterialControlsCard(modifier: Modifier = Modifier) {
       }
 
       Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-        listOf("Wayland", "OpenGL").forEach { option ->
+        listOf("Small", "Large").forEach { option ->
           Row(verticalAlignment = Alignment.CenterVertically) {
             RadioButton(selected = radioSelection == option, onClick = { radioSelection = option })
             Text(option)
@@ -80,26 +86,71 @@ internal fun MaterialControlsCard(modifier: Modifier = Modifier) {
       OutlinedTextField(
         value = text,
         onValueChange = { text = it },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().focusRequester(textFocusRequester),
         label = { Text("Text input") },
         singleLine = true,
       )
 
       Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        OutlinedButton(onClick = { menuOpen = true }) {
-          Text("Menu: $menuSelection")
+        OutlinedTextField(
+          value = password,
+          onValueChange = { password = it },
+          modifier = Modifier.weight(1f),
+          label = { Text("Password") },
+          visualTransformation = PasswordVisualTransformation(),
+          singleLine = true,
+        )
+        OutlinedButton(onClick = { textFocusRequester.requestFocus() }) {
+          Text("Focus text")
         }
-        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-          listOf("OpenGL", "Metal", "Direct3D").forEach { option ->
-            DropdownMenuItem(
-              text = { Text(option) },
-              onClick = {
-                menuSelection = option
-                menuOpen = false
-              },
-            )
-          }
-        }
+      }
+
+      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        MenuAnchor(
+          label = "Start",
+          selection = menuSelection,
+          alignment = Alignment.CenterStart,
+          onSelectionChange = { menuSelection = it },
+        )
+        MenuAnchor(
+          label = "Center",
+          selection = menuSelection,
+          alignment = Alignment.Center,
+          onSelectionChange = { menuSelection = it },
+        )
+        MenuAnchor(
+          label = "End",
+          selection = menuSelection,
+          alignment = Alignment.CenterEnd,
+          onSelectionChange = { menuSelection = it },
+        )
+      }
+    }
+  }
+}
+
+@Composable
+private fun MenuAnchor(
+  label: String,
+  selection: String,
+  alignment: Alignment,
+  onSelectionChange: (String) -> Unit,
+) {
+  var menuOpen by remember { mutableStateOf(false) }
+
+  Box(Modifier.fillMaxWidth().height(48.dp), contentAlignment = alignment) {
+    OutlinedButton(onClick = { menuOpen = true }) {
+      Text("$label: $selection")
+    }
+    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+      listOf("Daily", "Weekly", "Monthly", "Custom").forEach { option ->
+        DropdownMenuItem(
+          text = { Text(option) },
+          onClick = {
+            onSelectionChange(option)
+            menuOpen = false
+          },
+        )
       }
     }
   }

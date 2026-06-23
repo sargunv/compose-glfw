@@ -5,11 +5,9 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,6 +28,7 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import androidx.compose.ui.input.pointer.isAltGraphPressed as isPointerAltGraphPressed
 import androidx.compose.ui.input.pointer.isAltPressed as isPointerAltPressed
@@ -43,15 +42,15 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 
 @Composable
-internal fun ModifierStatusCard(modifier: Modifier = Modifier) {
+internal fun InputEventsCard(modifier: Modifier = Modifier) {
   val focusRequester = remember { FocusRequester() }
   var keyState by remember { mutableStateOf(ObservedModifiers()) }
-  var pointerState by remember { mutableStateOf(ObservedModifiers()) }
   var lastKey by remember { mutableStateOf("none") }
+  var lastPointer by remember { mutableStateOf("none") }
 
   Card(modifier) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-      Text("Modifier status", style = MaterialTheme.typography.titleMedium)
+      Text("Input events", style = MaterialTheme.typography.titleMedium)
 
       Box(
         Modifier.fillMaxWidth()
@@ -68,7 +67,7 @@ internal fun ModifierStatusCard(modifier: Modifier = Modifier) {
             awaitPointerEventScope {
               while (true) {
                 val event = awaitPointerEvent()
-                pointerState = event.keyboardModifiers.toObservedModifiers()
+                lastPointer = event.describe()
                 if (event.changes.any { it.pressed }) {
                   focusRequester.requestFocus()
                 }
@@ -80,43 +79,16 @@ internal fun ModifierStatusCard(modifier: Modifier = Modifier) {
         Text("Focus target")
       }
 
-      Text("Last key: $lastKey", style = MaterialTheme.typography.bodyMedium)
-      ModifierStatus("Key event", keyState)
-      ModifierStatus("Pointer event", pointerState)
+      Text(
+        "Last key: $lastKey (${keyState.format()})",
+        style = MaterialTheme.typography.bodyMedium,
+      )
+      Text(
+        "Last pointer: $lastPointer",
+        style = MaterialTheme.typography.bodyMedium,
+      )
     }
   }
-}
-
-@Composable
-private fun ModifierStatus(label: String, state: ObservedModifiers) {
-  Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-    Text(label, style = MaterialTheme.typography.labelLarge)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-      ModifierBadge("Ctrl", state.ctrl)
-      ModifierBadge("Shift", state.shift)
-      ModifierBadge("Alt", state.alt)
-      ModifierBadge("Meta", state.meta)
-      ModifierBadge("AltGraph", state.altGraph)
-      ModifierBadge("Caps", state.capsLock)
-      ModifierBadge("Num", state.numLock)
-      ModifierBadge("Scroll", state.scrollLock)
-    }
-  }
-}
-
-@Composable
-private fun ModifierBadge(label: String, active: Boolean) {
-  val colors = MaterialTheme.colorScheme
-  Text(
-    text = "$label ${if (active) "on" else "off"}",
-    modifier =
-      Modifier
-        .widthIn(min = 72.dp)
-        .background(if (active) colors.primaryContainer else colors.surfaceContainer)
-        .padding(horizontal = 10.dp, vertical = 6.dp),
-    style = MaterialTheme.typography.labelMedium,
-    color = if (active) colors.onPrimaryContainer else colors.onSurfaceVariant,
-  )
 }
 
 private data class ObservedModifiers(
@@ -149,3 +121,35 @@ private fun PointerKeyboardModifiers.toObservedModifiers(): ObservedModifiers =
     numLock = isPointerNumLockOn,
     scrollLock = isPointerScrollLockOn,
   )
+
+private fun PointerEvent.describe(): String {
+  val change = changes.firstOrNull()
+  val position =
+    if (change == null) {
+      "unknown"
+    } else {
+      "${change.position.x.toInt()}, ${change.position.y.toInt()}"
+    }
+  val pressed =
+    if (changes.any { it.pressed }) {
+      "pressed"
+    } else {
+      "released"
+    }
+  return "$type at $position, $pressed (${keyboardModifiers.toObservedModifiers().format()})"
+}
+
+private fun ObservedModifiers.format(): String {
+  val active =
+    buildList {
+      if (ctrl) add("Ctrl")
+      if (shift) add("Shift")
+      if (alt) add("Alt")
+      if (meta) add("Meta")
+      if (altGraph) add("AltGraph")
+      if (capsLock) add("Caps")
+      if (numLock) add("Num")
+      if (scrollLock) add("Scroll")
+    }
+  return active.joinToString().ifEmpty { "no modifiers" }
+}

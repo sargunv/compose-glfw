@@ -33,6 +33,7 @@ internal class ComposeWindowScene(
     CanvasLayersComposeScene(
       density = Density(initialDensity),
       layoutDirection = LayoutDirection.Ltr,
+      // The scene is rendered directly into the Skia framebuffer target, so local coordinates are pixels.
       size = initialSize,
       platformContext = platformContext,
       coroutineContext = coroutineContext,
@@ -64,6 +65,7 @@ internal class ComposeWindowScene(
 
   fun sendPointerEvent(
     event: PointerEventType,
+    // Compose expects this in the same framebuffer-pixel local space as scene.size.
     position: Offset,
     scrollDelta: Offset = Offset.Zero,
     button: PointerButton?,

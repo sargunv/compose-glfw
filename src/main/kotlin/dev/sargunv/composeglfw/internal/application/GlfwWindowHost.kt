@@ -11,6 +11,7 @@ import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
 import dev.sargunv.composeglfw.internal.scene.GlfwWindowScopeImpl
 import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
 import org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback
+import org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback
 
 internal class GlfwWindowHost(
   spec: GlfwWindowSpec,
@@ -18,11 +19,12 @@ internal class GlfwWindowHost(
 ) : AutoCloseable {
   private val window = GlfwPlatformWindow(spec.title, spec.size, spec.options)
   private val renderBackend = OpenGlRenderBackend(window)
-  private val platformContext = GlfwPlatformContext()
+  private val platformContext = GlfwPlatformContext(window)
   private val scope = GlfwWindowScopeImpl(currentInfo(), renderBackend.interop)
   private val scene =
     ComposeWindowScene(
       initialDensity = window.contentScale,
+      // Compose layout/rendering uses framebuffer pixels to match the OpenGL/Skia target.
       initialSize = window.framebufferSize,
       platformContext = platformContext,
       coroutineContext = uiDispatcher,
@@ -30,7 +32,14 @@ internal class GlfwWindowHost(
       content = spec.content,
       invalidate = ::requestRender,
     )
-  private val input = GlfwInputDispatcher(window, scene, platformContext.textInput, ::requestRender)
+  private val input =
+    GlfwInputDispatcher(
+      window = window,
+      scene = scene,
+      textInput = platformContext.textInput,
+      onKeyboardModifiers = platformContext::updateKeyboardModifiers,
+      requestRender = ::requestRender,
+    )
   private var lastFramebufferSize = window.framebufferSize
   private var lastContentScale = window.contentScale
   private var renderRequested = true
@@ -39,9 +48,14 @@ internal class GlfwWindowHost(
     get() = window.shouldClose
 
   init {
+    platformContext.updateWindowInfo()
     glfwSetFramebufferSizeCallback(window.handle) { _, _, _ ->
       window.refreshSizes()
       updateSceneMetrics()
+      requestRender()
+    }
+    glfwSetWindowFocusCallback(window.handle) { _, focused ->
+      platformContext.updateFocus(focused)
       requestRender()
     }
   }
@@ -61,6 +75,7 @@ internal class GlfwWindowHost(
 
   override fun close() {
     glfwSetFramebufferSizeCallback(window.handle, null)?.free()
+    glfwSetWindowFocusCallback(window.handle, null)?.free()
     input.close()
     scene.close()
     renderBackend.close()
@@ -84,6 +99,7 @@ internal class GlfwWindowHost(
       scene.updateDensity(window.contentScale)
       requestRender()
     }
+    platformContext.updateWindowInfo()
     scope.updateInfo(currentInfo())
   }
 
@@ -92,8 +108,10 @@ internal class GlfwWindowHost(
       platform = glfwPlatform(),
       displayName = System.getenv("WAYLAND_DISPLAY"),
       renderBackend = GlfwRenderBackend.OPENGL,
+      // Framebuffer dimensions are physical drawable pixels.
       framebufferWidth = window.framebufferSize.width,
       framebufferHeight = window.framebufferSize.height,
+      // Window dimensions are GLFW screen-coordinate content-area units.
       windowWidth = window.windowSize.width,
       windowHeight = window.windowSize.height,
       contentScale = window.contentScale,

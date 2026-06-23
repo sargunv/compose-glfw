@@ -27,11 +27,13 @@ What works today:
 - [x] Host-owned Compose scene coroutine dispatch on the GLFW UI thread
 - [x] Resize handling
 - [x] Content scale/density handling
+- [x] Compose `WindowInfo` focus, size, and keyboard modifier state
 - [x] Mouse move, press, and release
 - [x] Scroll wheel and trackpad events
 - [x] Basic keyboard key down, key up, and repeat routing
 - [x] Keyboard modifier and lock-state propagation for pointer events
 - [x] GLFW key table audited against Compose desktop key codes
+- [x] Built-in pointer cursor shape updates
 - [x] Basic committed text input from keyboard layouts
 - [x] Public `glfwApplication { Window { ... } }` API
 - [x] Per-window GPU interop hook for the current OpenGL context
@@ -42,7 +44,7 @@ Known gaps:
 - [ ] Multi-window lifecycle beyond the current static startup window list
 - [ ] Full key-event modifier payload for AltGraph and lock states
 - [ ] IME/preedit integration: composition text, candidate positioning, and commit/cancel lifecycle
-- [ ] Platform cursor shape updates: pointer, text, resize, and custom cursors
+- [ ] Resize and custom cursor shapes
 - [ ] Pointer enter/leave events at the window boundary
 - [ ] Clipboard
 - [ ] Window state APIs: position, minimize, maximize, fullscreen, close requests

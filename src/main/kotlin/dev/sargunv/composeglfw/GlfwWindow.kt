@@ -19,9 +19,14 @@ public data class GlfwWindowInfo(
   public val platform: GlfwPlatform,
   public val displayName: String?,
   public val renderBackend: GlfwRenderBackend,
+  /** Physical drawable pixels backing the Compose scene and Skia render target. */
   public val framebufferWidth: Int,
+  /** Physical drawable pixels backing the Compose scene and Skia render target. */
   public val framebufferHeight: Int,
+  /** GLFW content-area width in screen coordinates. */
   public val windowWidth: Int,
+  /** GLFW content-area height in screen coordinates. */
   public val windowHeight: Int,
+  /** GLFW content scale used as the Compose density. */
   public val contentScale: Float,
 )

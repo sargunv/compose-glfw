@@ -1,6 +1,7 @@
 package dev.sargunv.composeglfw.internal.input
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerButtons
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -25,6 +26,7 @@ internal class GlfwInputDispatcher(
   private val window: GlfwPlatformWindow,
   private val scene: ComposeWindowScene,
   textInput: GlfwTextInputService,
+  private val onKeyboardModifiers: (PointerKeyboardModifiers) -> Unit,
   private val requestRender: () -> Unit,
 ) : AutoCloseable {
   private var mousePressed = false
@@ -38,7 +40,7 @@ internal class GlfwInputDispatcher(
       sendPointer(PointerEventType.Move)
     }
     glfwSetMouseButtonCallback(window.handle) { _, button, action, mods ->
-      currentMods = mods
+      updateKeyboardModifiers(mods)
       if (button == GLFW_MOUSE_BUTTON_1 && (action == GLFW_PRESS || action == GLFW_RELEASE)) {
         mousePressed = action == GLFW_PRESS
         sendPointer(if (mousePressed) PointerEventType.Press else PointerEventType.Release, PointerButton.Primary)
@@ -51,10 +53,10 @@ internal class GlfwInputDispatcher(
       )
     }
     glfwSetKeyCallback(window.handle) { _, key, scancode, action, mods ->
-      currentMods = mods
       if (key == GLFW_KEY_SCROLL_LOCK && action == GLFW_PRESS) {
         scrollLockOn = !scrollLockOn
       }
+      updateKeyboardModifiers(mods)
       val event = glfwKeyEvent(key, scancode, action, mods)
       if (event != null) {
         scene.sendKeyEvent(event)
@@ -79,6 +81,7 @@ internal class GlfwInputDispatcher(
   private fun updateMousePosition(x: Double, y: Double) {
     val framebuffer = window.framebufferSize
     val windowSize = window.windowSize
+    // GLFW cursor positions are window screen coordinates; Compose local positions are framebuffer pixels.
     lastMouse =
       Offset(
         (x * framebuffer.width / windowSize.width).toFloat(),
@@ -100,5 +103,10 @@ internal class GlfwInputDispatcher(
       keyboardModifiers = glfwKeyboardModifiers(currentMods, scrollLockOn),
     )
     requestRender()
+  }
+
+  private fun updateKeyboardModifiers(mods: Int) {
+    currentMods = mods
+    onKeyboardModifiers(glfwKeyboardModifiers(currentMods, scrollLockOn))
   }
 }

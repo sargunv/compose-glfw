@@ -33,7 +33,8 @@ internal fun ComposeGlfwApp(windowInfo: GlfwWindowInfo) {
           DemoHeader(windowInfo)
           WindowStateCard(windowInfo, Modifier.fillMaxWidth())
           PointerInputCard(Modifier.fillMaxWidth())
-          ModifierStatusCard(Modifier.fillMaxWidth())
+          PointerIconCard(Modifier.fillMaxWidth())
+          InputEventsCard(Modifier.fillMaxWidth())
           MaterialControlsCard(Modifier.fillMaxWidth())
         }
 
@@ -54,9 +55,9 @@ private fun DemoHeader(windowInfo: GlfwWindowInfo) {
         Text("Compose GLFW", style = MaterialTheme.typography.headlineMedium)
       }
       Column(horizontalAlignment = Alignment.End) {
-        Text(windowInfo.platform.displayLabel, style = MaterialTheme.typography.labelLarge)
+        Text(windowInfo.platform.toString(), style = MaterialTheme.typography.labelLarge)
         Text(
-          windowInfo.renderBackend.displayLabel,
+          windowInfo.renderBackend.toString(),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

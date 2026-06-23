@@ -1,11 +1,10 @@
 package dev.sargunv.composeglfw.internal.application
 
 import dev.sargunv.composeglfw.GlfwWindowSpec
-import dev.sargunv.composeglfw.internal.platform.glfwPlatformName
+import dev.sargunv.composeglfw.internal.platform.glfwPlatform
 import org.lwjgl.glfw.GLFW.GLFW_PLATFORM
 import org.lwjgl.glfw.GLFW.GLFW_PLATFORM_WAYLAND
 import org.lwjgl.glfw.GLFW.glfwGetError
-import org.lwjgl.glfw.GLFW.glfwGetPlatform
 import org.lwjgl.glfw.GLFW.glfwInit
 import org.lwjgl.glfw.GLFW.glfwInitHint
 import org.lwjgl.glfw.GLFW.glfwPollEvents
@@ -56,8 +55,6 @@ internal class GlfwApplicationHost(private val windowSpecs: List<GlfwWindowSpec>
     }
     check(glfwInit()) { "GLFW initialization failed: ${glfwGetError(null)}" }
     initialized = true
-    check(glfwGetPlatform() == GLFW_PLATFORM_WAYLAND) {
-      "Only GLFW Wayland is supported; GLFW selected ${glfwPlatformName()}"
-    }
+    glfwPlatform()
   }
 }
