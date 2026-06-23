@@ -1,5 +1,10 @@
 # Compose GLFW
 
+[![Maven Central Version](https://img.shields.io/maven-central/v/dev.sargunv/compose-glfw?label=Maven)](https://central.sonatype.com/namespace/dev.sargunv)
+[![Kotlin Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsargunv%2Fcompose-glfw%2Frefs%2Fheads%2Fmain%2Fgradle%2Flibs.versions.toml&query=versions.kotlin&prefix=v&logo=kotlin&label=Kotlin)](./gradle/libs.versions.toml)
+[![Compose Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsargunv%2Fcompose-glfw%2Frefs%2Fheads%2Fmain%2Fgradle%2Flibs.versions.toml&query=versions.compose&prefix=v&logo=jetpackcompose&label=Compose)](./gradle/libs.versions.toml)
+[![API Reference](https://img.shields.io/badge/API_Reference-blue?logo=Kotlin&logoColor=white)](https://sargunv.github.io/compose-glfw/)
+
 This library provides a JVM Compose host that runs Compose UI in a GLFW window
 instead of the default AWT/Swing desktop host.
 
