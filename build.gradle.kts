@@ -1,5 +1,4 @@
 import org.gradle.api.tasks.JavaExec
-import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -23,7 +22,6 @@ val lwjglNativeClassifier =
     hostOs.isLinux -> "natives-linux"
     else -> error("This proof of concept is currently wired for Linux hosts only")
   }
-val glProcShim = layout.buildDirectory.file("native/glproc/libcompose_gl_proc.so")
 
 kotlin { compilerOptions { jvmTarget.set(JvmTarget.fromTarget(libs.versions.javaRelease.get())) } }
 
@@ -52,25 +50,5 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 tasks.withType<JavaExec>().configureEach {
-  dependsOn("buildGlProcShim")
   jvmArgs("--enable-native-access=ALL-UNNAMED")
-  systemProperty("compose.glfw.gl.proc.library", glProcShim.get().asFile.absolutePath)
 }
-
-tasks.register<Exec>("buildGlProcShim") {
-  val source = layout.projectDirectory.file("src/main/c/gl_proc_loader.c")
-  inputs.file(source)
-  outputs.file(glProcShim)
-  commandLine(
-    "cc",
-    "-shared",
-    "-fPIC",
-    "-O2",
-    "-o",
-    glProcShim.get().asFile.absolutePath,
-    source.asFile.absolutePath,
-    "-ldl",
-  )
-}
-
-tasks.named("classes").configure { dependsOn("buildGlProcShim") }

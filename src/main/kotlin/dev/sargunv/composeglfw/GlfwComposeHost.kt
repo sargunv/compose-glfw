@@ -14,6 +14,7 @@ import androidx.compose.ui.scene.ComposeScene
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
+import java.lang.invoke.MethodHandles
 import kotlin.coroutines.EmptyCoroutineContext
 import org.jetbrains.skia.BackendRenderTarget
 import org.jetbrains.skia.ColorSpace
@@ -62,6 +63,7 @@ import org.lwjgl.glfw.GLFW.glfwSwapInterval
 import org.lwjgl.glfw.GLFW.glfwTerminate
 import org.lwjgl.glfw.GLFW.glfwWindowHint
 import org.lwjgl.glfw.GLFW.glfwWindowShouldClose
+import org.lwjgl.glfw.GLFW.nglfwGetProcAddress
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11.GL_RENDERER
 import org.lwjgl.opengl.GL11.GL_RGBA
@@ -74,17 +76,21 @@ import org.lwjgl.opengl.GL11.glGetString
 import org.lwjgl.opengl.GL11.glReadPixels
 import org.lwjgl.opengl.GL13.GL_SAMPLES
 import org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_BINDING
-import org.lwjgl.system.APIUtil.apiCreateLibrary
-import org.lwjgl.system.APIUtil.apiGetFunctionAddress
+import org.lwjgl.system.APIUtil.apiCreateCIF
+import org.lwjgl.system.Callback
+import org.lwjgl.system.CallbackI
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.MemoryUtil.memGetAddress
+import org.lwjgl.system.MemoryUtil.memPutAddress
 import org.lwjgl.system.MemoryUtil.memUTF8
-import org.lwjgl.system.SharedLibrary
+import org.lwjgl.system.Pointer.POINTER_SIZE
+import org.lwjgl.system.libffi.LibFFI.ffi_type_pointer
 
 internal class GlfwComposeHost(private val title: String, private val width: Int, private val height: Int) :
   AutoCloseable {
   private var window = NULL
-  private var procLibrary: SharedLibrary? = null
+  private var glProcAddressCallback: GLProcAddressCallback? = null
   private var glInterface: GLAssembledInterface? = null
   private var directContext: DirectContext? = null
   private var skiaTarget: SkiaTarget? = null
@@ -117,8 +123,8 @@ internal class GlfwComposeHost(private val title: String, private val width: Int
     directContext = null
     glInterface?.close()
     glInterface = null
-    procLibrary?.close()
-    procLibrary = null
+    glProcAddressCallback?.free()
+    glProcAddressCallback = null
     if (window != NULL) {
       glfwDestroyWindow(window)
       window = NULL
@@ -301,15 +307,14 @@ internal class GlfwComposeHost(private val title: String, private val width: Int
     try {
       DirectContext.makeGL()
     } catch (error: RuntimeException) {
-      val libraryPath =
-        System.getProperty("compose.glfw.gl.proc.library")
-          ?: "build/native/glproc/libcompose_gl_proc.so"
-      val library = apiCreateLibrary(libraryPath)
-      val getProcAddress = apiGetFunctionAddress(library, "compose_glfw_get_proc")
-      val assembledInterface = GLAssembledInterface.createFromNativePointers(NULL, getProcAddress)
-      procLibrary = library
+      val getProcAddress =
+        object : GLProcAddressCallback() {
+          override fun invoke(ctx: Long, name: Long): Long = nglfwGetProcAddress(name)
+        }
+      val assembledInterface = GLAssembledInterface.createFromNativePointers(NULL, getProcAddress.address())
+      glProcAddressCallback = getProcAddress
       glInterface = assembledInterface
-      println("Skia default GL context creation failed; using explicit EGL/GL proc loader: ${error.message}")
+      println("Skia default GL context creation failed; using GLFW GL proc loader: ${error.message}")
       DirectContext.makeGLWithInterface(assembledInterface)
     }
 
@@ -362,4 +367,27 @@ internal class GlfwComposeHost(private val title: String, private val width: Int
       renderTarget.close()
     }
   }
+}
+
+private abstract class GLProcAddressCallback : Callback(GLProcAddressCallbackI.DESCRIPTOR), GLProcAddressCallbackI {
+  override fun address(): Long = super<Callback>.address()
+}
+
+@FunctionalInterface
+private fun interface GLProcAddressCallbackI : CallbackI {
+  companion object {
+    val DESCRIPTOR =
+      Callback.Descriptor(
+        MethodHandles.lookup(),
+        apiCreateCIF(ffi_type_pointer, ffi_type_pointer, ffi_type_pointer),
+      )
+  }
+
+  override fun getDescriptor(): Callback.Descriptor = DESCRIPTOR
+
+  override fun callback(ret: Long, args: Long) {
+    memPutAddress(ret, invoke(memGetAddress(args), memGetAddress(memGetAddress(args + POINTER_SIZE))))
+  }
+
+  fun invoke(ctx: Long, name: Long): Long
 }

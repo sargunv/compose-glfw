@@ -2,7 +2,7 @@
 
 This is a small JVM Compose app hosted by LWJGL GLFW instead of Compose Desktop's AWT/Swing windowing layer.
 
-The host creates a GLFW window, prefers GLFW's Wayland platform when `WAYLAND_DISPLAY` is set, creates an EGL/OpenGL context, gives Skia an explicit EGL/GL proc loader, and renders a `CanvasLayersComposeScene` into the GLFW backbuffer.
+The host creates a GLFW window, prefers GLFW's Wayland platform when `WAYLAND_DISPLAY` is set, creates an EGL/OpenGL context, gives Skia a GLFW-backed OpenGL proc loader through LWJGL, and renders a `CanvasLayersComposeScene` into the GLFW backbuffer.
 
 ## Run
 
