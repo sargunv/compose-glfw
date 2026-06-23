@@ -9,10 +9,29 @@ public data class GlfwWindowSize(public val width: Int, public val height: Int) 
   }
 }
 
-public data class GlfwWindowOptions(
-  public val resizable: Boolean = true,
-  public val textToolbar: GlfwTextToolbarContent = defaultGlfwTextToolbarContent,
-)
+public class GlfwWindowOptions private constructor(
+  public val resizable: Boolean,
+  public val transparentFramebuffer: Boolean,
+  public val textToolbar: GlfwTextToolbarContent,
+) {
+  public companion object {
+    public operator fun invoke(configure: Builder.() -> Unit = {}): GlfwWindowOptions =
+      Builder().apply(configure).build()
+  }
+
+  public class Builder {
+    public var resizable: Boolean = true
+    public var transparentFramebuffer: Boolean = false
+    public var textToolbar: GlfwTextToolbarContent = defaultGlfwTextToolbarContent
+
+    public fun build(): GlfwWindowOptions =
+      GlfwWindowOptions(
+        resizable = resizable,
+        transparentFramebuffer = transparentFramebuffer,
+        textToolbar = textToolbar,
+      )
+  }
+}
 
 public interface GlfwWindowScope {
   public val windowInfo: GlfwWindowInfo

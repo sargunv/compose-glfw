@@ -6,7 +6,12 @@ The current implementation is still early, but the intended library shape is in 
 
 ```kotlin
 fun main() = glfwApplication {
-  Window(title = "Example") {
+  Window(
+    title = "Example",
+    options = GlfwWindowOptions {
+      transparentFramebuffer = true
+    },
+  ) {
     App()
   }
 }
@@ -27,6 +32,7 @@ What works today:
 - [x] Host-owned Compose scene coroutine dispatch on the GLFW UI thread
 - [x] Resize handling
 - [x] Content scale/density handling
+- [x] Transparent framebuffer window option
 - [x] Compose `WindowInfo` focus, size, and keyboard modifier state
 - [x] Compose local/window coordinate conversion for framebuffer-scaled windows
 - [x] Basic popup/dropdown positioning through `PlatformContext`
@@ -47,22 +53,36 @@ What works today:
 
 Known gaps:
 
+Application composition and window model:
+
+- [ ] Compose-style `glfwApplication { Window(...) }` application composition, instead of the current static startup window list
+- [ ] Dynamic multi-window lifecycle: windows created and disposed as application composition changes
+- [ ] `GlfwWindowState` parity with Compose Desktop `WindowState`: position, size, minimized, maximized, fullscreen
+- [ ] Close-request flow matching Compose Desktop: `onCloseRequest` lets the app decide whether to close one window or exit
 - [ ] Production-ready application lifecycle semantics
-- [ ] Multi-window lifecycle beyond the current static startup window list
+
+Straightforward GLFW wiring:
+
 - [ ] X11 platform support
-- [ ] Full key-event modifier payload for AltGraph and lock states
-- [ ] IME/preedit integration: composition text, candidate positioning, and commit/cancel lifecycle
 - [ ] Custom cursor images
 - [ ] Drag and drop, including GLFW file drop callbacks
-- [ ] Transparent framebuffer/window option
-- [ ] Platform lifecycle/ViewModel owners
-- [ ] Test root and semantics owner listeners
+- [ ] Runtime window attribute updates: title, resizable, enabled/focusable where GLFW supports them
+
+OS/platform API wiring:
+
+- [ ] IME/preedit integration: composition text, candidate positioning, and commit/cancel lifecycle
 - [ ] Screen reader and accessibility integration
 - [ ] Keep-screen-on and frame-rate voting
-- [ ] Window state APIs: position, minimize, maximize, fullscreen, close requests
-- [ ] Window decorations and styling controls
-- [ ] Tooltips and layered windows
 - [ ] Native menus, tray, dialogs, and file pickers
+
+Compose platform services:
+
+- [ ] Platform lifecycle/ViewModel owners
+- [ ] Test root and semantics owner listeners
+- [ ] Full key-event modifier payload for AltGraph and lock states
+
+Packaging and platform expansion:
+
 - [ ] Packaging/publishing metadata and documented consumer setup
 - [ ] macOS backend/runtime modules
 - [ ] Windows backend/runtime modules

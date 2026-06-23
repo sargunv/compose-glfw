@@ -10,6 +10,7 @@ public fun glfwApplication(configure: GlfwApplicationScope.() -> Unit) {
 }
 
 public interface GlfwApplicationScope {
+  @Suppress("FunctionName")
   public fun Window(
     title: String,
     size: GlfwWindowSize = GlfwWindowSize(960, 640),

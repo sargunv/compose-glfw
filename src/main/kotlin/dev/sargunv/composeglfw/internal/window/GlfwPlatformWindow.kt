@@ -21,6 +21,7 @@ import org.lwjgl.glfw.GLFW.GLFW_OPENGL_API
 import org.lwjgl.glfw.GLFW.GLFW_POINTING_HAND_CURSOR
 import org.lwjgl.glfw.GLFW.GLFW_RESIZABLE
 import org.lwjgl.glfw.GLFW.GLFW_TRUE
+import org.lwjgl.glfw.GLFW.GLFW_TRANSPARENT_FRAMEBUFFER
 import org.lwjgl.glfw.GLFW.glfwCreateStandardCursor
 import org.lwjgl.glfw.GLFW.glfwCreateWindow
 import org.lwjgl.glfw.GLFW.glfwDefaultWindowHints
@@ -78,6 +79,8 @@ internal class GlfwPlatformWindow(
   val isFocused: Boolean
     get() = glfwGetWindowAttrib(handle, GLFW_FOCUSED) == GLFW_TRUE
 
+  val isTransparent: Boolean = options.transparentFramebuffer
+
   private val standardCursors = mutableMapOf<Int, Long>()
 
   init {
@@ -87,6 +90,7 @@ internal class GlfwPlatformWindow(
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
     glfwWindowHint(GLFW_RESIZABLE, if (options.resizable) GLFW_TRUE else GLFW_FALSE)
+    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, if (options.transparentFramebuffer) GLFW_TRUE else GLFW_FALSE)
 
     handle = glfwCreateWindow(size.width, size.height, title, NULL, NULL)
     check(handle != NULL) { "GLFW window creation failed: ${glfwGetError(null)}" }

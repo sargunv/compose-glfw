@@ -76,9 +76,8 @@ internal class GlfwPlatformContext(
   override val architectureComponentsOwner: PlatformArchitectureComponentsOwner
     get() = fallbackContext.architectureComponentsOwner
 
-  // TODO: Add a window option backed by GLFW_TRANSPARENT_FRAMEBUFFER, then report it here.
   override val isWindowTransparent: Boolean
-    get() = fallbackContext.isWindowTransparent
+    get() = window.isTransparent
 
   // TODO: Revisit when platform views or layer diagnostics need out-of-layout draw bounds.
   override val measureDrawLayerBounds: Boolean
