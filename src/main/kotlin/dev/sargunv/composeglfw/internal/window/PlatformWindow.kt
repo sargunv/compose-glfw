@@ -3,6 +3,7 @@ package dev.sargunv.composeglfw.internal.window
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import dev.sargunv.composeglfw.CursorImagePointerIcon
 import dev.sargunv.composeglfw.WindowOptions
 import dev.sargunv.composeglfw.WindowSize
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
@@ -23,6 +24,7 @@ import org.lwjgl.glfw.GLFW.GLFW_RESIZABLE
 import org.lwjgl.glfw.GLFW.GLFW_SCALE_TO_MONITOR
 import org.lwjgl.glfw.GLFW.GLFW_TRUE
 import org.lwjgl.glfw.GLFW.GLFW_TRANSPARENT_FRAMEBUFFER
+import org.lwjgl.glfw.GLFW.glfwCreateCursor
 import org.lwjgl.glfw.GLFW.glfwCreateStandardCursor
 import org.lwjgl.glfw.GLFW.glfwCreateWindow
 import org.lwjgl.glfw.GLFW.glfwDefaultWindowHints
@@ -42,9 +44,12 @@ import org.lwjgl.glfw.GLFW.glfwSwapBuffers
 import org.lwjgl.glfw.GLFW.glfwSwapInterval
 import org.lwjgl.glfw.GLFW.glfwWindowHint
 import org.lwjgl.glfw.GLFW.glfwWindowShouldClose
+import org.lwjgl.glfw.GLFWImage
 import org.lwjgl.opengl.GL
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.MemoryUtil.memAlloc
+import org.lwjgl.system.MemoryUtil.memFree
 import kotlin.math.roundToInt
 
 internal class PlatformWindow(
@@ -96,6 +101,7 @@ internal class PlatformWindow(
   val isTransparent: Boolean = options.transparentFramebuffer
 
   private val standardCursors = mutableMapOf<Int, Long>()
+  private val imageCursors = mutableMapOf<CursorImagePointerIcon, Long>()
 
   init {
     glfwDefaultWindowHints()
@@ -134,17 +140,7 @@ internal class PlatformWindow(
   }
 
   fun setPointerIcon(pointerIcon: PointerIcon) {
-    val shape = pointerIcon.glfwCursorShape()
-    val cursor =
-      if (shape == null) {
-        NULL
-      } else {
-        standardCursors[shape] ?: glfwCreateStandardCursor(shape).also { cursor ->
-          if (cursor != NULL) {
-            standardCursors[shape] = cursor
-          }
-        }
-      }
+    val cursor = pointerIcon.glfwCursor()
     glfwSetCursor(handle, cursor)
   }
 
@@ -200,8 +196,59 @@ internal class PlatformWindow(
     if (handle != NULL) {
       standardCursors.values.forEach(::glfwDestroyCursor)
       standardCursors.clear()
+      imageCursors.values.forEach(::glfwDestroyCursor)
+      imageCursors.clear()
       glfwDestroyWindow(handle)
       handle = NULL
+    }
+  }
+
+  private fun PointerIcon.glfwCursor(): Long =
+    when (this) {
+      is CursorImagePointerIcon -> imageCursors[this] ?: createImageCursor(this)
+      else -> standardCursor()
+    }
+
+  private fun PointerIcon.standardCursor(): Long {
+    val shape = glfwCursorShape() ?: return NULL
+    return standardCursors[shape] ?: glfwCreateStandardCursor(shape).also { cursor ->
+      if (cursor != NULL) {
+        standardCursors[shape] = cursor
+      }
+    }
+  }
+
+  private fun createImageCursor(pointerIcon: CursorImagePointerIcon): Long {
+    val image = pointerIcon.image
+    val argbPixels = IntArray(image.width * image.height)
+    image.readPixels(argbPixels)
+
+    val rgbaPixels = memAlloc(argbPixels.size * 4)
+    try {
+      argbPixels.forEachIndexed { index, argb ->
+        val offset = index * 4
+        rgbaPixels.put(offset, ((argb shr 16) and 0xff).toByte())
+        rgbaPixels.put(offset + 1, ((argb shr 8) and 0xff).toByte())
+        rgbaPixels.put(offset + 2, (argb and 0xff).toByte())
+        rgbaPixels.put(offset + 3, ((argb ushr 24) and 0xff).toByte())
+      }
+
+      val cursor =
+        MemoryStack.stackPush().use { stack ->
+          val glfwImage =
+            GLFWImage
+              .malloc(stack)
+              .width(image.width)
+              .height(image.height)
+              .pixels(rgbaPixels)
+          glfwCreateCursor(glfwImage, pointerIcon.hotSpot.x, pointerIcon.hotSpot.y)
+        }
+      if (cursor != NULL) {
+        imageCursors[pointerIcon] = cursor
+      }
+      return cursor
+    } finally {
+      memFree(rgbaPixels)
     }
   }
 }

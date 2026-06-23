@@ -11,14 +11,26 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import dev.sargunv.composeglfw.cursorImagePointerIcon
+import dev.sargunv.composeglfw.demo.generated.resources.Res
+import dev.sargunv.composeglfw.demo.generated.resources.custom_cursor
+import org.jetbrains.compose.resources.imageResource
 
 @Composable
 internal fun PointerIconCard(modifier: Modifier = Modifier) {
+  val customCursorImage = imageResource(Res.drawable.custom_cursor)
+  val customPointerIcon =
+    remember(customCursorImage) {
+      cursorImagePointerIcon(customCursorImage, IntOffset(12, 12))
+    }
+
   Card(modifier) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
       Text("Pointer icons", style = MaterialTheme.typography.titleMedium)
@@ -27,6 +39,7 @@ internal fun PointerIconCard(modifier: Modifier = Modifier) {
         PointerIconTarget("Hand", PointerIcon.Hand)
         PointerIconTarget("Text", PointerIcon.Text)
         PointerIconTarget("Crosshair", PointerIcon.Crosshair)
+        PointerIconTarget("Custom", customPointerIcon)
       }
     }
   }

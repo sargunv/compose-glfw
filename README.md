@@ -45,6 +45,7 @@ What works today:
 - [x] Keyboard modifier and lock-state propagation for pointer events
 - [x] GLFW key table audited against Compose desktop key codes
 - [x] Built-in pointer cursor shape updates
+- [x] Custom cursor images
 - [x] Basic committed text input from keyboard layouts
 - [x] System text clipboard through Compose Desktop's clipboard implementation
 - [x] Basic Compose-rendered text selection toolbar
@@ -64,7 +65,6 @@ Application composition and window model:
 
 Straightforward GLFW wiring:
 
-- [ ] Custom cursor images
 - [ ] Drag and drop, including GLFW file drop callbacks
 - [ ] Runtime window attribute updates: title, resizable, enabled/focusable where GLFW supports them
 

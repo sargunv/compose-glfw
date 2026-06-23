@@ -4,11 +4,17 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
   alias(libs.plugins.kotlinMultiplatform)
   alias(libs.plugins.kotlinCompose)
+  alias(libs.plugins.composeMultiplatform)
 }
 
 repositories {
   google()
   mavenCentral()
+}
+
+compose.resources {
+  packageOfResClass = "dev.sargunv.composeglfw.demo.generated.resources"
+  generateResClass = always
 }
 
 val hostOs = System.getProperty("os.name")
@@ -34,6 +40,7 @@ kotlin {
       dependencies {
         implementation(project(":"))
         implementation(libs.composeMaterial3)
+        implementation(compose.components.resources)
         if (hostRuntimeModule != null) {
           runtimeOnly(project(hostRuntimeModule))
         }

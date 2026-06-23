@@ -8,6 +8,7 @@ material3 = "1.11.0-alpha07"
 skiko = "0.144.6"
 
 [plugins]
+composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinCompose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
