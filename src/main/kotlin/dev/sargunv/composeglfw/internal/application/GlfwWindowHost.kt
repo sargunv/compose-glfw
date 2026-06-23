@@ -27,7 +27,7 @@ internal class GlfwWindowHost(
   private var renderRequested = true
   private val systemThemeProvider =
     SystemThemeProvider.create { theme ->
-      uiDispatcher.dispatch(EmptyCoroutineContext, Runnable {
+      uiDispatcher.dispatch(EmptyCoroutineContext,  {
         platformContext.updateSystemTheme(theme)
         requestRender()
       })
@@ -42,6 +42,7 @@ internal class GlfwWindowHost(
       scope = scope,
       content = spec.content,
       invalidate = ::requestRender,
+      checkThread = { operation -> uiDispatcher.checkOwnerThread(operation) },
     )
   private val input =
     GlfwInputDispatcher(

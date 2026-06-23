@@ -30,6 +30,7 @@ internal class ComposeWindowScene(
   scope: GlfwWindowScope,
   content: @Composable GlfwWindowScope.() -> Unit,
   invalidate: () -> Unit,
+  private val checkThread: (String) -> Unit,
 ) : AutoCloseable {
   private val scene: ComposeScene =
     CanvasLayersComposeScene(
@@ -43,6 +44,7 @@ internal class ComposeWindowScene(
     )
 
   init {
+    checkSceneThread("ComposeScene setContent")
     scene.setContent {
       CompositionLocalProvider(LocalSystemTheme provides platformContext.systemTheme) {
         scope.content()
@@ -52,23 +54,32 @@ internal class ComposeWindowScene(
   }
 
   val hasInvalidations: Boolean
-    get() = scene.hasInvalidations()
+    get() {
+      checkSceneThread("ComposeScene invalidation check")
+      return scene.hasInvalidations()
+    }
 
   fun render(canvas: Canvas, frameTimeNanos: Long) {
+    checkSceneThread("ComposeScene render")
     scene.render(canvas, frameTimeNanos)
   }
 
   fun resize(size: IntSize) {
+    checkSceneThread("ComposeScene resize")
     scene.size = size
   }
 
   fun updateDensity(density: Float) {
+    checkSceneThread("ComposeScene density update")
     if (scene.density.density != density) {
       scene.density = Density(density)
     }
   }
 
-  fun sendKeyEvent(event: KeyEvent): Boolean = scene.sendKeyEvent(event)
+  fun sendKeyEvent(event: KeyEvent): Boolean {
+    checkSceneThread("ComposeScene key event")
+    return scene.sendKeyEvent(event)
+  }
 
   fun sendPointerEvent(
     event: PointerEventType,
@@ -79,6 +90,7 @@ internal class ComposeWindowScene(
     buttons: PointerButtons,
     keyboardModifiers: PointerKeyboardModifiers,
   ) {
+    checkSceneThread("ComposeScene pointer event")
     scene.sendPointerEvent(
       eventType = event,
       position = position,
@@ -93,6 +105,15 @@ internal class ComposeWindowScene(
   }
 
   override fun close() {
+    checkSceneThread("ComposeScene close")
     scene.close()
+  }
+
+  private fun checkSceneThread(operation: String) {
+    // TODO(CMP-10289): Compose UI 1.11.x starts GlobalSnapshotManager on Skiko's Swing
+    // MainUIDispatcher instead of this scene's coroutineContext. Keep this local guard as a
+    // diagnostic until snapshot apply notifications are dispatched per scene context.
+    // https://youtrack.jetbrains.com/issue/CMP-10289
+    checkThread(operation)
   }
 }
