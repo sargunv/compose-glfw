@@ -5,7 +5,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import dev.sargunv.composeglfw.GlfwWindowOptions
 import dev.sargunv.composeglfw.GlfwWindowSize
-import dev.sargunv.composeglfw.internal.platform.glfwDisplayName
 import dev.sargunv.composeglfw.internal.platform.glfwPlatform
 import org.lwjgl.glfw.GLFW.GLFW_CLIENT_API
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_CREATION_API
@@ -32,7 +31,6 @@ import org.lwjgl.glfw.GLFW.glfwDestroyWindow
 import org.lwjgl.glfw.GLFW.glfwFocusWindow
 import org.lwjgl.glfw.GLFW.glfwGetError
 import org.lwjgl.glfw.GLFW.glfwGetFramebufferSize
-import org.lwjgl.glfw.GLFW.glfwGetVersionString
 import org.lwjgl.glfw.GLFW.glfwGetWindowContentScale
 import org.lwjgl.glfw.GLFW.glfwGetWindowAttrib
 import org.lwjgl.glfw.GLFW.glfwGetWindowPos
@@ -110,10 +108,6 @@ internal class GlfwPlatformWindow(
     readWindowSize()
     readFramebufferSize()
     readContentScale()
-
-    println("GLFW ${glfwGetVersionString()}")
-    println("GLFW platform: $platform")
-    println("GLFW display: ${platform.glfwDisplayName() ?: "<unset>"}")
   }
 
   fun makeCurrent() {

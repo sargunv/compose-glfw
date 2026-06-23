@@ -23,12 +23,8 @@ import org.lwjgl.glfw.GLFW.nglfwGetProcAddress
 import org.lwjgl.glfw.GLFWNativeEGL.glfwGetEGLConfig
 import org.lwjgl.glfw.GLFWNativeEGL.glfwGetEGLContext
 import org.lwjgl.glfw.GLFWNativeEGL.glfwGetEGLDisplay
-import org.lwjgl.opengl.GL11.GL_RENDERER
 import org.lwjgl.opengl.GL11.GL_STENCIL_BITS
-import org.lwjgl.opengl.GL11.GL_VENDOR
-import org.lwjgl.opengl.GL11.GL_VERSION
 import org.lwjgl.opengl.GL11.glGetInteger
-import org.lwjgl.opengl.GL11.glGetString
 import org.lwjgl.opengl.GL13.GL_SAMPLES
 import org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_BINDING
 import org.lwjgl.system.APIUtil.apiCreateCIF
@@ -51,9 +47,6 @@ internal class OpenGlRenderBackend(private val window: GlfwPlatformWindow) : Ren
 
   init {
     window.makeCurrent()
-    println("OpenGL vendor: ${glGetString(GL_VENDOR)}")
-    println("OpenGL renderer: ${glGetString(GL_RENDERER)}")
-    println("OpenGL version: ${glGetString(GL_VERSION)}")
     directContext = createDirectContext()
     skiaTarget = createSkiaTarget(window.framebufferSize)
     interop =
@@ -132,7 +125,6 @@ internal class OpenGlRenderBackend(private val window: GlfwPlatformWindow) : Ren
       val assembledInterface = GLAssembledInterface.createFromNativePointers(NULL, getProcAddress.address())
       glProcAddressCallback = getProcAddress
       glInterface = assembledInterface
-      println("Skia default GL context creation failed; using GLFW GL proc loader: ${error.message}")
       DirectContext.makeGLWithInterface(assembledInterface)
     }
 

@@ -4,6 +4,7 @@ package dev.sargunv.composeglfw.internal.platform.systemtheme
 
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.SystemTheme
+import dev.sargunv.composeglfw.internal.platform.linux.createLinuxSystemThemeProvider
 
 internal interface SystemThemeProvider : AutoCloseable {
   val systemTheme: SystemTheme
