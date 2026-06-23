@@ -5,4 +5,4 @@ java = "zulu-25"
 run = "./gradlew build"
 
 [tasks.run]
-run = "./gradlew run"
+run = "./gradlew :compose-glfw-demo:run"

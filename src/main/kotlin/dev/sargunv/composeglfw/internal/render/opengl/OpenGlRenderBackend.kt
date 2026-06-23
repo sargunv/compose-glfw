@@ -1,10 +1,10 @@
 package dev.sargunv.composeglfw.internal.render.opengl
 
 import androidx.compose.ui.graphics.asComposeCanvas
+import androidx.compose.ui.unit.IntSize
 import dev.sargunv.composeglfw.GlfwOpenGlInterop
 import dev.sargunv.composeglfw.internal.render.RenderBackend
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
-import dev.sargunv.composeglfw.internal.window.FramebufferSize
 import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
 import java.lang.invoke.MethodHandles
 import org.jetbrains.skia.BackendRenderTarget
@@ -68,7 +68,7 @@ internal class OpenGlRenderBackend(private val window: GlfwPlatformWindow) : Ren
       )
   }
 
-  override fun resize(size: FramebufferSize) {
+  override fun resize(size: IntSize) {
     val target = skiaTarget
     if (target != null && target.width == size.width && target.height == size.height) {
       return
@@ -99,7 +99,7 @@ internal class OpenGlRenderBackend(private val window: GlfwPlatformWindow) : Ren
     glProcAddressCallback = null
   }
 
-  private fun createSkiaTarget(size: FramebufferSize): SkiaTarget {
+  private fun createSkiaTarget(size: IntSize): SkiaTarget {
     val renderTarget =
       BackendRenderTarget.makeGL(
         size.width,

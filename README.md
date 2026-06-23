@@ -2,7 +2,7 @@
 
 Compose GLFW is a JVM Compose host that runs Compose UI in a GLFW window instead of the default AWT/Swing desktop host.
 
-The current implementation is still a proof-bearing prototype, but the project shape should move toward a small library: an app brings its own `@Composable fun App()` and runs it inside our host.
+The current implementation is still early, but the intended library shape is in place: an app brings its own `@Composable fun App()` and runs it inside our host.
 
 ```kotlin
 fun main() = glfwApplication {
@@ -27,21 +27,24 @@ What works today:
 - [x] Resize handling
 - [x] Content scale/density handling
 - [x] Mouse move, press, and release
+- [x] Public `glfwApplication { Window { ... } }` API
+- [x] Per-window GPU interop hook for the current OpenGL context
 
 Known gaps:
 
-- [ ] Public `glfwApplication { Window { ... } }` API
-- [ ] Move demo UI out of the library artifact
-- [ ] Multi-window lifecycle
+- [ ] Production-ready application lifecycle semantics
+- [ ] Multi-window lifecycle beyond the current static startup window list
 - [ ] Keyboard events and key mapping
 - [ ] Text input and IME
 - [ ] Scroll, hover, cursor icons
 - [ ] Clipboard
-- [ ] Window state: position, minimize, maximize, fullscreen, close requests
+- [ ] Window state APIs: position, minimize, maximize, fullscreen, close requests
+- [ ] Window decorations and styling controls
 - [ ] Popups, tooltips, and layered windows
 - [ ] Drag and drop
 - [ ] Menus, tray, dialogs, and file pickers
 - [ ] Accessibility
+- [ ] Packaging/publishing metadata and documented consumer setup
 - [ ] macOS backend/runtime modules
 - [ ] Windows backend/runtime modules
 

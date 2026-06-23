@@ -1,5 +1,6 @@
 package dev.sargunv.composeglfw.internal.window
 
+import androidx.compose.ui.unit.IntSize
 import dev.sargunv.composeglfw.GlfwWindowOptions
 import dev.sargunv.composeglfw.GlfwWindowSize
 import dev.sargunv.composeglfw.internal.platform.glfwPlatformName
@@ -37,10 +38,10 @@ internal class GlfwPlatformWindow(
   var handle: Long = NULL
     private set
 
-  var framebufferSize: FramebufferSize = FramebufferSize(size.width, size.height)
+  var framebufferSize: IntSize = IntSize(size.width, size.height)
     private set
 
-  var windowSize: WindowPixelSize = WindowPixelSize(size.width, size.height)
+  var windowSize: IntSize = IntSize(size.width, size.height)
     private set
 
   var contentScale: Float = 1f
@@ -90,7 +91,7 @@ internal class GlfwPlatformWindow(
       val width = stack.mallocInt(1)
       val height = stack.mallocInt(1)
       glfwGetFramebufferSize(handle, width, height)
-      framebufferSize = FramebufferSize(width[0].coerceAtLeast(0), height[0].coerceAtLeast(0))
+      framebufferSize = IntSize(width[0].coerceAtLeast(0), height[0].coerceAtLeast(0))
     }
   }
 
@@ -99,7 +100,7 @@ internal class GlfwPlatformWindow(
       val width = stack.mallocInt(1)
       val height = stack.mallocInt(1)
       glfwGetWindowSize(handle, width, height)
-      windowSize = WindowPixelSize(width[0].coerceAtLeast(1), height[0].coerceAtLeast(1))
+      windowSize = IntSize(width[0].coerceAtLeast(1), height[0].coerceAtLeast(1))
     }
   }
 

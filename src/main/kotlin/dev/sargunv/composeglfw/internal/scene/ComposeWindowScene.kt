@@ -10,12 +10,11 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import dev.sargunv.composeglfw.GlfwWindowScope
-import dev.sargunv.composeglfw.internal.window.FramebufferSize
 import kotlin.coroutines.EmptyCoroutineContext
 
 internal class ComposeWindowScene(
   initialDensity: Float,
-  initialSize: FramebufferSize,
+  initialSize: IntSize,
   private val scope: GlfwWindowScope,
   private val content: @Composable GlfwWindowScope.() -> Unit,
   invalidate: () -> Unit,
@@ -24,7 +23,7 @@ internal class ComposeWindowScene(
     CanvasLayersComposeScene(
       density = Density(initialDensity),
       layoutDirection = LayoutDirection.Ltr,
-      size = IntSize(initialSize.width, initialSize.height),
+      size = initialSize,
       coroutineContext = EmptyCoroutineContext,
       invalidate = invalidate,
     )
@@ -40,8 +39,8 @@ internal class ComposeWindowScene(
     scene.render(canvas, frameTimeNanos)
   }
 
-  fun resize(size: FramebufferSize) {
-    scene.size = IntSize(size.width, size.height)
+  fun resize(size: IntSize) {
+    scene.size = size
   }
 
   fun updateDensity(density: Float) {
