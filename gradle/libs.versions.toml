@@ -2,19 +2,23 @@
 compose = "1.11.1"
 androidxLifecycle = "2.9.4"
 dbusJava = "5.2.0"
+dokka = "2.2.0"
 javaRelease = "24"
 kotlin = "2.4.0"
 lifecycle = "2.9.6"
 lwjgl = "3.4.1"
 material3 = "1.11.0-alpha07"
+mavenPublish = "0.37.0"
 navigationEvent = "1.0.1"
 savedState = "1.4.0"
 skiko = "0.144.6"
 
 [plugins]
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinCompose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
 
 [libraries]
 composeFoundation = { module = "org.jetbrains.compose.foundation:foundation-desktop", version.ref = "compose" }

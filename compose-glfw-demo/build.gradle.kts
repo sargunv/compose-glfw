@@ -12,6 +12,8 @@ repositories {
   mavenCentral()
 }
 
+version = providers.gradleProperty("composeGlfwVersion").getOrElse("0.0.0-SNAPSHOT")
+
 compose.resources {
   packageOfResClass = "dev.sargunv.composeglfw.demo.generated.resources"
   generateResClass = always

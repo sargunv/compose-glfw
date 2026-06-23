@@ -16,6 +16,8 @@ of the default AWT/Swing desktop host.
 - `mise run check`: run repository checks.
 - `mise run fix`: apply automatic formatting fixes.
 - `mise run build`: build all Gradle modules.
+- `mise run docs`: generate Dokka API documentation.
+- `mise run publish-local`: publish artifacts to the local Maven repository.
 - `mise run run`: run the demo application.
 - `mise run run-wayland`: run the demo with the Wayland GLFW backend.
 - `mise run run-x11`: run the demo with the X11 GLFW backend.

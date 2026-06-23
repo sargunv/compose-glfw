@@ -3,7 +3,15 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
   alias(libs.plugins.kotlinMultiplatform)
   alias(libs.plugins.kotlinCompose)
+  alias(libs.plugins.dokka)
+  alias(libs.plugins.mavenPublish)
 }
+
+group = "dev.sargunv"
+
+version = providers.gradleProperty("composeGlfwVersion").getOrElse("0.0.0-SNAPSHOT")
+
+val sourceLinkRef = if (version.toString().endsWith("SNAPSHOT")) "main" else "v$version"
 
 repositories {
   google()
@@ -36,5 +44,24 @@ kotlin {
         implementation(libs.lwjglOpenGl)
       }
     }
+  }
+}
+
+dokka {
+  moduleName = "Compose GLFW"
+  dokkaSourceSets.configureEach {
+    includes.from("MODULE.md")
+    sourceLink {
+      remoteUrl("https://github.com/sargunv/compose-glfw/tree/$sourceLinkRef/")
+      localDirectory.set(rootDir)
+    }
+  }
+}
+
+mavenPublishing {
+  pom {
+    name = "Compose GLFW"
+    description = "JVM Compose host APIs for running Compose UI in GLFW windows."
+    url = "https://github.com/sargunv/compose-glfw"
   }
 }

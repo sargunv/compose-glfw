@@ -6,6 +6,7 @@ lockfile = true
 
 [tools]
 "core:java" = "zulu-25"
+"core:node" = "24.17.0"
 "aqua:jdx/hk" = "1.48.0"
 "aqua:dprint/dprint" = "0.54.0"
 "aqua:facebook/ktfmt" = "0.63"
@@ -20,6 +21,16 @@ run = "hk fix --all"
 
 [tasks.build]
 run = "./gradlew build"
+
+[tasks.docs]
+run = "./gradlew dokkaGenerate"
+
+[tasks.publish-local]
+run = "./gradlew publishToMavenLocal -PsignAllPublications=false"
+
+[tasks.actions-up]
+description = "Update and pin GitHub Actions steps."
+run = "npx -y actions-up -y"
 
 [tasks."ci:lint"]
 run = [
