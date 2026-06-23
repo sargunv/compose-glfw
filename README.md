@@ -9,11 +9,11 @@ fractional scaling isn't supported, and the GPU context isn't readily available
 for advanced rendering. Here I fix all of that with a more robust windowing
 toolkit.
 
-Note that this project uses internal Compose APIs and may break with future
-Compose versions; pay attention to the Compose version listed in the release
-notes.
-
 ## Usage
+
+> [!WARNING]
+> This project uses internal Compose APIs and may break with future Compose
+> versions; pay attention to the Compose version listed in the release notes.
 
 Add the core library and the runtime modules you want to ship:
 
