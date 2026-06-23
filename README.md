@@ -48,8 +48,6 @@ fun App() {
 }
 ```
 
-## Window Options
-
 Configure the GLFW window with `WindowOptions`:
 
 ```kotlin
@@ -67,8 +65,6 @@ Window(
 }
 ```
 
-## Custom Cursors
-
 Use `cursorImagePointerIcon` with the `pointerHoverIcon` modifier to use a
 custom `ImageBitmap` cursor:
 
@@ -77,8 +73,6 @@ Modifier.pointerHoverIcon(
   cursorImagePointerIcon(image, hotSpot),
 )
 ```
-
-## File Drops
 
 Use the `fileDropTarget` modifier to receive file drops delivered by the host:
 
@@ -89,8 +83,6 @@ Modifier.fileDropTarget { files ->
   }
 }
 ```
-
-## GPU Interop
 
 Advanced renderers can access the host GPU context from the `Window` content
 scope:
@@ -103,22 +95,17 @@ Window(title = "Example") {
 }
 ```
 
-`OpenGlInterop` exposes the Skia `DirectContext`, EGL handles, GL proc address
-lookup, and a `makeCurrent` callback. This is intended for integrations that
-need to share the host OpenGL context, such as game, map, or video renderers
-that produce textures sampled into a Canvas.
-
-## Display Server Selection (Linux)
-
-By default, the host prefers Wayland when `WAYLAND_DISPLAY` is set. You can
-force the GLFW display server backend with:
+On Linux, by default, the host prefers Wayland when `WAYLAND_DISPLAY` is set.
+You can force the GLFW display server backend with:
 
 ```sh
 -Dcompose.glfw.platform=wayland
 -Dcompose.glfw.platform=x11
 ```
 
-## Supported
+## Status
+
+The following features are supported:
 
 - Single window hosting for Compose UI on Linux with Wayland and X11
 - Fractional scaling
@@ -130,7 +117,7 @@ force the GLFW display server backend with:
 - Light/dark theme detection
 - Per-window GPU interop access for advanced OpenGL integrations
 
-## Partially supported
+The following features are partially supported:
 
 - Compose drag-and-drop targets
   - Only file drops are supported, and only the final dropped file list event.
@@ -143,7 +130,7 @@ force the GLFW display server backend with:
     accented characters before committing them, choosing characters from CJK
     input method popups, or canceling an in-progress composition.
 
-## Not yet supported
+The following features are not yet supported:
 
 - Windows and macOS
 - Dynamic multi-window composition
