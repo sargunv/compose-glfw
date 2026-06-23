@@ -23,6 +23,9 @@ kotlin {
       dependencies {
         api(libs.composeFoundation)
         api(libs.composeUi)
+        implementation(project.dependencies.platform(libs.dbusJavaBom))
+        implementation(libs.dbusJavaCore)
+        implementation(libs.dbusJavaTransportNativeUnixSocket)
         api(project.dependencies.platform(libs.lwjglBom))
         implementation(libs.lwjgl)
         implementation(libs.lwjglGlfw)

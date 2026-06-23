@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.InternalComposeUiApi
+import androidx.compose.ui.SystemTheme
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.InputModeManager
@@ -36,6 +37,8 @@ internal class GlfwPlatformContext(
   val textInput: GlfwTextInputService = GlfwTextInputService()
   private val glfwTextToolbar = GlfwTextToolbar(textToolbarContent)
   private val mutableWindowInfo = GlfwComposeWindowInfo()
+  var systemTheme: SystemTheme by mutableStateOf(SystemTheme.Unknown)
+    private set
   override val windowInfo: WindowInfo = mutableWindowInfo
 
   override suspend fun startInputMethod(request: PlatformTextInputMethodRequest): Nothing =
@@ -81,7 +84,7 @@ internal class GlfwPlatformContext(
   override val measureDrawLayerBounds: Boolean
     get() = fallbackContext.measureDrawLayerBounds
 
-  // TODO: GLFW does not provide desktop gesture timings or touch slop; choose explicit host defaults.
+  // GLFW does not expose host gesture timings or slop; Compose's Skiko defaults are appropriate here.
   override val viewConfiguration: ViewConfiguration
     get() = fallbackContext.viewConfiguration
 
@@ -105,7 +108,8 @@ internal class GlfwPlatformContext(
   override val dragAndDropManager: PlatformDragAndDropManager
     get() = fallbackContext.dragAndDropManager
 
-  // TODO: GLFW does not expose Wayland decoration/safe-area insets in Compose's window-inset model.
+  // Desktop window content is already the safe drawable area: OS title bars and borders live
+  // outside the GLFW content area.
   override val windowInsets: PlatformWindowInsets
     get() = fallbackContext.windowInsets
 
@@ -146,6 +150,10 @@ internal class GlfwPlatformContext(
 
   fun updateFocus(focused: Boolean) {
     mutableWindowInfo.isWindowFocused = focused
+  }
+
+  fun updateSystemTheme(theme: SystemTheme) {
+    systemTheme = theme
   }
 
   @Composable

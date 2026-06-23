@@ -1,6 +1,7 @@
 package dev.sargunv.composeglfw.demo
 
 import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,7 +25,8 @@ import dev.sargunv.composeglfw.GlfwWindowInfo
 
 @Composable
 internal fun ComposeGlfwApp(windowInfo: GlfwWindowInfo) {
-  MaterialTheme {
+  val darkTheme = isSystemInDarkTheme()
+  MaterialTheme(colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()) {
     Surface(Modifier.fillMaxSize()) {
       val scrollState = rememberScrollState()
       Box(Modifier.fillMaxSize()) {
@@ -31,7 +35,7 @@ internal fun ComposeGlfwApp(windowInfo: GlfwWindowInfo) {
           verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
           DemoHeader(windowInfo)
-          WindowStateCard(windowInfo, Modifier.fillMaxWidth())
+          WindowStateCard(windowInfo, darkTheme, Modifier.fillMaxWidth())
           PointerInputCard(Modifier.fillMaxWidth())
           PointerIconCard(Modifier.fillMaxWidth())
           InputEventsCard(Modifier.fillMaxWidth())

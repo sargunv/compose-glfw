@@ -1,5 +1,6 @@
 [versions]
 compose = "1.11.1"
+dbusJava = "5.2.0"
 javaRelease = "24"
 kotlin = "2.4.0"
 lwjgl = "3.4.1"
@@ -14,6 +15,9 @@ kotlinCompose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kot
 composeFoundation = { module = "org.jetbrains.compose.foundation:foundation-desktop", version.ref = "compose" }
 composeMaterial3 = { module = "org.jetbrains.compose.material3:material3-desktop", version.ref = "material3" }
 composeUi = { module = "org.jetbrains.compose.ui:ui-desktop", version.ref = "compose" }
+dbusJavaBom = { module = "com.github.hypfvieh:dbus-java-bom", version.ref = "dbusJava" }
+dbusJavaCore = { module = "com.github.hypfvieh:dbus-java-core" }
+dbusJavaTransportNativeUnixSocket = { module = "com.github.hypfvieh:dbus-java-transport-native-unixsocket" }
 lwjglBom = { module = "org.lwjgl:lwjgl-bom", version.ref = "lwjgl" }
 lwjgl = { module = "org.lwjgl:lwjgl" }
 lwjglGlfw = { module = "org.lwjgl:lwjgl-glfw" }

@@ -30,6 +30,7 @@ What works today:
 - [x] Compose `WindowInfo` focus, size, and keyboard modifier state
 - [x] Compose local/window coordinate conversion for framebuffer-scaled windows
 - [x] Basic popup/dropdown positioning through `PlatformContext`
+- [x] Linux system light/dark theme detection through XDG Desktop Portal settings
 - [x] Window focus requests from Compose
 - [x] Mouse move, press, and release
 - [x] Scroll wheel and trackpad events
@@ -38,7 +39,9 @@ What works today:
 - [x] GLFW key table audited against Compose desktop key codes
 - [x] Built-in pointer cursor shape updates
 - [x] Basic committed text input from keyboard layouts
+- [x] System text clipboard through Compose Desktop's clipboard implementation
 - [x] Basic Compose-rendered text selection toolbar
+- [x] Per-window text selection toolbar customization
 - [x] Public `glfwApplication { Window { ... } }` API
 - [x] Per-window GPU interop hook for the current OpenGL context
 
@@ -46,21 +49,20 @@ Known gaps:
 
 - [ ] Production-ready application lifecycle semantics
 - [ ] Multi-window lifecycle beyond the current static startup window list
+- [ ] X11 platform support
 - [ ] Full key-event modifier payload for AltGraph and lock states
 - [ ] IME/preedit integration: composition text, candidate positioning, and commit/cancel lifecycle
 - [ ] Custom cursor images
-- [ ] Clipboard
 - [ ] Drag and drop, including GLFW file drop callbacks
 - [ ] Transparent framebuffer/window option
 - [ ] Platform lifecycle/ViewModel owners
 - [ ] Test root and semantics owner listeners
 - [ ] Screen reader and accessibility integration
-- [ ] Window insets
 - [ ] Keep-screen-on and frame-rate voting
 - [ ] Window state APIs: position, minimize, maximize, fullscreen, close requests
 - [ ] Window decorations and styling controls
 - [ ] Tooltips and layered windows
-- [ ] Menus, tray, dialogs, and file pickers
+- [ ] Native menus, tray, dialogs, and file pickers
 - [ ] Packaging/publishing metadata and documented consumer setup
 - [ ] macOS backend/runtime modules
 - [ ] Windows backend/runtime modules

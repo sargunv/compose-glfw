@@ -5,6 +5,7 @@ import dev.sargunv.composeglfw.GlfwWindowInfo
 import dev.sargunv.composeglfw.GlfwWindowSpec
 import dev.sargunv.composeglfw.internal.input.GlfwInputDispatcher
 import dev.sargunv.composeglfw.internal.platform.GlfwPlatformContext
+import dev.sargunv.composeglfw.internal.platform.systemtheme.SystemThemeProvider
 import dev.sargunv.composeglfw.internal.platform.glfwPlatform
 import dev.sargunv.composeglfw.internal.render.opengl.OpenGlRenderBackend
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
@@ -12,6 +13,7 @@ import dev.sargunv.composeglfw.internal.scene.GlfwWindowScopeImpl
 import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
 import org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback
+import kotlin.coroutines.EmptyCoroutineContext
 
 internal class GlfwWindowHost(
   spec: GlfwWindowSpec,
@@ -21,6 +23,14 @@ internal class GlfwWindowHost(
   private val renderBackend = OpenGlRenderBackend(window)
   private val platformContext = GlfwPlatformContext(window, spec.options.textToolbar)
   private val scope = GlfwWindowScopeImpl(currentInfo(), renderBackend.interop)
+  private var renderRequested = true
+  private val systemThemeProvider =
+    SystemThemeProvider.create { theme ->
+      uiDispatcher.dispatch(EmptyCoroutineContext, Runnable {
+        platformContext.updateSystemTheme(theme)
+        requestRender()
+      })
+    }.also { platformContext.updateSystemTheme(it.systemTheme) }
   private val scene =
     ComposeWindowScene(
       initialDensity = window.contentScale,
@@ -42,7 +52,6 @@ internal class GlfwWindowHost(
     )
   private var lastFramebufferSize = window.framebufferSize
   private var lastContentScale = window.contentScale
-  private var renderRequested = true
 
   val shouldClose: Boolean
     get() = window.shouldClose
@@ -76,6 +85,7 @@ internal class GlfwWindowHost(
   override fun close() {
     glfwSetFramebufferSizeCallback(window.handle, null)?.free()
     glfwSetWindowFocusCallback(window.handle, null)?.free()
+    systemThemeProvider.close()
     input.close()
     scene.close()
     renderBackend.close()

@@ -3,6 +3,8 @@
 package dev.sargunv.composeglfw.internal.scene
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.LocalSystemTheme
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.input.key.KeyEvent
@@ -42,8 +44,10 @@ internal class ComposeWindowScene(
 
   init {
     scene.setContent {
-      scope.content()
-      platformContext.TextToolbarContent()
+      CompositionLocalProvider(LocalSystemTheme provides platformContext.systemTheme) {
+        scope.content()
+        platformContext.TextToolbarContent()
+      }
     }
   }
 

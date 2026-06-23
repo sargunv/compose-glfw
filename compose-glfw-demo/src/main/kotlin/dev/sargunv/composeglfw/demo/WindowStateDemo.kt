@@ -31,7 +31,11 @@ import dev.sargunv.composeglfw.GlfwWindowInfo
 import kotlin.math.roundToInt
 
 @Composable
-internal fun WindowStateCard(windowInfo: GlfwWindowInfo, modifier: Modifier = Modifier) {
+internal fun WindowStateCard(
+  windowInfo: GlfwWindowInfo,
+  darkTheme: Boolean,
+  modifier: Modifier = Modifier,
+) {
   val composeWindowInfo = LocalWindowInfo.current
   val framebufferScaleX = windowInfo.framebufferWidth.toFloat() / windowInfo.windowWidth
   val framebufferScaleY = windowInfo.framebufferHeight.toFloat() / windowInfo.windowHeight
@@ -45,6 +49,7 @@ internal fun WindowStateCard(windowInfo: GlfwWindowInfo, modifier: Modifier = Mo
         StatusValue("Renderer", windowInfo.renderBackend.toString())
         StatusValue("Display", windowInfo.displayName ?: "<unset>")
         StatusValue("Focus", if (composeWindowInfo.isWindowFocused) "Focused" else "Unfocused")
+        StatusValue("Theme", if (darkTheme) "Dark" else "Light")
       }
 
       Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
