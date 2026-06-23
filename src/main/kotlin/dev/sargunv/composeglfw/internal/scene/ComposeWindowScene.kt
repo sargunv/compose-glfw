@@ -4,7 +4,10 @@ package dev.sargunv.composeglfw.internal.scene
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.LocalSystemTheme
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTransferAction
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.input.key.KeyEvent
@@ -18,8 +21,10 @@ import androidx.compose.ui.scene.ComposeScene
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
+import dev.sargunv.composeglfw.DroppedFiles
 import dev.sargunv.composeglfw.HostWindowScope
 import dev.sargunv.composeglfw.internal.platform.HostPlatformContext
+import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
 
 internal class ComposeWindowScene(
@@ -102,6 +107,32 @@ internal class ComposeWindowScene(
       nativeEvent = null,
       button = button,
     )
+  }
+
+  @OptIn(ExperimentalComposeUiApi::class)
+  fun sendFileDrop(
+    position: Offset,
+    paths: List<Path>,
+  ): Boolean {
+    checkSceneThread("ComposeScene file drop")
+    val event =
+      DragAndDropEvent(
+        action = DragAndDropTransferAction.Copy,
+        nativeEvent = DroppedFiles(paths),
+        positionInRootImpl = position,
+      )
+    val root = scene.rootDragAndDropNode
+    val accepted = root.acceptDragAndDropTransfer(event)
+    if (accepted) {
+      root.onStarted(event)
+      root.onEntered(event)
+      root.onMoved(event)
+      val dropped = root.onDrop(event)
+      root.onEnded(event)
+      return dropped
+    }
+    root.onEnded(event)
+    return false
   }
 
   override fun close() {

@@ -35,9 +35,14 @@ import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 import org.lwjgl.glfw.GLFW.GLFW_REPEAT
 import org.lwjgl.glfw.GLFW.glfwSetCharCallback
 import org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback
+import org.lwjgl.glfw.GLFW.glfwSetDropCallback
 import org.lwjgl.glfw.GLFW.glfwSetKeyCallback
 import org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback
 import org.lwjgl.glfw.GLFW.glfwSetScrollCallback
+import org.lwjgl.glfw.GLFW.glfwGetCursorPos
+import org.lwjgl.glfw.GLFWDropCallback
+import org.lwjgl.system.MemoryStack
+import java.nio.file.Path
 
 // Compose's desktop scroll config normally sees AWT's scrollAmount, commonly 3 lines per wheel step.
 // GLFW gives unit offsets without that metadata, so apply the same baseline before forwarding.
@@ -90,6 +95,19 @@ internal class InputDispatcher(
         requestRender()
       }
     }
+    // GLFW currently exposes only the final file-drop callback, not a full drag session with
+    // enter/move/action/drop events, and current Wayland stacks may not deliver this callback.
+    // Full drag-and-drop parity is blocked upstream:
+    // https://github.com/glfw/glfw/issues/1898
+    glfwSetDropCallback(window.handle) { _, count, names ->
+      readMousePosition()
+      val paths =
+        List(count) { index ->
+          Path.of(GLFWDropCallback.getName(names, index))
+        }
+      scene.sendFileDrop(lastMouse, paths)
+      requestRender()
+    }
   }
 
   override fun close() {
@@ -98,6 +116,7 @@ internal class InputDispatcher(
     glfwSetScrollCallback(window.handle, null)?.free()
     glfwSetKeyCallback(window.handle, null)?.free()
     glfwSetCharCallback(window.handle, null)?.free()
+    glfwSetDropCallback(window.handle, null)?.free()
   }
 
   private fun updateMousePosition(x: Double, y: Double) {
@@ -109,6 +128,15 @@ internal class InputDispatcher(
         (x * framebuffer.width / windowSize.width).toFloat(),
         (y * framebuffer.height / windowSize.height).toFloat(),
       )
+  }
+
+  private fun readMousePosition() {
+    MemoryStack.stackPush().use { stack ->
+      val x = stack.mallocDouble(1)
+      val y = stack.mallocDouble(1)
+      glfwGetCursorPos(window.handle, x, y)
+      updateMousePosition(x[0], y[0])
+    }
   }
 
   private fun sendPointer(

@@ -46,6 +46,7 @@ What works today:
 - [x] GLFW key table audited against Compose desktop key codes
 - [x] Built-in pointer cursor shape updates
 - [x] Custom cursor images
+- [x] GLFW file drop callbacks into Compose drag-and-drop targets on X11
 - [x] Basic committed text input from keyboard layouts
 - [x] System text clipboard through Compose Desktop's clipboard implementation
 - [x] Basic Compose-rendered text selection toolbar
@@ -60,16 +61,14 @@ Application composition and window model:
 - [ ] Compose-style `glfwApplication { Window(...) }` application composition, instead of the current static startup window list
 - [ ] Dynamic multi-window lifecycle: windows created and disposed as application composition changes
 - [ ] `WindowState` parity with Compose Desktop `WindowState`: position, size, minimized, maximized, fullscreen
+- [ ] Runtime window attribute updates from composition state: title, resizable, enabled/focusable where GLFW supports them
 - [ ] Close-request flow matching Compose Desktop: `onCloseRequest` lets the app decide whether to close one window or exit
 - [ ] Production-ready application lifecycle semantics
 
-Straightforward GLFW wiring:
-
-- [ ] Drag and drop, including GLFW file drop callbacks
-- [ ] Runtime window attribute updates: title, resizable, enabled/focusable where GLFW supports them
-
 OS/platform API wiring:
 
+- [ ] Wayland file drops through GLFW
+- [ ] Full native drag-and-drop parity beyond GLFW file drop callbacks: enter/move/action events, non-file payloads, and outgoing drags
 - [ ] IME/preedit integration: composition text, candidate positioning, and commit/cancel lifecycle
 - [ ] Screen reader and accessibility integration
 - [ ] Keep-screen-on and frame-rate voting
