@@ -60,7 +60,7 @@ tasks.withType<JavaCompile>().configureEach {
 tasks.register<JavaExec>("run") {
   group = "application"
   description = "Runs the local GLFW Compose demo."
-  mainClass = "dev.sargunv.composeglfw.MainKt"
+  mainClass = "dev.sargunv.composeglfw.demo.MainKt"
   classpath = sourceSets.main.get().output + demoRuntimeOnly
   jvmArgs("--enable-native-access=ALL-UNNAMED")
 }

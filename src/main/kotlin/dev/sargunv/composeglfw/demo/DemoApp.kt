@@ -1,4 +1,4 @@
-package dev.sargunv.composeglfw
+package dev.sargunv.composeglfw.demo
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -38,10 +38,13 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.sargunv.composeglfw.GlfwPlatform
+import dev.sargunv.composeglfw.GlfwRenderBackend
+import dev.sargunv.composeglfw.GlfwWindowInfo
 import kotlin.math.sin
 
 @Composable
-internal fun ComposeGlfwApp(hostInfo: HostInfo) {
+internal fun ComposeGlfwApp(windowInfo: GlfwWindowInfo) {
   var clicks by remember { mutableIntStateOf(0) }
   var selected by remember { mutableStateOf("Wayland") }
   val accent = if (selected == "Wayland") Color(0xFF0B6B61) else Color(0xFF7C3AED)
@@ -72,14 +75,14 @@ internal fun ComposeGlfwApp(hostInfo: HostInfo) {
       Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         StatusPanel(
           title = "GLFW platform",
-          value = hostInfo.platform,
-          detail = "Display: ${hostInfo.displayName}",
+          value = windowInfo.platform.displayName,
+          detail = "Display: ${windowInfo.displayName ?: "<unset>"}",
           modifier = Modifier.weight(1f),
         )
         StatusPanel(
           title = "Windowing",
           value = "No AWT host",
-          detail = "Rendering path: GLFW + Skia GL",
+          detail = "Rendering path: GLFW + Skia ${windowInfo.renderBackend.displayName}",
           modifier = Modifier.weight(1f),
         )
       }
@@ -134,6 +137,18 @@ internal fun ComposeGlfwApp(hostInfo: HostInfo) {
   }
 }
 
+private val GlfwPlatform.displayName: String
+  get() =
+    when (this) {
+      GlfwPlatform.WAYLAND -> "Wayland"
+    }
+
+private val GlfwRenderBackend.displayName: String
+  get() =
+    when (this) {
+      GlfwRenderBackend.OPENGL -> "OpenGL"
+    }
+
 @Composable
 private fun StatusPanel(title: String, value: String, detail: String, modifier: Modifier = Modifier) {
   Column(
@@ -184,5 +199,3 @@ private fun ChoiceChip(label: String, selected: String, accent: Color, onSelect:
     )
   }
 }
-
-internal data class HostInfo(val platform: String, val displayName: String)

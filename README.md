@@ -27,7 +27,6 @@ What works today:
 - [x] Resize handling
 - [x] Content scale/density handling
 - [x] Mouse move, press, and release
-- [x] Smoke run with center-pixel readback
 
 Known gaps:
 
@@ -48,22 +47,11 @@ Known gaps:
 
 ## Run
 
+This runs the current visual demo app for manual verification:
+
 ```sh
 mise run build
 mise run run
-```
-
-For a non-interactive runtime check:
-
-```sh
-COMPOSE_GLFW_EXIT_AFTER_FRAMES=2 ./gradlew run
-```
-
-On this machine the smoke run currently verifies Wayland rendering:
-
-```text
-GLFW platform: Wayland
-Smoke frame: 1632x1088, center rgba=(239,244,249,255)
 ```
 
 `Failed to load plugin 'libdecor-gtk.so': failed to init` can appear on startup; GLFW still creates and runs the Wayland window.
