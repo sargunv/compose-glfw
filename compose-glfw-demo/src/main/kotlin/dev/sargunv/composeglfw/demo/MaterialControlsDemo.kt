@@ -41,14 +41,7 @@ internal fun MaterialControlsCard(modifier: Modifier = Modifier) {
 
   Card(modifier) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-      Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Material controls", style = MaterialTheme.typography.titleMedium)
-        Text(
-          "Controls exercise pointer input now and give keyboard/text input a visible target.",
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
+      Text("Material controls", style = MaterialTheme.typography.titleMedium)
 
       Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
         Button(onClick = { clicks++ }) {

@@ -12,7 +12,10 @@ import dev.sargunv.composeglfw.internal.scene.GlfwWindowScopeImpl
 import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
 import org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback
 
-internal class GlfwWindowHost(private val spec: GlfwWindowSpec) : AutoCloseable {
+internal class GlfwWindowHost(
+  spec: GlfwWindowSpec,
+  uiDispatcher: GlfwUiDispatcher,
+) : AutoCloseable {
   private val window = GlfwPlatformWindow(spec.title, spec.size, spec.options)
   private val renderBackend = OpenGlRenderBackend(window)
   private val platformContext = GlfwPlatformContext()
@@ -22,6 +25,7 @@ internal class GlfwWindowHost(private val spec: GlfwWindowSpec) : AutoCloseable 
       initialDensity = window.contentScale,
       initialSize = window.framebufferSize,
       platformContext = platformContext,
+      coroutineContext = uiDispatcher,
       scope = scope,
       content = spec.content,
       invalidate = ::requestRender,

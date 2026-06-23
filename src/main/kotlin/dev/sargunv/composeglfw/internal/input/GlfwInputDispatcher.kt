@@ -7,6 +7,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import dev.sargunv.composeglfw.internal.platform.GlfwTextInputService
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
 import dev.sargunv.composeglfw.internal.window.GlfwPlatformWindow
+import org.lwjgl.glfw.GLFW.GLFW_KEY_SCROLL_LOCK
 import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_1
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
@@ -23,18 +24,21 @@ private const val GlfwScrollAmount = 3f
 internal class GlfwInputDispatcher(
   private val window: GlfwPlatformWindow,
   private val scene: ComposeWindowScene,
-  private val textInput: GlfwTextInputService,
+  textInput: GlfwTextInputService,
   private val requestRender: () -> Unit,
 ) : AutoCloseable {
   private var mousePressed = false
   private var lastMouse = Offset.Zero
+  private var currentMods = 0
+  private var scrollLockOn = false
 
   init {
     glfwSetCursorPosCallback(window.handle) { _, x, y ->
       updateMousePosition(x, y)
       sendPointer(PointerEventType.Move)
     }
-    glfwSetMouseButtonCallback(window.handle) { _, button, action, _ ->
+    glfwSetMouseButtonCallback(window.handle) { _, button, action, mods ->
+      currentMods = mods
       if (button == GLFW_MOUSE_BUTTON_1 && (action == GLFW_PRESS || action == GLFW_RELEASE)) {
         mousePressed = action == GLFW_PRESS
         sendPointer(if (mousePressed) PointerEventType.Press else PointerEventType.Release, PointerButton.Primary)
@@ -47,6 +51,10 @@ internal class GlfwInputDispatcher(
       )
     }
     glfwSetKeyCallback(window.handle) { _, key, scancode, action, mods ->
+      currentMods = mods
+      if (key == GLFW_KEY_SCROLL_LOCK && action == GLFW_PRESS) {
+        scrollLockOn = !scrollLockOn
+      }
       val event = glfwKeyEvent(key, scancode, action, mods)
       if (event != null) {
         scene.sendKeyEvent(event)
@@ -89,6 +97,7 @@ internal class GlfwInputDispatcher(
       scrollDelta = scrollDelta,
       button = button,
       buttons = PointerButtons(if (mousePressed) 1 else 0),
+      keyboardModifiers = glfwKeyboardModifiers(currentMods, scrollLockOn),
     )
     requestRender()
   }

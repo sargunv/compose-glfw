@@ -18,14 +18,15 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import dev.sargunv.composeglfw.GlfwWindowScope
 import dev.sargunv.composeglfw.internal.platform.GlfwPlatformContext
-import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.CoroutineContext
 
 internal class ComposeWindowScene(
   initialDensity: Float,
   initialSize: IntSize,
   platformContext: GlfwPlatformContext,
-  private val scope: GlfwWindowScope,
-  private val content: @Composable GlfwWindowScope.() -> Unit,
+  coroutineContext: CoroutineContext,
+  scope: GlfwWindowScope,
+  content: @Composable GlfwWindowScope.() -> Unit,
   invalidate: () -> Unit,
 ) : AutoCloseable {
   private val scene: ComposeScene =
@@ -34,7 +35,7 @@ internal class ComposeWindowScene(
       layoutDirection = LayoutDirection.Ltr,
       size = initialSize,
       platformContext = platformContext,
-      coroutineContext = EmptyCoroutineContext,
+      coroutineContext = coroutineContext,
       invalidate = invalidate,
     )
 
@@ -67,6 +68,7 @@ internal class ComposeWindowScene(
     scrollDelta: Offset = Offset.Zero,
     button: PointerButton?,
     buttons: PointerButtons,
+    keyboardModifiers: PointerKeyboardModifiers,
   ) {
     scene.sendPointerEvent(
       eventType = event,
@@ -75,7 +77,7 @@ internal class ComposeWindowScene(
       timeMillis = System.currentTimeMillis(),
       type = PointerType.Mouse,
       buttons = buttons,
-      keyboardModifiers = PointerKeyboardModifiers(0),
+      keyboardModifiers = keyboardModifiers,
       nativeEvent = null,
       button = button,
     )

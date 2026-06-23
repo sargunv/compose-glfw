@@ -5,10 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
@@ -35,7 +33,7 @@ internal fun ComposeGlfwApp(windowInfo: GlfwWindowInfo) {
           DemoHeader(windowInfo)
           WindowStateCard(windowInfo, Modifier.fillMaxWidth())
           PointerInputCard(Modifier.fillMaxWidth())
-          ScrollPanCard(Modifier.fillMaxWidth())
+          ModifierStatusCard(Modifier.fillMaxWidth())
           MaterialControlsCard(Modifier.fillMaxWidth())
         }
 
@@ -54,12 +52,6 @@ private fun DemoHeader(windowInfo: GlfwWindowInfo) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
       Column(Modifier.weight(1f)) {
         Text("Compose GLFW", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(4.dp))
-        Text(
-          "A collection of focused demos for the GLFW Compose host.",
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
       }
       Column(horizontalAlignment = Alignment.End) {
         Text(windowInfo.platform.displayLabel, style = MaterialTheme.typography.labelLarge)

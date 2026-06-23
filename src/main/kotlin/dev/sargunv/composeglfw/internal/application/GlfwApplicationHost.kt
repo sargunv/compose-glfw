@@ -15,20 +15,25 @@ import org.lwjgl.system.MemoryUtil.memUTF8
 
 internal class GlfwApplicationHost(private val windowSpecs: List<GlfwWindowSpec>) : AutoCloseable {
   private val windows = mutableListOf<GlfwWindowHost>()
+  private val uiDispatcher = GlfwUiDispatcher()
   private var initialized = false
 
   fun run() {
     require(windowSpecs.isNotEmpty()) { "glfwApplication must declare at least one Window" }
+    uiDispatcher.bindToCurrentThread()
     initializeGlfw()
-    windowSpecs.mapTo(windows) { GlfwWindowHost(it) }
+    windowSpecs.mapTo(windows) { GlfwWindowHost(it, uiDispatcher) }
 
     while (windows.any { !it.shouldClose }) {
+      uiDispatcher.drain()
       glfwPollEvents()
+      uiDispatcher.drain()
       windows.forEach { window ->
         if (!window.shouldClose) {
           window.updateAndRender()
         }
       }
+      uiDispatcher.drain()
     }
   }
 

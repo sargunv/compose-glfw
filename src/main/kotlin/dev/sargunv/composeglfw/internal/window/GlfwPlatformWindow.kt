@@ -10,6 +10,7 @@ import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR
 import org.lwjgl.glfw.GLFW.GLFW_EGL_CONTEXT_API
 import org.lwjgl.glfw.GLFW.GLFW_FALSE
+import org.lwjgl.glfw.GLFW.GLFW_LOCK_KEY_MODS
 import org.lwjgl.glfw.GLFW.GLFW_OPENGL_API
 import org.lwjgl.glfw.GLFW.GLFW_RESIZABLE
 import org.lwjgl.glfw.GLFW.GLFW_TRUE
@@ -31,7 +32,7 @@ import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.NULL
 
 internal class GlfwPlatformWindow(
-  private val title: String,
+  title: String,
   size: GlfwWindowSize,
   options: GlfwWindowOptions,
 ) : AutoCloseable {
@@ -56,6 +57,7 @@ internal class GlfwPlatformWindow(
     glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
+    glfwWindowHint(GLFW_LOCK_KEY_MODS, GLFW_TRUE)
     glfwWindowHint(GLFW_RESIZABLE, if (options.resizable) GLFW_TRUE else GLFW_FALSE)
 
     handle = glfwCreateWindow(size.width, size.height, title, NULL, NULL)

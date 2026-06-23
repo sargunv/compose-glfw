@@ -24,11 +24,14 @@ What works today:
 - [x] EGL/OpenGL context creation
 - [x] Skia `DirectContext` creation through the GLFW GL proc loader
 - [x] `CanvasLayersComposeScene` rendering into the GLFW backbuffer
+- [x] Host-owned Compose scene coroutine dispatch on the GLFW UI thread
 - [x] Resize handling
 - [x] Content scale/density handling
 - [x] Mouse move, press, and release
 - [x] Scroll wheel and trackpad events
 - [x] Basic keyboard key down, key up, and repeat routing
+- [x] Keyboard modifier and lock-state propagation for pointer events
+- [x] GLFW key table audited against Compose desktop key codes
 - [x] Basic committed text input from keyboard layouts
 - [x] Public `glfwApplication { Window { ... } }` API
 - [x] Per-window GPU interop hook for the current OpenGL context
@@ -37,7 +40,7 @@ Known gaps:
 
 - [ ] Production-ready application lifecycle semantics
 - [ ] Multi-window lifecycle beyond the current static startup window list
-- [ ] Complete keyboard mapping: all keys, locations, modifiers, lock states, and repeat semantics
+- [ ] Full key-event modifier payload for AltGraph and lock states
 - [ ] IME/preedit integration: composition text, candidate positioning, and commit/cancel lifecycle
 - [ ] Platform cursor shape updates: pointer, text, resize, and custom cursors
 - [ ] Pointer enter/leave events at the window boundary

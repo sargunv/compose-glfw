@@ -5,6 +5,7 @@ package dev.sargunv.composeglfw.internal.input
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import org.lwjgl.glfw.GLFW.GLFW_KEY_0
 import org.lwjgl.glfw.GLFW.GLFW_KEY_1
 import org.lwjgl.glfw.GLFW.GLFW_KEY_2
@@ -83,6 +84,7 @@ import org.lwjgl.glfw.GLFW.GLFW_KEY_KP_EQUAL
 import org.lwjgl.glfw.GLFW.GLFW_KEY_KP_MULTIPLY
 import org.lwjgl.glfw.GLFW.GLFW_KEY_KP_SUBTRACT
 import org.lwjgl.glfw.GLFW.GLFW_KEY_L
+import org.lwjgl.glfw.GLFW.GLFW_KEY_LAST
 import org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT
 import org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT
 import org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_BRACKET
@@ -127,13 +129,18 @@ import org.lwjgl.glfw.GLFW.GLFW_KEY_X
 import org.lwjgl.glfw.GLFW.GLFW_KEY_Y
 import org.lwjgl.glfw.GLFW.GLFW_KEY_Z
 import org.lwjgl.glfw.GLFW.GLFW_MOD_ALT
+import org.lwjgl.glfw.GLFW.GLFW_MOD_CAPS_LOCK
 import org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL
+import org.lwjgl.glfw.GLFW.GLFW_MOD_NUM_LOCK
 import org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT
 import org.lwjgl.glfw.GLFW.GLFW_MOD_SUPER
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 import org.lwjgl.glfw.GLFW.GLFW_REPEAT
 import java.awt.event.KeyEvent as AwtKeyEvent
+
+private val glfwKeyCodes = IntArray(GLFW_KEY_LAST + 1) { key -> glfwKeyCodeFromMapping(key) }
+private val glfwKeyLocations = IntArray(GLFW_KEY_LAST + 1) { key -> glfwKeyLocationFromMapping(key) }
 
 internal fun glfwKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): KeyEvent? {
   val type =
@@ -156,17 +163,35 @@ internal fun glfwKeyEvent(key: Int, scancode: Int, action: Int, mods: Int): KeyE
 
 internal data class GlfwKeyNativeEvent(val key: Int, val scancode: Int, val action: Int, val mods: Int)
 
+internal fun glfwKeyboardModifiers(mods: Int, scrollLockOn: Boolean = false): PointerKeyboardModifiers =
+  PointerKeyboardModifiers(
+    isCtrlPressed = mods has GLFW_MOD_CONTROL,
+    isMetaPressed = mods has GLFW_MOD_SUPER,
+    isAltPressed = mods has GLFW_MOD_ALT,
+    isShiftPressed = mods has GLFW_MOD_SHIFT,
+    isCapsLockOn = mods has GLFW_MOD_CAPS_LOCK,
+    isScrollLockOn = scrollLockOn,
+    isNumLockOn = mods has GLFW_MOD_NUM_LOCK,
+  )
+
 private infix fun Int.has(mask: Int): Boolean = (this and mask) != 0
 
 private fun glfwKeyLocation(key: Int): Int =
+  glfwKeyLocations.getOrElse(key) { AwtKeyEvent.KEY_LOCATION_STANDARD }
+
+private fun glfwKeyLocationFromMapping(key: Int): Int =
   when (key) {
     GLFW_KEY_LEFT_SHIFT, GLFW_KEY_LEFT_CONTROL, GLFW_KEY_LEFT_ALT, GLFW_KEY_LEFT_SUPER -> AwtKeyEvent.KEY_LOCATION_LEFT
     GLFW_KEY_RIGHT_SHIFT, GLFW_KEY_RIGHT_CONTROL, GLFW_KEY_RIGHT_ALT, GLFW_KEY_RIGHT_SUPER -> AwtKeyEvent.KEY_LOCATION_RIGHT
+    GLFW_KEY_NUM_LOCK -> AwtKeyEvent.KEY_LOCATION_NUMPAD
     in GLFW_KEY_KP_0..GLFW_KEY_KP_EQUAL -> AwtKeyEvent.KEY_LOCATION_NUMPAD
     else -> AwtKeyEvent.KEY_LOCATION_STANDARD
   }
 
 private fun glfwKeyCode(key: Int): Int =
+  glfwKeyCodes.getOrElse(key) { AwtKeyEvent.VK_UNDEFINED }
+
+private fun glfwKeyCodeFromMapping(key: Int): Int =
   when (key) {
     GLFW_KEY_UNKNOWN -> AwtKeyEvent.VK_UNDEFINED
     GLFW_KEY_SPACE -> AwtKeyEvent.VK_SPACE
@@ -183,6 +208,8 @@ private fun glfwKeyCode(key: Int): Int =
     GLFW_KEY_BACKSLASH -> AwtKeyEvent.VK_BACK_SLASH
     GLFW_KEY_RIGHT_BRACKET -> AwtKeyEvent.VK_CLOSE_BRACKET
     GLFW_KEY_GRAVE_ACCENT -> AwtKeyEvent.VK_BACK_QUOTE
+    // GLFW exposes these non-US physical keys, but Compose desktop models keys using AWT key codes,
+    // which do not have stable equivalents for them.
     GLFW_KEY_WORLD_1 -> AwtKeyEvent.VK_UNDEFINED
     GLFW_KEY_WORLD_2 -> AwtKeyEvent.VK_UNDEFINED
     GLFW_KEY_ESCAPE -> AwtKeyEvent.VK_ESCAPE
@@ -217,9 +244,10 @@ private fun glfwKeyCode(key: Int): Int =
     GLFW_KEY_F22 -> AwtKeyEvent.VK_F22
     GLFW_KEY_F23 -> AwtKeyEvent.VK_F23
     GLFW_KEY_F24 -> AwtKeyEvent.VK_F24
+    // AWT stops at F24.
     GLFW_KEY_F25 -> AwtKeyEvent.VK_UNDEFINED
     in GLFW_KEY_KP_0..GLFW_KEY_KP_9 -> AwtKeyEvent.VK_NUMPAD0 + (key - GLFW_KEY_KP_0)
-    GLFW_KEY_KP_DECIMAL -> AwtKeyEvent.VK_DECIMAL
+    GLFW_KEY_KP_DECIMAL -> AwtKeyEvent.VK_PERIOD
     GLFW_KEY_KP_DIVIDE -> AwtKeyEvent.VK_DIVIDE
     GLFW_KEY_KP_MULTIPLY -> AwtKeyEvent.VK_MULTIPLY
     GLFW_KEY_KP_SUBTRACT -> AwtKeyEvent.VK_SUBTRACT

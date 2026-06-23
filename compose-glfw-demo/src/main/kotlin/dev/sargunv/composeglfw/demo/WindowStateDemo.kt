@@ -24,14 +24,7 @@ internal fun WindowStateCard(windowInfo: GlfwWindowInfo, modifier: Modifier = Mo
 
   Card(modifier) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-      Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Window state", style = MaterialTheme.typography.titleMedium)
-        Text(
-          "Live values from the GLFW window and Compose scene.",
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
+      Text("Window state", style = MaterialTheme.typography.titleMedium)
 
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         StatusValue("Platform", windowInfo.platform.displayLabel)
