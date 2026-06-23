@@ -54,6 +54,7 @@ What works today:
 - [x] Public `glfwApplication { Window { ... } }` API
 - [x] Per-window GPU interop hook for the current OpenGL context
 - [x] Platform lifecycle, ViewModel, saved-state, and navigation owners
+- [x] Test root and semantics owner listener tracking
 
 Known gaps:
 
@@ -74,10 +75,6 @@ OS/platform API wiring:
 - [ ] Screen reader and accessibility integration
 - [ ] Keep-screen-on and frame-rate voting
 - [ ] Native menus, tray, dialogs, and file pickers
-
-Compose platform services:
-
-- [ ] Test root and semantics owner listeners
 
 Packaging and platform expansion:
 

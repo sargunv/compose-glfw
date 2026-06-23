@@ -23,6 +23,8 @@ import androidx.compose.ui.platform.PlatformWindowInsets
 import androidx.compose.ui.platform.TextToolbar
 import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.platform.WindowInfo
+import androidx.compose.ui.platform.PlatformRootForTest
+import androidx.compose.ui.semantics.SemanticsOwner
 import androidx.compose.ui.text.input.PlatformTextInputService
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntSize
@@ -40,6 +42,8 @@ internal class HostPlatformContext(
   val textInput: TextInputService = TextInputService()
   private val textToolbarAdapter = TextToolbarAdapter(textToolbarContent)
   private val mutableWindowInfo = ComposeWindowInfoState()
+  private val rootForTestRegistry = RootForTestRegistry()
+  private val semanticsOwnerRegistry = SemanticsOwnerRegistry()
   private val architectureOwner =
     DefaultArchitectureComponentsOwner(enforceMainThread = false).apply {
       enableSavedStateHandles()
@@ -132,13 +136,25 @@ internal class HostPlatformContext(
     fallbackContext.voteFrameRate(frameRate, frameRateCategory)
   }
 
-  // TODO: Expose test root tracking hooks for host-level tests.
   override val rootForTestListener: PlatformContext.RootForTestListener?
-    get() = fallbackContext.rootForTestListener
+    get() = rootForTestRegistry
 
-  // TODO: Expose semantics tracking hooks; accessibility still needs OS-specific integration.
   override val semanticsOwnerListener: PlatformContext.SemanticsOwnerListener?
-    get() = fallbackContext.semanticsOwnerListener
+    get() = semanticsOwnerRegistry
+
+  val rootsForTest: Set<PlatformRootForTest>
+    get() = rootForTestRegistry.roots
+
+  val semanticsOwners: Set<SemanticsOwner>
+    get() = semanticsOwnerRegistry.owners
+
+  fun setRootForTestListener(listener: PlatformContext.RootForTestListener?) {
+    rootForTestRegistry.setListener(listener)
+  }
+
+  fun setSemanticsOwnerListener(listener: PlatformContext.SemanticsOwnerListener?) {
+    semanticsOwnerRegistry.setListener(listener)
+  }
 
   fun updateWindowInfo() {
     mutableWindowInfo.isWindowFocused = window.isFocused
