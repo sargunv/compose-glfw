@@ -64,7 +64,8 @@ The following features are not yet supported:
   graphics context for integrating custom components.
 - Draggable window area (custom title bar)
 
-See <ROADMAP.md> for a detailed list of known gaps. Please contribute!
+See [`ROADMAP.md`](./ROADMAP.md) for a detailed list of known gaps. Please
+contribute!
 
 ### Linux notes
 
