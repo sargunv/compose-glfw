@@ -17,7 +17,10 @@ OS/platform API wiring:
 - [ ] Screen reader and accessibility integration
 - [ ] Keep-screen-on and frame-rate voting
 - [ ] Native macOS fullscreen Spaces (`NSWindow.toggleFullScreen`)
-- [ ] Native menus, tray, dialogs, and file pickers
+- [ ] Native menus
+- [ ] System tray
+- [ ] Dialogs and file pickers
+- [ ] Draggable window area
 
 Useful parity reference:
 [Compose Multiplatform desktop-only API](https://kotlinlang.org/docs/multiplatform/compose-desktop-components.html).

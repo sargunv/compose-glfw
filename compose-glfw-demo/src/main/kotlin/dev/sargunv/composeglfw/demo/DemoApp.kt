@@ -1,5 +1,8 @@
 package dev.sargunv.composeglfw.demo
 
+import androidx.compose.foundation.DarkDefaultContextMenuRepresentation
+import androidx.compose.foundation.LightDefaultContextMenuRepresentation
+import androidx.compose.foundation.LocalContextMenuRepresentation
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -48,8 +52,10 @@ internal fun ComposeGlfwApp(
           )
           WindowShowcaseCard(showcaseState, showcaseActions, Modifier.fillMaxWidth())
           LifecycleCard(Modifier.fillMaxWidth())
+          LayoutDirectionCard(Modifier.fillMaxWidth())
           PointerInputCard(Modifier.fillMaxWidth())
           PointerIconCard(Modifier.fillMaxWidth())
+          PopupMenuCard(Modifier.fillMaxWidth())
           FileDropCard(Modifier.fillMaxWidth())
           InputEventsCard(Modifier.fillMaxWidth())
         }
@@ -67,7 +73,15 @@ internal fun ComposeGlfwApp(
 internal fun DemoTheme(content: @Composable () -> Unit) {
   val darkTheme = isSystemInDarkTheme()
   MaterialTheme(colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()) {
-    content()
+    val contextMenuRepresentation =
+      if (darkTheme) {
+        DarkDefaultContextMenuRepresentation
+      } else {
+        LightDefaultContextMenuRepresentation
+      }
+    CompositionLocalProvider(LocalContextMenuRepresentation provides contextMenuRepresentation) {
+      content()
+    }
   }
 }
 
