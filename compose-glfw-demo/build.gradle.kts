@@ -86,12 +86,6 @@ registerDemoRunTask(
 )
 
 registerDemoRunTask(
-  name = "runWayland",
-  description = "Runs the local GLFW Compose demo on Wayland.",
-  platform = "wayland",
-)
-
-registerDemoRunTask(
   name = "runX11",
   description = "Runs the local GLFW Compose demo on X11.",
   platform = "x11",

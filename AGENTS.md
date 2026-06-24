@@ -7,11 +7,6 @@ of the default AWT/Swing desktop host.
 
 - `src/main/kotlin`: core Compose GLFW library.
 - `compose-glfw-demo`: runnable demo application.
-- `compose-glfw-opengl-linux-x64`: Linux x64 OpenGL runtime module.
-- `compose-glfw-opengl-linux-arm64`: Linux arm64 OpenGL runtime module.
-- `compose-glfw-metal-macos-arm64`: macOS arm64 Metal runtime module.
-- `compose-glfw-metal-macos-x64`: macOS x64 Metal runtime module.
-- `gradle`: Gradle wrapper and version catalog.
 
 ## Dev tool commands
 
@@ -21,11 +16,6 @@ of the default AWT/Swing desktop host.
 - `mise run docs`: generate Dokka API documentation.
 - `mise run publish-local`: publish artifacts to the local Maven repository.
 - `mise run run`: run the demo application.
-- `mise run run-wayland`: run the demo with the Wayland GLFW backend.
-- `mise run run-x11`: run the demo with the X11 GLFW backend.
+- `mise run run-x11`: run the demo, forcing the X11 GLFW backend on Linux.
 
 Run `mise tasks ls --all` for the complete task list.
-
-## Project invariants
-
-<!-- List non-negotiable rules for this project -->
