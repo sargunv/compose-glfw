@@ -7,4 +7,6 @@ internal interface RenderBackendDriver : AutoCloseable {
   fun resize(size: IntSize)
 
   fun render(scene: ComposeWindowScene, frameTimeNanos: Long)
+
+  fun renderWithoutPresenting(scene: ComposeWindowScene, frameTimeNanos: Long)
 }

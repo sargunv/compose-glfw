@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -127,7 +128,7 @@ internal fun ToolsWindowContent(
   windowState: WindowState,
 ) {
   DemoTheme {
-    Surface(Modifier.fillMaxSize()) {
+    Surface {
       Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("Always-on-top tools", style = MaterialTheme.typography.titleMedium)
         MetricRow("Display server", windowInfo.displayServer.toString())
@@ -140,6 +141,12 @@ internal fun ToolsWindowContent(
         ) {
           OutlinedButton(onClick = { windowState.position = WindowPosition(Alignment.CenterEnd) }) {
             Text("Dock right")
+          }
+          OutlinedButton(onClick = { windowState.size = DpSize.Unspecified }) {
+            Text("Fit content")
+          }
+          OutlinedButton(onClick = { windowState.size = DpSize(320.dp, Dp.Unspecified) }) {
+            Text("Wrap height")
           }
           OutlinedButton(onClick = { windowState.size = DpSize(420.dp, 360.dp) }) {
             Text("Reset size")

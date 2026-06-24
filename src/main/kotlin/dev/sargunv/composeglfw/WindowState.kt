@@ -52,7 +52,12 @@ public interface WindowState {
   /** Current window position in screen coordinates, when supported by the display server. */
   public var position: WindowPosition
 
-  /** Current logical content-area size. */
+  /**
+   * Current logical content-area size.
+   *
+   * If one or both dimensions are [Dp.Unspecified], the window measures its content and replaces
+   * this with the resolved concrete size when the size is applied.
+   */
   public var size: DpSize
 }
 

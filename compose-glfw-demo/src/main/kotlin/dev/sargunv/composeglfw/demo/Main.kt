@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import dev.sargunv.composeglfw.Window
@@ -19,7 +20,7 @@ internal fun main(): Unit {
     val toolsWindowState =
       rememberWindowState(
         position = WindowPosition(Alignment.CenterEnd),
-        size = DpSize(420.dp, 360.dp),
+        size = DpSize(420.dp, Dp.Unspecified),
       )
     val hudWindowState =
       rememberWindowState(

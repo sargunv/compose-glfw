@@ -16,8 +16,10 @@ import androidx.compose.ui.input.pointer.PointerButtons
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.scene.CanvasLayersComposeScene
 import androidx.compose.ui.scene.ComposeScene
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
@@ -37,6 +39,8 @@ internal class ComposeWindowScene(
   invalidate: () -> Unit,
   private val checkThread: (String) -> Unit,
 ) : AutoCloseable {
+  private var preferredSizeConstraints: PreferredContentSizeConstraints? = null
+
   private val scene: ComposeScene =
     CanvasLayersComposeScene(
       density = Density(initialDensity),
@@ -53,8 +57,10 @@ internal class ComposeWindowScene(
     checkSceneThread("ComposeScene setContent")
     scene.setContent {
       CompositionLocalProvider(LocalSystemTheme provides platformContext.systemTheme) {
-        scope.content()
-        platformContext.TextToolbarContent()
+        WindowRootLayout(preferredSizeConstraints = { preferredSizeConstraints }) {
+          scope.content()
+          platformContext.TextToolbarContent()
+        }
       }
     }
   }
@@ -79,6 +85,19 @@ internal class ComposeWindowScene(
     checkSceneThread("ComposeScene density update")
     if (scene.density.density != density) {
       scene.density = Density(density)
+    }
+  }
+
+  fun calculatePreferredContentSize(
+    fixedWidth: Int?,
+    fixedHeight: Int?,
+  ): IntSize {
+    checkSceneThread("ComposeScene preferred content size calculation")
+    preferredSizeConstraints = PreferredContentSizeConstraints(fixedWidth, fixedHeight)
+    try {
+      return scene.calculateContentSize()
+    } finally {
+      preferredSizeConstraints = null
     }
   }
 
@@ -149,3 +168,55 @@ internal class ComposeWindowScene(
     checkThread(operation)
   }
 }
+
+@Composable
+private fun WindowRootLayout(
+  preferredSizeConstraints: () -> PreferredContentSizeConstraints?,
+  content: @Composable () -> Unit,
+) {
+  Layout(content = content) { measurables, incomingConstraints ->
+    val preferredConstraints = preferredSizeConstraints()
+    val childConstraints =
+      if (preferredConstraints != null) {
+        preferredConstraints.toConstraints(incomingConstraints)
+      } else {
+        incomingConstraints.toExactSizeConstraints()
+      }
+    val placeables = measurables.map { it.measure(childConstraints) }
+    val measuredWidth = placeables.maxOfOrNull { it.measuredWidth } ?: 0
+    val measuredHeight = placeables.maxOfOrNull { it.measuredHeight } ?: 0
+    val width =
+      if (preferredConstraints != null) {
+        preferredConstraints.fixedWidth ?: measuredWidth
+      } else {
+        incomingConstraints.maxWidth
+      }
+    val height =
+      if (preferredConstraints != null) {
+        preferredConstraints.fixedHeight ?: measuredHeight
+      } else {
+        incomingConstraints.maxHeight
+      }
+
+    layout(width, height) { placeables.forEach { it.place(0, 0) } }
+  }
+}
+
+private data class PreferredContentSizeConstraints(
+  val fixedWidth: Int?,
+  val fixedHeight: Int?,
+) {
+  fun toConstraints(incomingConstraints: Constraints): Constraints =
+    Constraints(
+      maxWidth = fixedWidth ?: incomingConstraints.maxWidth,
+      maxHeight = fixedHeight ?: incomingConstraints.maxHeight,
+    )
+}
+
+private fun Constraints.toExactSizeConstraints(): Constraints =
+  Constraints(
+    minWidth = maxWidth,
+    maxWidth = maxWidth,
+    minHeight = maxHeight,
+    maxHeight = maxHeight,
+  )

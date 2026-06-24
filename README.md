@@ -54,7 +54,8 @@ fun App() {
 }
 ```
 
-Configure the GLFW window with `WindowOptions`:
+You can pass a `Dp.Unspecified` dimension to window size to fit to contents.
+Configure the GLFW window further with `WindowOptions`:
 
 ```kotlin
 Window(

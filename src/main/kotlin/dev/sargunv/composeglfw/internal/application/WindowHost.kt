@@ -1,10 +1,12 @@
 package dev.sargunv.composeglfw.internal.application
 
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import dev.sargunv.composeglfw.HostWindowInfo
 import dev.sargunv.composeglfw.RenderBackend
 import dev.sargunv.composeglfw.TextToolbarContent
@@ -23,6 +25,7 @@ import dev.sargunv.composeglfw.internal.scene.WindowScopeImpl
 import dev.sargunv.composeglfw.internal.window.PlatformWindow
 import dev.sargunv.composeglfw.internal.window.PlatformWindowBounds
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 import org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowCloseCallback
@@ -53,8 +56,10 @@ internal class WindowHost(
     )
   private var onPreviewKeyEvent = request.onPreviewKeyEvent
   private var onKeyEvent = request.onKeyEvent
-  private var lastAppliedStateSize = request.state.size
-  private var pendingStateSize: DpSize? = request.state.size
+  private var lastAppliedStateSize = request.state.size.initialConcreteSize()
+  private var pendingStateSize: DpSize? = lastAppliedStateSize
+  private var hasReappliedPendingStateSize = false
+  private var pendingVisiblePreferredSizeRequest: DpSize? = null
   private var isApplyingStateSize = false
   private var lastAppliedPosition = request.state.position
   private var lastAppliedPlacement = request.state.placement
@@ -69,12 +74,14 @@ internal class WindowHost(
   private var peer: WindowPeer
   private var lastFramebufferSize: IntSize
   private var lastContentScale: Float
+  private var actualVisible = false
 
   private val window: PlatformWindow
     get() = peer.window
 
   init {
-    val initialWindow = createPlatformWindow(config)
+    actualVisible = initialNativeVisibility(config)
+    val initialWindow = createPlatformWindow(config, visible = actualVisible)
     val initialRenderBackend = OpenGlRenderBackend(initialWindow)
     platformContext = HostPlatformContext(initialWindow, request.options.textToolbar)
     scope = WindowScopeImpl(currentInfo(initialWindow), initialRenderBackend.interop)
@@ -144,15 +151,12 @@ internal class WindowHost(
       config = nextConfig
       recreatePeer(config)
       applyStateToWindow(forceSize = true)
+      syncWindowVisibility()
       return
     }
 
     if (nextConfig.title != config.title) {
       window.setTitle(nextConfig.title)
-    }
-    if (nextConfig.visible != config.visible) {
-      window.setVisible(nextConfig.visible)
-      requestRender()
     }
     if (nextConfig.undecorated != config.undecorated) {
       window.setDecorated(!nextConfig.undecorated)
@@ -171,14 +175,20 @@ internal class WindowHost(
     }
     config = nextConfig
     applyStateToWindow()
+    syncWindowVisibility()
   }
 
   fun updateAndRender() {
     applyStateToWindow()
+    syncWindowVisibility()
     window.refreshSizes()
     updateSceneMetrics()
+    if (applyPendingVisiblePreferredSize()) {
+      window.refreshSizes()
+      updateSceneMetrics()
+    }
     updateStateFromWindow()
-    if (!config.visible) {
+    if (!actualVisible) {
       return
     }
     if (window.framebufferSize.width <= 0 || window.framebufferSize.height <= 0) {
@@ -203,7 +213,8 @@ internal class WindowHost(
   private fun recreatePeer(config: WindowPeerConfig) {
     // Only the native pieces are replaced. The Compose scene survives, so UI state survives too.
     peer.close()
-    val newWindow = createPlatformWindow(config)
+    actualVisible = initialNativeVisibility(config)
+    val newWindow = createPlatformWindow(config, visible = actualVisible)
     val newRenderBackend = OpenGlRenderBackend(newWindow)
     platformContext.updateWindow(newWindow)
     scope.gpu = newRenderBackend.interop
@@ -218,11 +229,14 @@ internal class WindowHost(
     requestRender()
   }
 
-  private fun createPlatformWindow(config: WindowPeerConfig): PlatformWindow =
+  private fun createPlatformWindow(
+    config: WindowPeerConfig,
+    visible: Boolean = config.visible,
+  ): PlatformWindow =
     PlatformWindow(
       title = config.title,
-      size = config.size,
-      visible = config.visible,
+      size = config.size.initialConcreteSize(),
+      visible = visible,
       undecorated = config.undecorated,
       transparent = config.transparent,
       resizable = config.resizable,
@@ -300,11 +314,18 @@ internal class WindowHost(
   }
 
   private fun applyStateToWindow(forceSize: Boolean = false) {
-    val requestedSize = state.size
+    val stateSize = state.size
+    if (!stateSize.hasUnspecifiedDimensions() && stateSize != lastAppliedStateSize) {
+      pendingVisiblePreferredSizeRequest = null
+    }
+
+    val requestedSize = resolveStateSize(stateSize)
     if (forceSize || requestedSize != lastAppliedStateSize) {
-      // TODO: Support Compose Desktop-style DpSize.Unspecified by measuring content before
-      // choosing the native window size.
-      applyNativeStateSize(requestedSize)
+      if (forceSize || canApplyStateSizeToWindow()) {
+        applyNativeStateSize(requestedSize)
+      } else {
+        lastAppliedStateSize = requestedSize
+      }
       requestRender()
     }
 
@@ -383,8 +404,9 @@ internal class WindowHost(
   }
 
   private fun resetAppliedStateForNewPeer() {
-    lastAppliedStateSize = state.size
-    pendingStateSize = state.size
+    lastAppliedStateSize = state.size.initialConcreteSize()
+    pendingStateSize = lastAppliedStateSize
+    hasReappliedPendingStateSize = false
     lastAppliedPosition = WindowPosition.PlatformDefault
     lastAppliedPlacement = WindowPlacement.Floating
     lastAppliedMinimized = false
@@ -440,11 +462,100 @@ internal class WindowHost(
   private fun updateStateSizeFromWindow() {
     val size = currentWindowStateSize() ?: return
     if (size != state.size) {
+      pendingVisiblePreferredSizeRequest = null
       lastAppliedStateSize = size
       state.size = size
       config = config.copy(size = size)
     }
   }
+
+  private fun resolveStateSize(requestedSize: DpSize): DpSize {
+    if (!requestedSize.hasUnspecifiedDimensions()) {
+      return requestedSize
+    }
+
+    if (!actualVisible) {
+      pendingVisiblePreferredSizeRequest = requestedSize
+    } else {
+      prepareSceneForPreferredSizeMeasurement()
+    }
+
+    val measuredSize = measurePreferredContentSize(requestedSize)
+    val resolvedSize =
+      DpSize(
+        width =
+          if (requestedSize.width.isSpecified) {
+            requestedSize.width
+          } else {
+            measuredSize.width.toCeilDp(window.contentScale).coerceAtLeast(MinWindowSize)
+          },
+        height =
+          if (requestedSize.height.isSpecified) {
+            requestedSize.height
+          } else {
+            measuredSize.height.toCeilDp(window.contentScale).coerceAtLeast(MinWindowSize)
+          },
+      )
+
+    state.size = resolvedSize
+    config = config.copy(size = resolvedSize)
+    return resolvedSize
+  }
+
+  private fun measurePreferredContentSize(requestedSize: DpSize): IntSize {
+    val fixedWidth = requestedSize.width.toScenePixelsOrNull(window.contentScale)
+    val fixedHeight = requestedSize.height.toScenePixelsOrNull(window.contentScale)
+    val naturalSize =
+      scene.calculatePreferredContentSize(
+        fixedWidth = fixedWidth,
+        fixedHeight = fixedHeight,
+      )
+    val preferredMaxSize = window.preferredContentSizeLimit()
+    val resolvedWidth = fixedWidth ?: naturalSize.width.coerceAtMost(preferredMaxSize.width)
+    val resolvedHeight = fixedHeight ?: naturalSize.height.coerceAtMost(preferredMaxSize.height)
+    val needsWidthConstraint = fixedWidth != null || resolvedWidth != naturalSize.width
+    val needsHeightConstraint = fixedHeight != null || resolvedHeight != naturalSize.height
+
+    if (needsWidthConstraint || needsHeightConstraint) {
+      val constrainedSize =
+        scene.calculatePreferredContentSize(
+          fixedWidth = if (needsWidthConstraint) resolvedWidth else null,
+          fixedHeight = if (needsHeightConstraint) resolvedHeight else null,
+        )
+      return IntSize(
+        width = fixedWidth ?: constrainedSize.width.coerceAtMost(preferredMaxSize.width),
+        height = fixedHeight ?: constrainedSize.height.coerceAtMost(preferredMaxSize.height),
+      )
+    }
+
+    return naturalSize
+  }
+
+  private fun applyPendingVisiblePreferredSize(): Boolean {
+    val requestedSize = pendingVisiblePreferredSizeRequest ?: return false
+    if (!actualVisible) {
+      return false
+    }
+
+    pendingVisiblePreferredSizeRequest = null
+    val resolvedSize = resolveStateSize(requestedSize)
+    if (resolvedSize == lastAppliedStateSize && currentWindowStateSize() == resolvedSize) {
+      return false
+    }
+
+    applyNativeStateSize(resolvedSize)
+    requestRender()
+    return true
+  }
+
+  private fun prepareSceneForPreferredSizeMeasurement() {
+    // A hidden Wayland window can report its final density only after it becomes visible. Drawing
+    // without swapping lets Compose observe the current density before preferred sizing measures.
+    peer.renderBackend.renderWithoutPresenting(scene, System.nanoTime())
+  }
+
+  private fun canApplyStateSizeToWindow(): Boolean =
+    !actualVisible || state.placement == WindowPlacement.Floating
 
   private fun settlePendingStateSize(): Boolean {
     // Wayland can report a compositor-adjusted size after the first buffer swap. Until GLFW reports
@@ -454,15 +565,24 @@ internal class WindowHost(
     if (pendingSize != null) {
       if (currentWindowStateSize() == pendingSize) {
         pendingStateSize = null
+        hasReappliedPendingStateSize = false
+      } else if (!hasReappliedPendingStateSize) {
+        hasReappliedPendingStateSize = true
+        applyNativeStateSize(pendingSize, resetPendingReapply = false)
       } else {
-        applyNativeStateSize(pendingSize)
+        pendingStateSize = null
+        hasReappliedPendingStateSize = false
+        return false
       }
       return true
     }
     return false
   }
 
-  private fun applyNativeStateSize(size: DpSize) {
+  private fun applyNativeStateSize(
+    size: DpSize,
+    resetPendingReapply: Boolean = true,
+  ) {
     // Mark the synchronous GLFW resize as app-driven so callbacks fired inside glfwSetWindowSize do
     // not get mistaken for user/native resize.
     isApplyingStateSize = true
@@ -470,6 +590,9 @@ internal class WindowHost(
       window.setSize(size)
       lastAppliedStateSize = size
       pendingStateSize = size
+      if (resetPendingReapply) {
+        hasReappliedPendingStateSize = false
+      }
     } finally {
       isApplyingStateSize = false
     }
@@ -481,6 +604,18 @@ internal class WindowHost(
     } else {
       null
     }
+
+  private fun initialNativeVisibility(config: WindowPeerConfig): Boolean =
+    config.visible && !config.size.hasUnspecifiedDimensions()
+
+  private fun syncWindowVisibility() {
+    val shouldBeVisible = config.visible && !state.size.hasUnspecifiedDimensions()
+    if (shouldBeVisible != actualVisible) {
+      window.setVisible(shouldBeVisible)
+      actualVisible = shouldBeVisible
+      requestRender()
+    }
+  }
 
   private fun currentInfo(window: PlatformWindow = this.window): HostWindowInfo {
     val displayServer = currentDisplayServer()
@@ -556,6 +691,48 @@ private data class WindowPeerConfig(
   val focusOnShow: Boolean,
   val alwaysOnTop: Boolean,
 )
+
+private val DefaultWindowSize = DpSize(800.dp, 600.dp)
+private val MinWindowSize = 1.dp
+
+private fun DpSize.hasUnspecifiedDimensions(): Boolean = !width.isSpecified || !height.isSpecified
+
+private fun DpSize.initialConcreteSize(): DpSize =
+  DpSize(
+    width = if (width.isSpecified) width else DefaultWindowSize.width,
+    height = if (height.isSpecified) height else DefaultWindowSize.height,
+  )
+
+private fun Dp.toScenePixelsOrNull(contentScale: Float): Int? =
+  if (isSpecified) {
+    toScenePixels(contentScale)
+  } else {
+    null
+  }
+
+private fun PlatformWindow.preferredContentSizeLimit(): IntSize {
+  val workAreaSize = currentMonitorWorkArea().size
+  return IntSize(
+    width =
+      minOf(
+        workAreaSize.width.toScenePixels(contentScale),
+        DefaultWindowSize.width.toScenePixels(contentScale),
+      ),
+    height =
+      minOf(
+        workAreaSize.height.toScenePixels(contentScale),
+        DefaultWindowSize.height.toScenePixels(contentScale),
+      ),
+  )
+}
+
+private fun Dp.toScenePixels(contentScale: Float): Int =
+  (value * contentScale).roundToInt().coerceAtLeast(1)
+
+private fun Int.toScenePixels(contentScale: Float): Int =
+  (this * contentScale).roundToInt().coerceAtLeast(1)
+
+private fun Int.toCeilDp(contentScale: Float): Dp = ceil(this / contentScale).dp
 
 private operator fun IntOffset.plus(offset: IntOffset): IntOffset =
   IntOffset(x + offset.x, y + offset.y)

@@ -76,13 +76,21 @@ internal class OpenGlRenderBackend(private val window: PlatformWindow) : RenderB
   }
 
   override fun render(scene: ComposeWindowScene, frameTimeNanos: Long) {
+    draw(scene, frameTimeNanos)
+    window.swapBuffers()
+  }
+
+  override fun renderWithoutPresenting(scene: ComposeWindowScene, frameTimeNanos: Long) {
+    draw(scene, frameTimeNanos)
+  }
+
+  private fun draw(scene: ComposeWindowScene, frameTimeNanos: Long) {
     val target = skiaTarget ?: return
     window.makeCurrent()
     val clearColor = if (window.isTransparent) SkiaColor.TRANSPARENT else SkiaColor.BLACK
     target.surface.canvas.clear(clearColor)
     scene.render(target.surface.canvas.asComposeCanvas(), frameTimeNanos)
     target.surface.flushAndSubmit()
-    window.swapBuffers()
   }
 
   override fun close() {
