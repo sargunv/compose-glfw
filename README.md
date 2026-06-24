@@ -25,18 +25,14 @@ Add the core library and the runtime modules you want to ship:
 ```kotlin
 dependencies {
   implementation("dev.sargunv:compose-glfw:<version>")
+  runtimeOnly("dev.sargunv:compose-glfw-opengl-linux-arm64:<version>")
   runtimeOnly("dev.sargunv:compose-glfw-opengl-linux-x64:<version>")
   runtimeOnly("dev.sargunv:compose-glfw-metal-macos-arm64:<version>")
+  runtimeOnly("dev.sargunv:compose-glfw-metal-macos-x64:<version>")
+  runtimeOnly("dev.sargunv:compose-glfw-direct3d-windows-x64:<version>")
+  runtimeOnly("dev.sargunv:compose-glfw-direct3d-windows-arm64:<version>")
 }
 ```
-
-Available runtime modules:
-
-- `compose-glfw-opengl-linux-x64`
-- `compose-glfw-opengl-linux-arm64`
-- `compose-glfw-metal-macos-arm64`
-- `compose-glfw-metal-macos-x64`
-- Windows is TBD
 
 ## Usage
 
@@ -113,8 +109,9 @@ scope:
 
 ```kotlin
 Window(onCloseRequest = ::exitApplication, title = "Example") {
-  val openGl = gpu as? OpenGlInterop
-  val metal = gpu as? MetalInterop
+  val openGl = gpu as? OpenGlInterop // linux
+  val metal = gpu as? MetalInterop // macos
+  val direct3d = gpu as? Direct3DInterop // windows
 
   App()
 }
@@ -178,12 +175,10 @@ The following features are partially supported:
     input method popups, or canceling an in-progress composition.
 - Window state
   - Supports runtime size, minimize, maximize, fullscreen, and position updates.
-  - Window positioning is best-effort; Wayland restricts window positioning and
-    always-on-top.
+  - Wayland restricts window positioning and always-on-top.
 
 The following features are not yet supported:
 
-- Windows
 - Screen reader, native menus, tray, dialogs, or file pickers
 - Interop views like `SwingPanel`. Advanced users can instead use the host GPU
   context for integrating custom components.

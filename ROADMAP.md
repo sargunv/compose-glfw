@@ -4,13 +4,9 @@ This file tracks implementation status for Compose GLFW.
 
 Known gaps:
 
-Application composition and window model:
-
-- [ ] Propagate recomposer/coroutine failures out of the application loop before
-      shutdown
-
 OS/platform API wiring:
 
+- [ ] Windows light/dark mode detection
 - [ ] Wayland file drops through GLFW
 - [ ] Full native drag-and-drop parity beyond GLFW file drop callbacks:
       enter/move/action events, non-file payloads, and outgoing drags
@@ -22,10 +18,6 @@ OS/platform API wiring:
 - [ ] Keep-screen-on and frame-rate voting
 - [ ] Native macOS fullscreen Spaces (`NSWindow.toggleFullScreen`)
 - [ ] Native menus, tray, dialogs, and file pickers
-
-Packaging and platform expansion:
-
-- [ ] Windows backend/runtime modules
 
 Useful parity reference:
 [Compose Multiplatform desktop-only API](https://kotlinlang.org/docs/multiplatform/compose-desktop-components.html).
