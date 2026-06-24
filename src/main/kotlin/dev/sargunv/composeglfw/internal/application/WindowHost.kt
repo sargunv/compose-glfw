@@ -35,6 +35,7 @@ import org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowIconifyCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowMaximizeCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowPosCallback
+import org.lwjgl.glfw.GLFW.glfwSetWindowRefreshCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback
 
 internal class WindowHost(
@@ -68,6 +69,9 @@ internal class WindowHost(
   private var lastAppliedMinimized = request.state.isMinimized
   private var windowedBoundsBeforeFullscreen: PlatformWindowBounds? = null
   private var renderRequested = true
+  private var isRenderingFromGlfwCallback = false
+  private val shouldRenderDuringBlockedEventProcessing =
+    currentDisplayServer() == DisplayServer.COCOA
 
   private val platformContext: HostPlatformContext
   private val scope: WindowScopeImpl
@@ -200,6 +204,10 @@ internal class WindowHost(
       updateSceneMetrics()
     }
     updateStateFromWindow()
+    renderPendingFrame()
+  }
+
+  private fun renderPendingFrame() {
     if (!actualVisible) {
       return
     }
@@ -289,6 +297,7 @@ internal class WindowHost(
         settlePendingStateSize()
       }
       requestRender()
+      renderFromGlfwCallback()
     }
     glfwSetWindowSizeCallback(window.handle) { _, _, _ ->
       window.refreshSizes()
@@ -297,6 +306,11 @@ internal class WindowHost(
         updateStateSizeFromWindow()
       }
       requestRender()
+      renderFromGlfwCallback()
+    }
+    glfwSetWindowRefreshCallback(window.handle) { _ ->
+      requestRender()
+      renderFromGlfwCallback()
     }
     glfwSetWindowFocusCallback(window.handle) { _, focused ->
       platformContext.updateFocus(focused)
@@ -328,6 +342,7 @@ internal class WindowHost(
     glfwSetWindowPosCallback(window.handle, null)?.free()
     glfwSetWindowIconifyCallback(window.handle, null)?.free()
     glfwSetWindowMaximizeCallback(window.handle, null)?.free()
+    glfwSetWindowRefreshCallback(window.handle, null)?.free()
   }
 
   private fun applyStateToWindow(forceSize: Boolean = false) {
@@ -432,6 +447,19 @@ internal class WindowHost(
 
   private fun requestRender() {
     renderRequested = true
+  }
+
+  private fun renderFromGlfwCallback() {
+    if (!shouldRenderDuringBlockedEventProcessing || isRenderingFromGlfwCallback) {
+      return
+    }
+
+    isRenderingFromGlfwCallback = true
+    try {
+      renderPendingFrame()
+    } finally {
+      isRenderingFromGlfwCallback = false
+    }
   }
 
   private fun updateSceneMetrics() {
