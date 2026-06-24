@@ -6,15 +6,14 @@ import androidx.compose.ui.platform.PlatformTextInputMethodRequest
 import kotlinx.coroutines.awaitCancellation
 
 internal class TextInputService {
-  private var currentInput: CurrentInput? = null
+  private var currentInput: PlatformTextInputMethodRequest? = null
 
   suspend fun startInputMethod(request: PlatformTextInputMethodRequest): Nothing {
-    val input = CurrentInput(request)
-    currentInput = input
+    currentInput = request
     try {
       awaitCancellation()
     } finally {
-      if (currentInput === input) {
+      if (currentInput === request) {
         currentInput = null
       }
     }
@@ -24,11 +23,9 @@ internal class TextInputService {
     val input = currentInput ?: return false
     if (!Character.isValidCodePoint(codePoint)) return false
 
-    input.request.editText {
+    input.editText {
       commitText(String(Character.toChars(codePoint)), 1)
     }
     return true
   }
-
-  private data class CurrentInput(val request: PlatformTextInputMethodRequest)
 }

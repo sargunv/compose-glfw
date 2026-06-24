@@ -15,7 +15,7 @@ of the default AWT/Swing desktop host.
 - `mise run build`: build all Gradle modules.
 - `mise run docs`: generate Dokka API documentation.
 - `mise run publish-local`: publish artifacts to the local Maven repository.
-- `mise run run`: run the demo application.
-- `mise run run-x11`: run the demo, forcing the X11 GLFW backend on Linux.
+- `mise run demo`: run the demo application.
+- `mise run demo:x11`: run the demo, forcing the X11 GLFW backend on Linux.
 
 Run `mise tasks ls --all` for the complete task list.

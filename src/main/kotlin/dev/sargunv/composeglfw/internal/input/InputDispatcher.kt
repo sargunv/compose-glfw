@@ -55,6 +55,8 @@ internal class InputDispatcher(
   private val scene: ComposeWindowScene,
   textInput: TextInputService,
   private val onKeyboardModifiers: (PointerKeyboardModifiers) -> Unit,
+  private val onKeyboardInputMode: () -> Unit,
+  private val onPointerInputMode: () -> Unit,
   private val onPreviewKeyEvent: (KeyEvent) -> Boolean,
   private val onKeyEvent: (KeyEvent) -> Boolean,
   private val requestRender: () -> Unit,
@@ -76,6 +78,7 @@ internal class InputDispatcher(
       updateKeyboardModifiers(mods)
       val pointerButton = button.toPointerButton()
       if (pointerButton != null && (action == GLFW_PRESS || action == GLFW_RELEASE)) {
+        onPointerInputMode()
         updateMouseButton(button, action == GLFW_PRESS)
         sendPointer(
           if (action == GLFW_PRESS) PointerEventType.Press else PointerEventType.Release,
@@ -98,6 +101,9 @@ internal class InputDispatcher(
       val normalizedMods = updateKeyEventModifiers(key, action, mods)
       val event = glfwKeyEvent(key, scancode, action, normalizedMods)
       if (event != null) {
+        if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+          onKeyboardInputMode()
+        }
         onPreviewKeyEvent(event) || scene.sendKeyEvent(event) || onKeyEvent(event)
         requestRender()
       }
@@ -105,6 +111,7 @@ internal class InputDispatcher(
     glfwSetCharCallback(window.handle) { _, codePoint ->
       if (!enabled) return@glfwSetCharCallback
       if (textInput.commit(codePoint)) {
+        onKeyboardInputMode()
         requestRender()
       }
     }

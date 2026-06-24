@@ -301,6 +301,8 @@ internal class WindowHost(
           scene = scene,
           textInput = platformContext.textInput,
           onKeyboardModifiers = platformContext::updateKeyboardModifiers,
+          onKeyboardInputMode = platformContext::updateKeyboardInputMode,
+          onPointerInputMode = platformContext::updatePointerInputMode,
           onPreviewKeyEvent = { onPreviewKeyEvent(it) },
           onKeyEvent = { onKeyEvent(it) },
           requestRender = ::requestRender,

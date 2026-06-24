@@ -39,11 +39,13 @@ import androidx.compose.ui.input.pointer.isNumLockOn as isPointerNumLockOn
 import androidx.compose.ui.input.pointer.isScrollLockOn as isPointerScrollLockOn
 import androidx.compose.ui.input.pointer.isShiftPressed as isPointerShiftPressed
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.unit.dp
 
 @Composable
 internal fun InputEventsCard(modifier: Modifier = Modifier) {
   val focusRequester = remember { FocusRequester() }
+  val inputMode = LocalInputModeManager.current.inputMode
   var keyState by remember { mutableStateOf(ObservedModifiers()) }
   var lastKey by remember { mutableStateOf("none") }
   var lastPointer by remember { mutableStateOf("none") }
@@ -85,6 +87,10 @@ internal fun InputEventsCard(modifier: Modifier = Modifier) {
       )
       Text(
         "Last pointer: $lastPointer",
+        style = MaterialTheme.typography.bodyMedium,
+      )
+      Text(
+        "Input mode: $inputMode",
         style = MaterialTheme.typography.bodyMedium,
       )
     }

@@ -43,6 +43,7 @@ internal class HostPlatformContext(
   private val fallbackContext = PlatformContext.Empty()
   val textInput: TextInputService = TextInputService()
   private val textToolbarAdapter = TextToolbarAdapter(textToolbarContent)
+  private val hostInputModeManager = HostInputModeManager()
   private val mutableWindowInfo = ComposeWindowInfoState()
   private val rootForTestRegistry = RootForTestRegistry()
   private val semanticsOwnerRegistry = SemanticsOwnerRegistry()
@@ -104,10 +105,8 @@ internal class HostPlatformContext(
   override val viewConfiguration: ViewConfiguration
     get() = fallbackContext.viewConfiguration
 
-  // TODO: Implement touch/stylus input and switch InputMode when a backend can report those
-  // events. GLFW's mouse/keyboard event stream only supports keyboard-mode behavior here.
   override val inputModeManager: InputModeManager
-    get() = fallbackContext.inputModeManager
+    get() = hostInputModeManager
 
   // Legacy Compose API. The active text-input path is startInputMethod.
   @Suppress("DEPRECATION")
@@ -178,6 +177,14 @@ internal class HostPlatformContext(
 
   fun updateKeyboardModifiers(modifiers: PointerKeyboardModifiers) {
     mutableWindowInfo.keyboardModifiers = modifiers
+  }
+
+  fun updateKeyboardInputMode() {
+    hostInputModeManager.switchToKeyboardInputMode()
+  }
+
+  fun updatePointerInputMode() {
+    hostInputModeManager.switchToPointerInputMode()
   }
 
   fun updateFocus(focused: Boolean) {
