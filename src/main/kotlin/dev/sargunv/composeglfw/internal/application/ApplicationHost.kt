@@ -20,7 +20,10 @@ import dev.sargunv.composeglfw.WindowState
 import dev.sargunv.composeglfw.internal.platform.HostOperatingSystem
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
 import dev.sargunv.composeglfw.internal.platform.hostOperatingSystem
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -59,6 +62,7 @@ internal class ApplicationHost(private val content: @Composable ApplicationScope
   private val windows = mutableListOf<WindowHost>()
   private val uiDispatcher = UiDispatcher(::wakeEventLoop)
   private val applicationScope = ApplicationScopeImpl(::createWindow, ::disposeWindow)
+  private val coroutineFailure = AtomicReference<Throwable?>()
   private var initialized = false
   private var coroutineScope: CoroutineScope? = null
   private var recomposer: Recomposer? = null
@@ -70,10 +74,18 @@ internal class ApplicationHost(private val content: @Composable ApplicationScope
     uiDispatcher.bindToCurrentThread()
     initializeGlfw()
 
-    val context = uiDispatcher + YieldFrameClock
+    val job = Job()
+    val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+      recordCoroutineFailure(throwable)
+    }
+    val context = uiDispatcher + YieldFrameClock + job + exceptionHandler
+    job.invokeOnCompletion(::recordCoroutineFailure)
     coroutineScope = CoroutineScope(context)
     recomposer = Recomposer(context)
-    recomposerJob = coroutineScope?.launch { recomposer?.runRecomposeAndApplyChanges() }
+    recomposerJob =
+      coroutineScope
+        ?.launch { checkNotNull(recomposer).runRecomposeAndApplyChanges() }
+        ?.also { it.invokeOnCompletion(::recordCoroutineFailure) }
     composition = Composition(ApplicationApplier, checkNotNull(recomposer))
     composition?.setContent {
       if (applicationScope.isOpen) {
@@ -106,7 +118,9 @@ internal class ApplicationHost(private val content: @Composable ApplicationScope
   private fun runEventLoop() {
     var hasCompletedFirstFrame = false
     while (applicationScope.isOpen && (!hasCompletedFirstFrame || windows.isNotEmpty())) {
+      throwCoroutineFailureIfAny()
       uiDispatcher.drain()
+      throwCoroutineFailureIfAny()
       if (!applicationScope.isOpen) {
         break
       }
@@ -115,15 +129,20 @@ internal class ApplicationHost(private val content: @Composable ApplicationScope
       } else {
         glfwPollEvents()
       }
+      throwCoroutineFailureIfAny()
       uiDispatcher.drain()
+      throwCoroutineFailureIfAny()
       windows.toList().forEach { window ->
         if (window in windows) {
           window.updateAndRender()
         }
       }
+      throwCoroutineFailureIfAny()
       uiDispatcher.drain()
+      throwCoroutineFailureIfAny()
       hasCompletedFirstFrame = true
     }
+    throwCoroutineFailureIfAny()
   }
 
   private fun createWindow(request: WindowRequest): WindowHost =
@@ -165,6 +184,29 @@ internal class ApplicationHost(private val content: @Composable ApplicationScope
     }
   }
 
+  private fun recordCoroutineFailure(cause: Throwable?) {
+    val failure = cause?.nonCancellationFailure() ?: return
+    while (true) {
+      val recorded = coroutineFailure.get()
+      when {
+        recorded == null && coroutineFailure.compareAndSet(null, failure) -> {
+          wakeEventLoop()
+          return
+        }
+        recorded != null -> {
+          if (recorded !== failure) {
+            recorded.addSuppressed(failure)
+          }
+          return
+        }
+      }
+    }
+  }
+
+  private fun throwCoroutineFailureIfAny() {
+    coroutineFailure.get()?.let { throw it }
+  }
+
   private fun preferredPlatform(): DisplayServer? {
     val requested =
       System.getProperty(PlatformProperty)
@@ -197,6 +239,9 @@ internal class ApplicationScopeImpl(
     disposeWindow.invoke(window)
   }
 }
+
+private tailrec fun Throwable.nonCancellationFailure(): Throwable? =
+  if (this is CancellationException) cause?.nonCancellationFailure() else this
 
 private object ApplicationApplier : Applier<Any> {
   override val current: Any = Unit
