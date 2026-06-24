@@ -9,7 +9,10 @@ import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import dev.sargunv.composeglfw.internal.platform.TextInputService
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
 import dev.sargunv.composeglfw.internal.window.PlatformWindow
+import java.awt.Component
+import java.awt.event.MouseWheelEvent
 import java.nio.file.Path
+import kotlin.math.abs
 import org.lwjgl.glfw.GLFW.GLFW_FALSE
 import org.lwjgl.glfw.GLFW.GLFW_IME
 import org.lwjgl.glfw.GLFW.GLFW_KEY_CAPS_LOCK
@@ -53,6 +56,9 @@ import org.lwjgl.glfw.GLFWDropCallback
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.MemoryUtil.memIntBuffer
+
+private const val WheelScrollAmount = 1
+private const val PreciseWheelRotation = 0
 
 internal class InputDispatcher(
   private val window: PlatformWindow,
@@ -103,10 +109,8 @@ internal class InputDispatcher(
       if (!enabled) return@glfwSetScrollCallback
       sendPointer(
         type = PointerEventType.Scroll,
-        // TODO: GLFW's public scroll callback does not expose input source, precise-wheel state,
-        // scroll phase/momentum, or OS scrollAmount. Forward the raw offsets for now instead of
-        // guessing Compose Desktop's AWT MouseWheelEvent metadata.
         scrollDelta = Offset(x.toFloat(), -y.toFloat()),
+        nativeEvent = glfwMouseWheelEvent(x, y),
       )
     }
     glfwSetKeyCallback(window.handle) { _, key, scancode, action, mods ->
@@ -237,6 +241,7 @@ internal class InputDispatcher(
     type: PointerEventType,
     button: PointerButton? = null,
     scrollDelta: Offset = Offset.Zero,
+    nativeEvent: Any? = null,
   ) {
     scene.sendPointerEvent(
       event = type,
@@ -245,6 +250,7 @@ internal class InputDispatcher(
       button = button,
       buttons = pointerButtons(),
       keyboardModifiers = glfwKeyboardModifiers(currentMods, scrollLockOn),
+      nativeEvent = nativeEvent,
     )
     requestRender()
   }
@@ -305,6 +311,35 @@ internal class InputDispatcher(
       else -> mods
     }
   }
+}
+
+private val ScrollEventSource = object : Component() {}
+
+private fun glfwMouseWheelEvent(
+  x: Double,
+  y: Double,
+): MouseWheelEvent {
+  // TODO: GLFW's public scroll callback does not expose input source, precise-wheel state,
+  // scroll phase/momentum, or OS scrollAmount. Synthesize the subset of AWT MouseWheelEvent
+  // metadata Compose Desktop uses and mark GLFW scroll events as precise until there is native
+  // metadata to classify them more accurately.
+  val preciseWheelRotation = if (abs(x) > abs(y)) x else y
+  return MouseWheelEvent(
+    ScrollEventSource,
+    MouseWheelEvent.MOUSE_WHEEL,
+    System.currentTimeMillis(),
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    false,
+    MouseWheelEvent.WHEEL_UNIT_SCROLL,
+    WheelScrollAmount,
+    PreciseWheelRotation,
+    preciseWheelRotation,
+  )
 }
 
 private fun Int.toPointerButton(): PointerButton? =
