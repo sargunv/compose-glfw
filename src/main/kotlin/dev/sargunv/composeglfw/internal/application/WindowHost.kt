@@ -640,7 +640,7 @@ internal class WindowHost(
     if (currentDisplayServer() == DisplayServer.WAYLAND) {
       // A hidden Wayland window can report its final density only after it becomes visible. Drawing
       // without swapping lets Compose observe the current density before preferred sizing measures.
-      peer.renderBackend.renderWithoutPresenting(scene, System.nanoTime())
+      peer.renderBackend.prepareForPreferredSizeMeasurement(scene, System.nanoTime())
     }
   }
 

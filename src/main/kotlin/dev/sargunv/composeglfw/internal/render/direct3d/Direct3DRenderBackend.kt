@@ -69,10 +69,6 @@ internal class Direct3DRenderBackend(private val window: PlatformWindow) : Rende
     deviceResources.present()
   }
 
-  override fun renderWithoutPresenting(scene: ComposeWindowScene, frameTimeNanos: Long) {
-    draw(scene, frameTimeNanos)
-  }
-
   private fun draw(scene: ComposeWindowScene, frameTimeNanos: Long) {
     val target = currentTarget() ?: return
     val clearColor = if (window.isTransparent) SkiaColor.TRANSPARENT else SkiaColor.BLACK

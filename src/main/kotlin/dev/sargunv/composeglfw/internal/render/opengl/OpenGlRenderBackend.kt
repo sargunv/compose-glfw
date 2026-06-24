@@ -83,7 +83,10 @@ internal class OpenGlRenderBackend(private val window: PlatformWindow) : RenderB
     window.swapBuffers()
   }
 
-  override fun renderWithoutPresenting(scene: ComposeWindowScene, frameTimeNanos: Long) {
+  override fun prepareForPreferredSizeMeasurement(
+    scene: ComposeWindowScene,
+    frameTimeNanos: Long,
+  ) {
     draw(scene, frameTimeNanos)
   }
 

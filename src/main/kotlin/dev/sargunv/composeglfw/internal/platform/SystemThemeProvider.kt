@@ -19,9 +19,11 @@ internal interface SystemThemeProvider : AutoCloseable {
         HostOperatingSystem.LINUX -> createLinuxSystemThemeProvider(onSystemThemeChanged)
         HostOperatingSystem.MACOS -> createMacSystemThemeProvider(onSystemThemeChanged)
         HostOperatingSystem.WINDOWS -> createWindowsSystemThemeProvider(onSystemThemeChanged)
-        HostOperatingSystem.OTHER -> StaticSystemThemeProvider(SystemTheme.Unknown)
+        HostOperatingSystem.OTHER -> UnknownSystemThemeProvider
       }
   }
 }
 
-private class StaticSystemThemeProvider(override val systemTheme: SystemTheme) : SystemThemeProvider
+private object UnknownSystemThemeProvider : SystemThemeProvider {
+  override val systemTheme: SystemTheme = SystemTheme.Unknown
+}

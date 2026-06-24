@@ -14,6 +14,5 @@ internal interface RenderBackendDriver : AutoCloseable {
 
   fun render(scene: ComposeWindowScene, frameTimeNanos: Long)
 
-  // TODO only wayland implements this so far; reconsider our abstraction
-  fun renderWithoutPresenting(scene: ComposeWindowScene, frameTimeNanos: Long)
+  fun prepareForPreferredSizeMeasurement(scene: ComposeWindowScene, frameTimeNanos: Long) = Unit
 }

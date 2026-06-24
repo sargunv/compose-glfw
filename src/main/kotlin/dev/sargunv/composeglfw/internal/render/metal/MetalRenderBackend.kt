@@ -73,8 +73,6 @@ internal class MetalRenderBackend(private val window: PlatformWindow) : RenderBa
     draw(scene, frameTimeNanos)
   }
 
-  override fun renderWithoutPresenting(scene: ComposeWindowScene, frameTimeNanos: Long) = Unit
-
   private fun draw(
     scene: ComposeWindowScene,
     frameTimeNanos: Long,
