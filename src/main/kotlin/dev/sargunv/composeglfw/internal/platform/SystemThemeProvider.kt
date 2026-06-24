@@ -6,6 +6,7 @@ import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.SystemTheme
 import dev.sargunv.composeglfw.internal.platform.linux.createLinuxSystemThemeProvider
 import dev.sargunv.composeglfw.internal.platform.macos.createMacSystemThemeProvider
+import dev.sargunv.composeglfw.internal.platform.windows.createWindowsSystemThemeProvider
 
 internal interface SystemThemeProvider : AutoCloseable {
   val systemTheme: SystemTheme
@@ -17,7 +18,7 @@ internal interface SystemThemeProvider : AutoCloseable {
       when (hostOperatingSystem) {
         HostOperatingSystem.LINUX -> createLinuxSystemThemeProvider(onSystemThemeChanged)
         HostOperatingSystem.MACOS -> createMacSystemThemeProvider(onSystemThemeChanged)
-        HostOperatingSystem.WINDOWS,
+        HostOperatingSystem.WINDOWS -> createWindowsSystemThemeProvider(onSystemThemeChanged)
         HostOperatingSystem.OTHER -> StaticSystemThemeProvider(SystemTheme.Unknown)
       }
   }
