@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.IntSize
 import dev.sargunv.composeglfw.CursorImagePointerIcon
 import dev.sargunv.composeglfw.DisplayServer
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
+import dev.sargunv.composeglfw.internal.platform.windows.configureDirectCompositionHost
 import kotlin.math.roundToInt
 import org.lwjgl.glfw.GLFW.GLFW_ARROW_CURSOR
 import org.lwjgl.glfw.GLFW.GLFW_CLIENT_API
@@ -71,6 +72,7 @@ import org.lwjgl.glfw.GLFW.glfwSwapInterval
 import org.lwjgl.glfw.GLFW.glfwWindowHint
 import org.lwjgl.glfw.GLFW.glfwWindowShouldClose
 import org.lwjgl.glfw.GLFWImage
+import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GLCapabilities
 import org.lwjgl.system.MemoryStack
@@ -104,12 +106,13 @@ internal class PlatformWindow(
     private set
 
   // Cross-platform logical content-area size. Wayland already reports this in window units; X11
-  // needs conversion from physical framebuffer pixels on scaled desktops.
+  // and Win32 need conversion from physical framebuffer pixels on scaled desktops.
   val logicalWindowSize: IntSize
     get() =
       when (displayServer) {
         DisplayServer.WAYLAND,
         DisplayServer.COCOA -> windowSize
+        DisplayServer.WIN32,
         DisplayServer.X11 ->
           IntSize(
             (framebufferSize.width / contentScale).roundToInt().coerceAtLeast(0),
@@ -165,6 +168,7 @@ internal class PlatformWindow(
     }
     glfwWindowHint(GLFW_DECORATED, if (undecorated) GLFW_FALSE else GLFW_TRUE)
     glfwWindowHint(GLFW_RESIZABLE, if (resizable) GLFW_TRUE else GLFW_FALSE)
+    glfwWindowHint(GLFW_FOCUSED, if (focusOnShow) GLFW_TRUE else GLFW_FALSE)
     glfwWindowHint(GLFW_FOCUS_ON_SHOW, if (focusOnShow) GLFW_TRUE else GLFW_FALSE)
     glfwWindowHint(GLFW_FLOATING, if (alwaysOnTop) GLFW_TRUE else GLFW_FALSE)
     // On X11, screen coordinates and pixels are 1:1, so GLFW needs this to create windows at
@@ -176,6 +180,11 @@ internal class PlatformWindow(
     handle = glfwCreateWindow(initialWindowSize.width, initialWindowSize.height, title, NULL, NULL)
     check(handle != NULL) { "GLFW window creation failed: ${glfwGetError(null)}" }
     setDecorated(!undecorated)
+    if (
+      displayServer == DisplayServer.WIN32 && clientApi == WindowClientApi.NO_API && transparent
+    ) {
+      configureDirectCompositionHost(glfwGetWin32Window(handle))
+    }
     glfwSetInputMode(handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE)
     if (clientApi == WindowClientApi.OPENGL_EGL) {
       makeCurrent()
@@ -189,11 +198,17 @@ internal class PlatformWindow(
   }
 
   fun makeCurrent() {
+    check(clientApi == WindowClientApi.OPENGL_EGL) {
+      "makeCurrent is only available for OpenGL windows"
+    }
     glfwMakeContextCurrent(handle)
     glCapabilities?.let(GL::setCapabilities)
   }
 
   fun swapBuffers() {
+    check(clientApi == WindowClientApi.OPENGL_EGL) {
+      "swapBuffers is only available for OpenGL windows"
+    }
     glfwSwapBuffers(handle)
   }
 
@@ -369,7 +384,6 @@ internal class PlatformWindow(
         }
       }
     }
-
     val primary = glfwGetPrimaryMonitor()
     check(primary != NULL) { "GLFW did not report a primary monitor" }
     return primary
@@ -436,7 +450,8 @@ internal class PlatformWindow(
   private fun DpSize.toRuntimeGlfwWindowSize(): IntSize {
     val scale =
       when (displayServer) {
-        DisplayServer.X11 -> contentScale
+        DisplayServer.X11,
+        DisplayServer.WIN32 -> contentScale
         DisplayServer.WAYLAND,
         DisplayServer.COCOA -> 1f
       }

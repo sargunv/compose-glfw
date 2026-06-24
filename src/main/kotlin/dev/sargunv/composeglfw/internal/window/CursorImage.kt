@@ -28,7 +28,8 @@ private fun CursorImagePointerIcon.cursorImagePixelScale(
 ): Float {
   val nativeScale =
     when (displayServer) {
-      DisplayServer.X11 -> contentScale
+      DisplayServer.X11,
+      DisplayServer.WIN32 -> contentScale
       DisplayServer.WAYLAND,
       DisplayServer.COCOA -> 1f
     }

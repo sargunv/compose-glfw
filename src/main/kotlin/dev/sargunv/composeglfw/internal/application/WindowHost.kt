@@ -64,9 +64,9 @@ internal class WindowHost(
   private var hasReappliedPendingStateSize = false
   private var pendingVisiblePreferredSizeRequest: DpSize? = null
   private var isApplyingStateSize = false
-  private var lastAppliedPosition = request.state.position
-  private var lastAppliedPlacement = request.state.placement
-  private var lastAppliedMinimized = request.state.isMinimized
+  private var lastAppliedPosition: WindowPosition = WindowPosition.PlatformDefault
+  private var lastAppliedPlacement: WindowPlacement = WindowPlacement.Floating
+  private var lastAppliedMinimized: Boolean = false
   private var windowedBoundsBeforeFullscreen: PlatformWindowBounds? = null
   private var renderRequested = true
   private var isRenderingFromGlfwCallback = false
@@ -115,7 +115,7 @@ internal class WindowHost(
     scene =
       ComposeWindowScene(
         initialDensity = initialWindow.contentScale,
-        // Compose layout/rendering uses framebuffer pixels to match the OpenGL/Skia target.
+        // Compose layout/rendering uses framebuffer pixels to match the GPU/Skia target.
         initialSize = initialWindow.framebufferSize,
         platformContext = platformContext,
         coroutineContext = uiDispatcher,
@@ -128,6 +128,8 @@ internal class WindowHost(
     lastFramebufferSize = initialWindow.framebufferSize
     lastContentScale = initialWindow.contentScale
     platformContext.updateWindowInfo()
+    applyStateToWindow()
+    syncWindowVisibility()
   }
 
   fun update(
@@ -654,18 +656,19 @@ internal class WindowHost(
       null
     }
 
-  private fun initialNativeVisibility(config: WindowPeerConfig): Boolean =
-    config.visible && !config.size.hasUnspecifiedDimensions()
-
   private fun syncWindowVisibility() {
     val shouldBeVisible = config.visible && !state.size.hasUnspecifiedDimensions()
     if (shouldBeVisible != actualVisible) {
       window.setVisible(shouldBeVisible)
       actualVisible = shouldBeVisible
       updatePlatformLifecycleState()
+      platformContext.updateWindowInfo()
       requestRender()
     }
   }
+
+  private fun initialNativeVisibility(config: WindowPeerConfig): Boolean =
+    config.visible && !config.size.hasUnspecifiedDimensions()
 
   private fun updatePlatformLifecycleState() {
     platformContext.updateLifecycleState(

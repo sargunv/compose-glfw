@@ -21,12 +21,15 @@ run = "hk fix --all"
 
 [tasks.build]
 run = "./gradlew build"
+run_windows = "gradlew.bat build"
 
 [tasks.docs]
 run = "./gradlew dokkaGenerate"
+run_windows = "gradlew.bat dokkaGenerate"
 
 [tasks.publish-local]
 run = "./gradlew publishToMavenLocal -PsignAllPublications=false"
+run_windows = "gradlew.bat publishToMavenLocal -PsignAllPublications=false"
 
 [tasks.actions-up]
 description = "Update and pin GitHub Actions steps."
@@ -46,6 +49,7 @@ run = 'java -jar {{ tools["aqua:facebook/ktfmt"].path }}/ktfmt'
 
 [tasks.run]
 run = "./gradlew :compose-glfw-demo:run"
+run_windows = "gradlew.bat :compose-glfw-demo:run"
 
 [tasks.run-wayland]
 run = "./gradlew :compose-glfw-demo:runWayland"

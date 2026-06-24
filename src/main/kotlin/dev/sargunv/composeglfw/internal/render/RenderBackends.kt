@@ -2,6 +2,7 @@ package dev.sargunv.composeglfw.internal.render
 
 import dev.sargunv.composeglfw.DisplayServer
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
+import dev.sargunv.composeglfw.internal.render.direct3d.Direct3DRenderBackend
 import dev.sargunv.composeglfw.internal.render.metal.MetalRenderBackend
 import dev.sargunv.composeglfw.internal.render.opengl.OpenGlRenderBackend
 import dev.sargunv.composeglfw.internal.window.PlatformWindow
@@ -11,7 +12,8 @@ internal fun currentWindowClientApi(): WindowClientApi =
   when (currentDisplayServer()) {
     DisplayServer.WAYLAND,
     DisplayServer.X11 -> WindowClientApi.OPENGL_EGL
-    DisplayServer.COCOA -> WindowClientApi.NO_API
+    DisplayServer.COCOA,
+    DisplayServer.WIN32 -> WindowClientApi.NO_API
   }
 
 internal fun createRenderBackend(window: PlatformWindow): RenderBackendDriver =
@@ -19,4 +21,5 @@ internal fun createRenderBackend(window: PlatformWindow): RenderBackendDriver =
     DisplayServer.WAYLAND,
     DisplayServer.X11 -> OpenGlRenderBackend(window)
     DisplayServer.COCOA -> MetalRenderBackend(window)
+    DisplayServer.WIN32 -> Direct3DRenderBackend(window)
   }

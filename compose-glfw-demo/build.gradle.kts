@@ -24,12 +24,15 @@ val hostArch = System.getProperty("os.arch")
 val isLinux = hostOs.equals("Linux", ignoreCase = true)
 val isMac = hostOs.contains("Mac", ignoreCase = true)
 val isArm64 = hostArch == "aarch64" || hostArch == "arm64"
+val isWindows = hostOs.startsWith("Windows", ignoreCase = true)
 val hostRuntimeModule =
   when {
     isLinux && isArm64 -> ":compose-glfw-opengl-linux-arm64"
     isLinux -> ":compose-glfw-opengl-linux-x64"
     isMac && isArm64 -> ":compose-glfw-metal-macos-arm64"
     isMac -> ":compose-glfw-metal-macos-x64"
+    isWindows && isArm64 -> ":compose-glfw-direct3d-windows-arm64"
+    isWindows -> ":compose-glfw-direct3d-windows-x64"
     else -> null
   }
 

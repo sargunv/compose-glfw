@@ -57,3 +57,38 @@ public data class MetalInterop(
   /** `MTLCommandQueue*` used by Skia. */
   public val queue: Long,
 ) : GpuInterop
+
+/**
+ * Direct3D interop for a Compose GLFW window.
+ *
+ * Native handles are borrowed from the host window and remain valid only until that window is
+ * closed or recreated. Do not close or release them from user code.
+ */
+public data class Direct3DInterop(
+  /** Skia direct context used by Compose for this window. */
+  public val directContext: DirectContext,
+
+  /** Win32 HWND hosting the DirectComposition target. */
+  public val hwnd: Long,
+
+  /** IDXGIAdapter1 pointer used to create the D3D device. */
+  public val adapter: Long,
+
+  /** ID3D12Device pointer used by Skia. */
+  public val device: Long,
+
+  /** ID3D12CommandQueue pointer used by Skia and DXGI presentation. */
+  public val commandQueue: Long,
+
+  /** IDXGISwapChain3 pointer used as DirectComposition visual content. */
+  public val swapChain: Long,
+
+  /** IDCompositionDesktopDevice pointer owning the composition transaction. */
+  public val compositionDevice: Long,
+
+  /** IDCompositionTarget pointer bound to the GLFW HWND. */
+  public val compositionTarget: Long,
+
+  /** IDCompositionVisual pointer whose content is the DXGI swap chain. */
+  public val compositionVisual: Long,
+) : GpuInterop

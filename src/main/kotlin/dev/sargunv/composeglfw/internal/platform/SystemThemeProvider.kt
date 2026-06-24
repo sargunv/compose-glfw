@@ -17,6 +17,7 @@ internal interface SystemThemeProvider : AutoCloseable {
       when (hostOperatingSystem) {
         HostOperatingSystem.LINUX -> createLinuxSystemThemeProvider(onSystemThemeChanged)
         HostOperatingSystem.MACOS -> createMacSystemThemeProvider(onSystemThemeChanged)
+        HostOperatingSystem.WINDOWS,
         HostOperatingSystem.OTHER -> StaticSystemThemeProvider(SystemTheme.Unknown)
       }
   }

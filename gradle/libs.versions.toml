@@ -42,3 +42,5 @@ skikoAwtRuntimeLinuxArm64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-li
 skikoAwtRuntimeLinuxX64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-linux-x64", version.ref = "skiko" }
 skikoAwtRuntimeMacosArm64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-macos-arm64", version.ref = "skiko" }
 skikoAwtRuntimeMacosX64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-macos-x64", version.ref = "skiko" }
+skikoAwtRuntimeWindowsArm64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-windows-arm64", version.ref = "skiko" }
+skikoAwtRuntimeWindowsX64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-windows-x64", version.ref = "skiko" }

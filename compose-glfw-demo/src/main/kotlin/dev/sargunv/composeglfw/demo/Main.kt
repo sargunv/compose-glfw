@@ -4,39 +4,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import dev.sargunv.composeglfw.Window
 import dev.sargunv.composeglfw.WindowOptions
-import dev.sargunv.composeglfw.WindowPosition
 import dev.sargunv.composeglfw.glfwApplication
 import dev.sargunv.composeglfw.rememberWindowState
 
 internal fun main(): Unit {
   glfwApplication {
     val windowState = rememberWindowState(size = DpSize(960.dp, 640.dp))
-    val toolsWindowState =
-      rememberWindowState(
-        position = WindowPosition(Alignment.CenterEnd),
-        size = DpSize(420.dp, Dp.Unspecified),
-      )
-    val hudWindowState =
-      rememberWindowState(
-        position = WindowPosition(Alignment.TopCenter),
-        size = DpSize(460.dp, 360.dp),
-      )
-    val passiveWindowState =
-      rememberWindowState(
-        position = WindowPosition(Alignment.BottomEnd),
-        size = DpSize(420.dp, 260.dp),
-      )
-    val textToolbarWindowState =
-      rememberWindowState(
-        position = WindowPosition(Alignment.CenterStart),
-        size = DpSize(460.dp, 320.dp),
-      )
+    val toolsWindowState = rememberWindowState(size = DpSize(420.dp, Dp.Unspecified))
+    val hudWindowState = rememberWindowState(size = DpSize(460.dp, 360.dp))
+    val passiveWindowState = rememberWindowState(size = DpSize(420.dp, 260.dp))
+    val textToolbarWindowState = rememberWindowState(size = DpSize(460.dp, 320.dp))
     var toolsOpen by remember { mutableStateOf(false) }
     var hudOpen by remember { mutableStateOf(false) }
     var hudTransparent by remember { mutableStateOf(true) }
