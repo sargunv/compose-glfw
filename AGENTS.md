@@ -9,6 +9,8 @@ of the default AWT/Swing desktop host.
 - `compose-glfw-demo`: runnable demo application.
 - `compose-glfw-opengl-linux-x64`: Linux x64 OpenGL runtime module.
 - `compose-glfw-opengl-linux-arm64`: Linux arm64 OpenGL runtime module.
+- `compose-glfw-metal-macos-arm64`: macOS arm64 Metal runtime module.
+- `compose-glfw-metal-macos-x64`: macOS x64 Metal runtime module.
 - `gradle`: Gradle wrapper and version catalog.
 
 ## Dev tool commands

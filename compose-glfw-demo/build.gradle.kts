@@ -22,10 +22,14 @@ compose.resources {
 val hostOs = System.getProperty("os.name")
 val hostArch = System.getProperty("os.arch")
 val isLinux = hostOs.equals("Linux", ignoreCase = true)
+val isMac = hostOs.contains("Mac", ignoreCase = true)
+val isArm64 = hostArch == "aarch64" || hostArch == "arm64"
 val hostRuntimeModule =
   when {
-    isLinux && hostArch == "aarch64" -> ":compose-glfw-opengl-linux-arm64"
+    isLinux && isArm64 -> ":compose-glfw-opengl-linux-arm64"
     isLinux -> ":compose-glfw-opengl-linux-x64"
+    isMac && isArm64 -> ":compose-glfw-metal-macos-arm64"
+    isMac -> ":compose-glfw-metal-macos-x64"
     else -> null
   }
 
@@ -63,6 +67,9 @@ fun registerDemoRunTask(
     this.description = description
     mainClass = "dev.sargunv.composeglfw.demo.MainKt"
     classpath = files(tasks.named("jvmJar")) + configurations.named("jvmRuntimeClasspath").get()
+    if (isMac) {
+      jvmArgs("-XstartOnFirstThread")
+    }
     jvmArgs("--enable-native-access=ALL-UNNAMED")
     if (platform != null) {
       systemProperty("compose.glfw.platform", platform)

@@ -26,7 +26,7 @@ OS/platform API wiring:
 
 Packaging and platform expansion:
 
-- [ ] macOS backend/runtime modules
+- [ ] macOS quirks and light/dark theme detection
 - [ ] Windows backend/runtime modules
 
 Useful parity reference:

@@ -39,7 +39,7 @@ public data class HostWindowInfo(
   /** Display server used by GLFW for this window. */
   public val displayServer: DisplayServer,
 
-  /** Name of the display or monitor when GLFW reports one. */
+  /** Platform display connection name, such as `WAYLAND_DISPLAY` or `DISPLAY`, when known. */
   public val displayName: String?,
 
   /** Renderer used to draw Compose content. */

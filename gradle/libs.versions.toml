@@ -40,3 +40,5 @@ navigationEvent = { module = "androidx.navigationevent:navigationevent", version
 savedState = { module = "androidx.savedstate:savedstate", version.ref = "savedState" }
 skikoAwtRuntimeLinuxArm64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-linux-arm64", version.ref = "skiko" }
 skikoAwtRuntimeLinuxX64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-linux-x64", version.ref = "skiko" }
+skikoAwtRuntimeMacosArm64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-macos-arm64", version.ref = "skiko" }
+skikoAwtRuntimeMacosX64 = { module = "org.jetbrains.skiko:skiko-awt-runtime-macos-x64", version.ref = "skiko" }

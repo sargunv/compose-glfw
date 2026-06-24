@@ -8,7 +8,12 @@ public sealed interface GpuInterop {
   public val backend: RenderBackend
 }
 
-/** OpenGL interop for a Compose GLFW window. */
+/**
+ * OpenGL interop for a Compose GLFW window.
+ *
+ * Native handles are borrowed from the host window and remain valid only until that window is
+ * closed or recreated. Do not close or release them from user code.
+ */
 public data class OpenGlInterop(
   /** Skia direct context used by Compose for this window. */
   public val directContext: DirectContext,
@@ -32,4 +37,30 @@ public data class OpenGlInterop(
   public val makeCurrent: () -> Unit,
 ) : GpuInterop {
   override val backend: RenderBackend = RenderBackend.OPENGL
+}
+
+/**
+ * Metal interop for a Compose GLFW window.
+ *
+ * Native handles are borrowed from the host window and remain valid only until that window is
+ * closed or recreated. Do not close or release them from user code. Cocoa and Metal objects should
+ * be used from the application/UI thread unless their platform documentation says otherwise.
+ */
+public data class MetalInterop(
+  /** Skia direct context used by Compose for this window. */
+  public val directContext: DirectContext,
+
+  /** Cocoa `NSView*` backing the GLFW window content. */
+  public val view: Long,
+
+  /** `CAMetalLayer*` used as the window drawable. */
+  public val layer: Long,
+
+  /** `MTLDevice*` used by Skia. */
+  public val device: Long,
+
+  /** `MTLCommandQueue*` used by Skia. */
+  public val queue: Long,
+) : GpuInterop {
+  override val backend: RenderBackend = RenderBackend.METAL
 }

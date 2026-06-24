@@ -13,10 +13,10 @@ internal interface SystemThemeProvider : AutoCloseable {
 
   companion object {
     fun create(onSystemThemeChanged: (SystemTheme) -> Unit): SystemThemeProvider =
-      if (System.getProperty("os.name").equals("Linux", ignoreCase = true)) {
-        createLinuxSystemThemeProvider(onSystemThemeChanged)
-      } else {
-        StaticSystemThemeProvider(SystemTheme.Unknown)
+      when (hostOperatingSystem) {
+        HostOperatingSystem.LINUX -> createLinuxSystemThemeProvider(onSystemThemeChanged)
+        HostOperatingSystem.MACOS,
+        HostOperatingSystem.OTHER -> StaticSystemThemeProvider(SystemTheme.Unknown)
       }
   }
 }

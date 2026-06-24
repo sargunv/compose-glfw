@@ -11,6 +11,7 @@ import androidx.compose.ui.input.key.KeyEvent
 import dev.sargunv.composeglfw.internal.application.ApplicationHost
 import dev.sargunv.composeglfw.internal.application.ApplicationScopeImpl
 import dev.sargunv.composeglfw.internal.application.WindowRequest
+import dev.sargunv.composeglfw.internal.application.prepareApplicationRuntime
 
 /**
  * Starts a Compose GLFW application and runs until the application exits.
@@ -21,6 +22,7 @@ import dev.sargunv.composeglfw.internal.application.WindowRequest
  * @param content application-level composition.
  */
 public fun glfwApplication(content: @Composable ApplicationScope.() -> Unit) {
+  prepareApplicationRuntime()
   ApplicationHost(content).use { it.run() }
 }
 

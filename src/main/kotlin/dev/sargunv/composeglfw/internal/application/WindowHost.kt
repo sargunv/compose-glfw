@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
+import dev.sargunv.composeglfw.DisplayServer
 import dev.sargunv.composeglfw.HostWindowInfo
 import dev.sargunv.composeglfw.RenderBackend
 import dev.sargunv.composeglfw.TextToolbarContent
@@ -18,8 +19,9 @@ import dev.sargunv.composeglfw.internal.input.InputDispatcher
 import dev.sargunv.composeglfw.internal.platform.HostPlatformContext
 import dev.sargunv.composeglfw.internal.platform.SystemThemeProvider
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
-import dev.sargunv.composeglfw.internal.platform.displayName
-import dev.sargunv.composeglfw.internal.render.opengl.OpenGlRenderBackend
+import dev.sargunv.composeglfw.internal.render.RenderBackendDriver
+import dev.sargunv.composeglfw.internal.render.createRenderBackend
+import dev.sargunv.composeglfw.internal.render.currentWindowClientApi
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
 import dev.sargunv.composeglfw.internal.scene.WindowScopeImpl
 import dev.sargunv.composeglfw.internal.window.PlatformWindow
@@ -82,7 +84,7 @@ internal class WindowHost(
   init {
     actualVisible = initialNativeVisibility(config)
     val initialWindow = createPlatformWindow(config, visible = actualVisible)
-    val initialRenderBackend = OpenGlRenderBackend(initialWindow)
+    val initialRenderBackend = createRenderBackend(initialWindow)
     platformContext =
       HostPlatformContext(
         window = initialWindow,
@@ -90,7 +92,11 @@ internal class WindowHost(
         initialVisible = actualVisible,
         initialMinimized = request.state.isMinimized,
       )
-    scope = WindowScopeImpl(currentInfo(initialWindow), initialRenderBackend.interop)
+    scope =
+      WindowScopeImpl(
+        currentInfo(initialWindow, initialRenderBackend.backend),
+        initialRenderBackend.interop,
+      )
     systemThemeProvider =
       SystemThemeProvider.create { theme ->
           uiDispatcher.dispatch(
@@ -221,7 +227,7 @@ internal class WindowHost(
     peer.close()
     actualVisible = initialNativeVisibility(config)
     val newWindow = createPlatformWindow(config, visible = actualVisible)
-    val newRenderBackend = OpenGlRenderBackend(newWindow)
+    val newRenderBackend = createRenderBackend(newWindow)
     platformContext.updateWindow(
       window = newWindow,
       visible = actualVisible,
@@ -252,11 +258,12 @@ internal class WindowHost(
       resizable = config.resizable,
       focusOnShow = config.focusOnShow,
       alwaysOnTop = config.alwaysOnTop,
+      clientApi = currentWindowClientApi(),
     )
 
   private fun attachPeer(
     window: PlatformWindow,
-    renderBackend: OpenGlRenderBackend,
+    renderBackend: RenderBackendDriver,
     enabled: Boolean,
   ): WindowPeer {
     val input =
@@ -561,9 +568,11 @@ internal class WindowHost(
   }
 
   private fun prepareSceneForPreferredSizeMeasurement() {
-    // A hidden Wayland window can report its final density only after it becomes visible. Drawing
-    // without swapping lets Compose observe the current density before preferred sizing measures.
-    peer.renderBackend.renderWithoutPresenting(scene, System.nanoTime())
+    if (currentDisplayServer() == DisplayServer.WAYLAND) {
+      // A hidden Wayland window can report its final density only after it becomes visible. Drawing
+      // without swapping lets Compose observe the current density before preferred sizing measures.
+      peer.renderBackend.renderWithoutPresenting(scene, System.nanoTime())
+    }
   }
 
   private fun canApplyStateSizeToWindow(): Boolean =
@@ -637,12 +646,15 @@ internal class WindowHost(
     )
   }
 
-  private fun currentInfo(window: PlatformWindow = this.window): HostWindowInfo {
+  private fun currentInfo(
+    window: PlatformWindow = this.window,
+    renderBackend: RenderBackend = peer.renderBackend.backend,
+  ): HostWindowInfo {
     val displayServer = currentDisplayServer()
     return HostWindowInfo(
       displayServer = displayServer,
-      displayName = displayServer.displayName(),
-      renderBackend = RenderBackend.OPENGL,
+      displayName = displayServer.displayConnectionName(),
+      renderBackend = renderBackend,
       // Framebuffer dimensions are physical drawable pixels.
       framebufferWidth = window.framebufferSize.width,
       framebufferHeight = window.framebufferSize.height,
@@ -671,7 +683,7 @@ internal class WindowHost(
 
   private inner class WindowPeer(
     val window: PlatformWindow,
-    val renderBackend: OpenGlRenderBackend,
+    val renderBackend: RenderBackendDriver,
     val input: InputDispatcher,
   ) : AutoCloseable {
     private var inputDetached = false

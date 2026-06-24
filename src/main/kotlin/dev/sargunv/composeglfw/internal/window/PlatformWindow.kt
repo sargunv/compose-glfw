@@ -26,6 +26,7 @@ import org.lwjgl.glfw.GLFW.GLFW_IBEAM_CURSOR
 import org.lwjgl.glfw.GLFW.GLFW_ICONIFIED
 import org.lwjgl.glfw.GLFW.GLFW_LOCK_KEY_MODS
 import org.lwjgl.glfw.GLFW.GLFW_MAXIMIZED
+import org.lwjgl.glfw.GLFW.GLFW_NO_API
 import org.lwjgl.glfw.GLFW.GLFW_OPENGL_API
 import org.lwjgl.glfw.GLFW.GLFW_POINTING_HAND_CURSOR
 import org.lwjgl.glfw.GLFW.GLFW_RESIZABLE
@@ -86,6 +87,7 @@ internal class PlatformWindow(
   resizable: Boolean,
   focusOnShow: Boolean,
   alwaysOnTop: Boolean,
+  private val clientApi: WindowClientApi,
 ) : AutoCloseable {
   private val initialWindowSize = size.toGlfwWindowSize()
 
@@ -108,7 +110,8 @@ internal class PlatformWindow(
   val logicalWindowSize: IntSize
     get() =
       when (displayServer) {
-        DisplayServer.WAYLAND -> windowSize
+        DisplayServer.WAYLAND,
+        DisplayServer.COCOA -> windowSize
         DisplayServer.X11 ->
           IntSize(
             (framebufferSize.width / contentScale).roundToInt().coerceAtLeast(0),
@@ -151,10 +154,17 @@ internal class PlatformWindow(
 
   init {
     glfwDefaultWindowHints()
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API)
-    glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API)
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
+    when (clientApi) {
+      WindowClientApi.OPENGL_EGL -> {
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API)
+        glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
+      }
+      WindowClientApi.NO_API -> {
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API)
+      }
+    }
     glfwWindowHint(GLFW_DECORATED, if (undecorated) GLFW_FALSE else GLFW_TRUE)
     glfwWindowHint(GLFW_RESIZABLE, if (resizable) GLFW_TRUE else GLFW_FALSE)
     glfwWindowHint(GLFW_FOCUS_ON_SHOW, if (focusOnShow) GLFW_TRUE else GLFW_FALSE)
@@ -169,9 +179,11 @@ internal class PlatformWindow(
     check(handle != NULL) { "GLFW window creation failed: ${glfwGetError(null)}" }
     setDecorated(!undecorated)
     glfwSetInputMode(handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE)
-    makeCurrent()
-    glfwSwapInterval(1)
-    glCapabilities = GL.createCapabilities()
+    if (clientApi == WindowClientApi.OPENGL_EGL) {
+      makeCurrent()
+      glfwSwapInterval(1)
+      glCapabilities = GL.createCapabilities()
+    }
     refreshWindowPosition()
     readWindowSize()
     readFramebufferSize()
@@ -439,13 +451,19 @@ internal class PlatformWindow(
     val scale =
       when (displayServer) {
         DisplayServer.X11 -> contentScale
-        DisplayServer.WAYLAND -> 1f
+        DisplayServer.WAYLAND,
+        DisplayServer.COCOA -> 1f
       }
     return IntSize(
       width = width.toGlfwWindowUnit("width", scale),
       height = height.toGlfwWindowUnit("height", scale),
     )
   }
+}
+
+internal enum class WindowClientApi {
+  OPENGL_EGL,
+  NO_API,
 }
 
 internal data class PlatformWindowBounds(

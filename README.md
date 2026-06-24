@@ -14,7 +14,7 @@ fractional scaling isn't supported, and the GPU context isn't readily available
 for advanced rendering. Here I fix all of that with a more robust windowing
 toolkit.
 
-## Usage
+## Installation
 
 > [!WARNING]
 > This project uses internal Compose APIs and may break with future Compose
@@ -26,6 +26,7 @@ Add the core library and the runtime modules you want to ship:
 dependencies {
   implementation("dev.sargunv:compose-glfw:<version>")
   runtimeOnly("dev.sargunv:compose-glfw-opengl-linux-x64:<version>")
+  runtimeOnly("dev.sargunv:compose-glfw-metal-macos-arm64:<version>")
 }
 ```
 
@@ -33,9 +34,13 @@ Available runtime modules:
 
 - `compose-glfw-opengl-linux-x64`
 - `compose-glfw-opengl-linux-arm64`
-- macOS and Windows are TBD
+- `compose-glfw-metal-macos-arm64`
+- `compose-glfw-metal-macos-x64`
+- Windows is TBD
 
-Then run your Compose content with `glfwApplication`:
+## Usage
+
+Run your Compose content with `glfwApplication`:
 
 ```kotlin
 fun main() = glfwApplication {
@@ -55,6 +60,9 @@ fun App() {
 ```
 
 You can pass a `Dp.Unspecified` dimension to window size to fit to contents.
+
+### Window configuration
+
 Configure the GLFW window further with `WindowOptions`:
 
 ```kotlin
@@ -75,6 +83,8 @@ Window(
 }
 ```
 
+### Custom cursors
+
 Use `cursorImagePointerIcon` with the `pointerHoverIcon` modifier to use a
 custom `ImageBitmap` cursor:
 
@@ -83,6 +93,8 @@ Modifier.pointerHoverIcon(
   cursorImagePointerIcon(image, hotSpot),
 )
 ```
+
+### File drops
 
 Use the `fileDropTarget` modifier to receive file drops delivered by the host:
 
@@ -94,15 +106,32 @@ Modifier.fileDropTarget { files ->
 }
 ```
 
+### GPU interop
+
 Advanced renderers can access the host GPU context from the `Window` content
 scope:
 
 ```kotlin
 Window(onCloseRequest = ::exitApplication, title = "Example") {
   val openGl = gpu as? OpenGlInterop
+  val metal = gpu as? MetalInterop
 
   App()
 }
+```
+
+### Platform notes
+
+On macOS, apps must be launched on AppKit's first thread:
+
+```sh
+-XstartOnFirstThread
+```
+
+On recent JDKs, LWJGL may also require native access to be enabled:
+
+```sh
+--enable-native-access=ALL-UNNAMED
 ```
 
 On Linux, by default, the host prefers Wayland when `WAYLAND_DISPLAY` is set.
@@ -132,8 +161,8 @@ The following features are supported:
 - Clipboard integration
 - Popup/dropdown positioning
 - Pointer cursor shapes and custom cursor images
-- Light/dark theme detection
-- Per-window GPU interop access for advanced OpenGL integrations
+- Light/dark theme detection on Linux
+- Per-window GPU interop access for advanced rendering integrations
 
 The following features are partially supported:
 
@@ -154,7 +183,7 @@ The following features are partially supported:
 
 The following features are not yet supported:
 
-- Windows and macOS
+- Windows
 - Screen reader, native menus, tray, dialogs, or file pickers
 - Interop views like `SwingPanel`. Advanced users can instead use the host GPU
   context for integrating custom components.

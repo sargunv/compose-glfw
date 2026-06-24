@@ -17,15 +17,15 @@ import dev.sargunv.composeglfw.DisplayServer
 import dev.sargunv.composeglfw.HostWindowScope
 import dev.sargunv.composeglfw.WindowOptions
 import dev.sargunv.composeglfw.WindowState
+import dev.sargunv.composeglfw.internal.platform.HostOperatingSystem
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
+import dev.sargunv.composeglfw.internal.platform.hostOperatingSystem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import org.lwjgl.glfw.GLFW.GLFW_PLATFORM
-import org.lwjgl.glfw.GLFW.GLFW_PLATFORM_WAYLAND
-import org.lwjgl.glfw.GLFW.GLFW_PLATFORM_X11
 import org.lwjgl.glfw.GLFW.glfwGetError
 import org.lwjgl.glfw.GLFW.glfwInit
 import org.lwjgl.glfw.GLFW.glfwInitHint
@@ -135,8 +135,15 @@ internal class ApplicationHost(private val content: @Composable ApplicationScope
 
   private fun preferredPlatform(): DisplayServer? {
     val requested =
-      System.getProperty(PlatformProperty)
-        ?: if (System.getenv("WAYLAND_DISPLAY") != null) DisplayServer.WAYLAND.toString() else null
+      System.getProperty("compose.glfw.platform")
+        ?: if (
+          hostOperatingSystem == HostOperatingSystem.LINUX &&
+            System.getenv("WAYLAND_DISPLAY") != null
+        ) {
+          DisplayServer.WAYLAND.toString()
+        } else {
+          null
+        }
     return requested?.let(DisplayServer::fromSelection)
   }
 }
@@ -208,19 +215,3 @@ private object YieldFrameClock : MonotonicFrameClock {
     return onFrame(System.nanoTime())
   }
 }
-
-private const val PlatformProperty = "compose.glfw.platform"
-
-private val DisplayServer.glfwPlatformHint: Int
-  get() =
-    when (this) {
-      DisplayServer.WAYLAND -> GLFW_PLATFORM_WAYLAND
-      DisplayServer.X11 -> GLFW_PLATFORM_X11
-    }
-
-private fun DisplayServer.Companion.fromSelection(value: String): DisplayServer =
-  when (value.lowercase()) {
-    "wayland" -> DisplayServer.WAYLAND
-    "x11" -> DisplayServer.X11
-    else -> error("Unsupported GLFW platform '$value'. Use 'wayland' or 'x11'.")
-  }
