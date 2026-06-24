@@ -95,10 +95,6 @@ On macOS, apps must be launched on AppKit's first thread:
 -XstartOnFirstThread
 ```
 
-Fullscreen support is limited. We (do ???? placeholder what's it called), not
-the fullscreen Spaces (`NSWindow.toggleFullScreen`) most users are used to
-seeing. Scale factor is 1x in fullscreen mode regardless of display density.
-
 ## Usage
 
 Run your Compose content with `glfwApplication`:

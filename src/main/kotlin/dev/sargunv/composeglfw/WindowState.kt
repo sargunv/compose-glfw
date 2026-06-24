@@ -71,7 +71,7 @@ public enum class WindowPlacement {
    */
   Maximized,
 
-  /** Fullscreen window, occupying the target monitor when the display server supports it. */
+  /** Fullscreen window using the display server's native fullscreen behavior. */
   Fullscreen,
 }
 

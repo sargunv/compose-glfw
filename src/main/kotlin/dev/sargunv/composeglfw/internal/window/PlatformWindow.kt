@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.IntSize
 import dev.sargunv.composeglfw.CursorImagePointerIcon
 import dev.sargunv.composeglfw.DisplayServer
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
+import dev.sargunv.composeglfw.internal.platform.macos.MacObjectiveC
 import dev.sargunv.composeglfw.internal.platform.windows.configureDirectCompositionHost
 import kotlin.math.roundToInt
 import org.lwjgl.glfw.GLFW.GLFW_ARROW_CURSOR
@@ -73,6 +74,7 @@ import org.lwjgl.glfw.GLFW.glfwSwapInterval
 import org.lwjgl.glfw.GLFW.glfwWindowHint
 import org.lwjgl.glfw.GLFW.glfwWindowShouldClose
 import org.lwjgl.glfw.GLFWImage
+import org.lwjgl.glfw.GLFWNativeCocoa.glfwGetCocoaWindow
 import org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GLCapabilities
@@ -146,13 +148,20 @@ internal class PlatformWindow(
     get() = glfwGetWindowAttrib(handle, GLFW_MAXIMIZED) == GLFW_TRUE
 
   val isFullscreen: Boolean
-    get() = glfwGetWindowMonitor(handle) != NULL
+    get() =
+      when (displayServer) {
+        DisplayServer.COCOA -> macNativeFullscreenTarget ?: isMacNativeFullscreen()
+        DisplayServer.WAYLAND,
+        DisplayServer.X11,
+        DisplayServer.WIN32 -> glfwGetWindowMonitor(handle) != NULL
+      }
 
   val isTransparent: Boolean = transparent
 
   private val standardCursors = mutableMapOf<Int, Long>()
   private val imageCursors = mutableMapOf<ImageCursorKey, Long>()
   private var glCapabilities: GLCapabilities? = null
+  private var macNativeFullscreenTarget: Boolean? = null
 
   init {
     glfwDefaultWindowHints()
@@ -184,6 +193,9 @@ internal class PlatformWindow(
     handle = glfwCreateWindow(initialWindowSize.width, initialWindowSize.height, title, NULL, NULL)
     check(handle != NULL) { "GLFW window creation failed: ${glfwGetError(null)}" }
     setDecorated(!undecorated)
+    if (displayServer == DisplayServer.COCOA) {
+      configureMacNativeFullscreen()
+    }
     if (
       displayServer == DisplayServer.WIN32 && clientApi == WindowClientApi.NO_API && transparent
     ) {
@@ -262,6 +274,12 @@ internal class PlatformWindow(
   }
 
   fun setFullscreen() {
+    if (displayServer == DisplayServer.COCOA) {
+      setMacNativeFullscreen(true)
+      refreshSizes()
+      return
+    }
+
     val monitor = currentMonitor()
     val videoMode = glfwGetVideoMode(monitor) ?: error("GLFW monitor has no video mode")
     glfwSetWindowMonitor(
@@ -277,6 +295,12 @@ internal class PlatformWindow(
   }
 
   fun setWindowed(bounds: PlatformWindowBounds) {
+    if (displayServer == DisplayServer.COCOA && isFullscreen) {
+      setMacNativeFullscreen(false)
+      refreshSizes()
+      return
+    }
+
     glfwSetWindowMonitor(
       handle,
       NULL,
@@ -325,6 +349,7 @@ internal class PlatformWindow(
     readWindowSize()
     readFramebufferSize()
     readContentScale()
+    refreshMacNativeFullscreenTarget()
   }
 
   private fun refreshWindowPosition() {
@@ -451,6 +476,47 @@ internal class PlatformWindow(
     }
   }
 
+  private fun configureMacNativeFullscreen() {
+    val nsWindow = glfwGetCocoaWindow(handle)
+    if (nsWindow == NULL) {
+      return
+    }
+
+    val collectionBehavior = MacObjectiveC.sendPointer(nsWindow, "collectionBehavior")
+    MacObjectiveC.sendVoid(
+      nsWindow,
+      "setCollectionBehavior:",
+      collectionBehavior or NsWindowCollectionBehaviorFullScreenPrimary,
+    )
+  }
+
+  private fun setMacNativeFullscreen(fullscreen: Boolean) {
+    val current = isMacNativeFullscreen()
+    if (current == fullscreen) {
+      macNativeFullscreenTarget = null
+      return
+    }
+    if (macNativeFullscreenTarget != fullscreen) {
+      macNativeFullscreenTarget = fullscreen
+      MacObjectiveC.sendVoid(glfwGetCocoaWindow(handle), "toggleFullScreen:", NULL)
+    }
+  }
+
+  private fun isMacNativeFullscreen(): Boolean {
+    val nsWindow = glfwGetCocoaWindow(handle)
+    if (nsWindow == NULL) {
+      return false
+    }
+    return MacObjectiveC.sendPointer(nsWindow, "styleMask") and NsWindowStyleMaskFullScreen != 0L
+  }
+
+  private fun refreshMacNativeFullscreenTarget() {
+    val target = macNativeFullscreenTarget ?: return
+    if (displayServer == DisplayServer.COCOA && isMacNativeFullscreen() == target) {
+      macNativeFullscreenTarget = null
+    }
+  }
+
   private fun DpSize.toRuntimeGlfwWindowSize(): IntSize {
     val scale =
       when (displayServer) {
@@ -465,6 +531,9 @@ internal class PlatformWindow(
     )
   }
 }
+
+private const val NsWindowCollectionBehaviorFullScreenPrimary = 1L shl 7
+private const val NsWindowStyleMaskFullScreen = 1L shl 14
 
 internal enum class WindowClientApi {
   OPENGL_EGL,

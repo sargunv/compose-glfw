@@ -118,6 +118,7 @@ internal class ComposeWindowScene(
     button: PointerButton?,
     buttons: PointerButtons,
     keyboardModifiers: PointerKeyboardModifiers,
+    nativeEvent: Any? = null,
   ) {
     checkSceneThread("ComposeScene pointer event")
     scene.sendPointerEvent(
@@ -128,7 +129,7 @@ internal class ComposeWindowScene(
       type = PointerType.Mouse,
       buttons = buttons,
       keyboardModifiers = keyboardModifiers,
-      nativeEvent = null,
+      nativeEvent = nativeEvent,
       button = button,
     )
   }
