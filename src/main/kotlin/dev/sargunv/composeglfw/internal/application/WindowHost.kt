@@ -41,6 +41,7 @@ import org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback
 internal class WindowHost(
   request: WindowRequest,
   private val uiDispatcher: UiDispatcher,
+  private val wakeEventLoop: () -> Unit,
 ) : AutoCloseable {
   private val onCloseRequest = request.onCloseRequest
   private var state = request.state
@@ -66,6 +67,7 @@ internal class WindowHost(
   private var isApplyingStateSize = false
   private var lastAppliedPosition: WindowPosition = WindowPosition.PlatformDefault
   private var lastAppliedPlacement: WindowPlacement = WindowPlacement.Floating
+  private var pendingPlacement: WindowPlacement? = null
   private var lastAppliedMinimized: Boolean = false
   private var windowedBoundsBeforeFullscreen: PlatformWindowBounds? = null
   private var renderRequested = true
@@ -84,6 +86,9 @@ internal class WindowHost(
 
   private val window: PlatformWindow
     get() = peer.window
+
+  val hasPendingWork: Boolean
+    get() = canRenderFrame && (renderRequested || scene.hasInvalidations)
 
   init {
     actualVisible = initialNativeVisibility(config)
@@ -210,10 +215,7 @@ internal class WindowHost(
   }
 
   private fun renderPendingFrame() {
-    if (!actualVisible) {
-      return
-    }
-    if (window.framebufferSize.width <= 0 || window.framebufferSize.height <= 0) {
+    if (!canRenderFrame) {
       return
     }
     if (!renderRequested && !scene.hasInvalidations) {
@@ -411,6 +413,10 @@ internal class WindowHost(
   }
 
   private fun applyPlacement(placement: WindowPlacement) {
+    pendingPlacement = placement
+    if (placement != WindowPlacement.Floating) {
+      clearPendingStateSize()
+    }
     when (placement) {
       WindowPlacement.Floating -> {
         if (window.isFullscreen) {
@@ -425,7 +431,9 @@ internal class WindowHost(
           window.setWindowed(windowedBoundsBeforeFullscreen ?: window.currentWindowedBounds())
           windowedBoundsBeforeFullscreen = null
         }
-        window.restore()
+        if (window.isIconified) {
+          window.restore()
+        }
         window.maximize()
       }
       WindowPlacement.Fullscreen -> {
@@ -444,12 +452,19 @@ internal class WindowHost(
     hasReappliedPendingStateSize = false
     lastAppliedPosition = WindowPosition.PlatformDefault
     lastAppliedPlacement = WindowPlacement.Floating
+    pendingPlacement = null
     lastAppliedMinimized = false
   }
 
   private fun requestRender() {
-    renderRequested = true
+    if (!renderRequested) {
+      renderRequested = true
+      wakeEventLoop()
+    }
   }
+
+  private val canRenderFrame: Boolean
+    get() = actualVisible && window.framebufferSize.width > 0 && window.framebufferSize.height > 0
 
   private fun renderFromGlfwCallback() {
     if (!shouldRenderDuringBlockedEventProcessing || isRenderingFromGlfwCallback) {
@@ -497,9 +512,13 @@ internal class WindowHost(
         window.isMaximized -> WindowPlacement.Maximized
         else -> WindowPlacement.Floating
       }
-    if (placement != state.placement) {
-      lastAppliedPlacement = placement
-      state.placement = placement
+    val expectedPlacement = pendingPlacement
+    if (expectedPlacement == null || placement == expectedPlacement) {
+      pendingPlacement = null
+      if (placement != state.placement) {
+        lastAppliedPlacement = placement
+        state.placement = placement
+      }
     }
 
     if (window.isIconified != state.isMinimized) {
@@ -614,20 +633,29 @@ internal class WindowHost(
     // into WindowState.
     val pendingSize = pendingStateSize
     if (pendingSize != null) {
+      if (
+        state.placement != WindowPlacement.Floating || window.isMaximized || window.isFullscreen
+      ) {
+        clearPendingStateSize()
+        return false
+      }
       if (currentWindowStateSize() == pendingSize) {
-        pendingStateSize = null
-        hasReappliedPendingStateSize = false
+        clearPendingStateSize()
       } else if (!hasReappliedPendingStateSize) {
         hasReappliedPendingStateSize = true
         applyNativeStateSize(pendingSize, resetPendingReapply = false)
       } else {
-        pendingStateSize = null
-        hasReappliedPendingStateSize = false
+        clearPendingStateSize()
         return false
       }
       return true
     }
     return false
+  }
+
+  private fun clearPendingStateSize() {
+    pendingStateSize = null
+    hasReappliedPendingStateSize = false
   }
 
   private fun applyNativeStateSize(

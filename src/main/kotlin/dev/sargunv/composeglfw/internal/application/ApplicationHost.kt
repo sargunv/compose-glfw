@@ -20,6 +20,7 @@ import dev.sargunv.composeglfw.WindowState
 import dev.sargunv.composeglfw.internal.platform.HostOperatingSystem
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
 import dev.sargunv.composeglfw.internal.platform.hostOperatingSystem
+import java.util.concurrent.locks.LockSupport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -30,8 +31,10 @@ import org.lwjgl.glfw.GLFW.glfwGetError
 import org.lwjgl.glfw.GLFW.glfwInit
 import org.lwjgl.glfw.GLFW.glfwInitHint
 import org.lwjgl.glfw.GLFW.glfwPollEvents
+import org.lwjgl.glfw.GLFW.glfwPostEmptyEvent
 import org.lwjgl.glfw.GLFW.glfwSetErrorCallback
 import org.lwjgl.glfw.GLFW.glfwTerminate
+import org.lwjgl.glfw.GLFW.glfwWaitEvents
 import org.lwjgl.system.MemoryUtil.memUTF8
 
 internal data class WindowRequest(
@@ -54,13 +57,14 @@ internal data class WindowRequest(
 internal class ApplicationHost(private val content: @Composable ApplicationScope.() -> Unit) :
   AutoCloseable {
   private val windows = mutableListOf<WindowHost>()
-  private val uiDispatcher = UiDispatcher()
+  private val uiDispatcher = UiDispatcher(::wakeEventLoop)
   private val applicationScope = ApplicationScopeImpl(::createWindow, ::disposeWindow)
   private var initialized = false
   private var coroutineScope: CoroutineScope? = null
   private var recomposer: Recomposer? = null
   private var recomposerJob: Job? = null
   private var composition: Composition? = null
+  private var displayServer: DisplayServer? = null
 
   fun run() {
     uiDispatcher.bindToCurrentThread()
@@ -91,6 +95,7 @@ internal class ApplicationHost(private val content: @Composable ApplicationScope
     coroutineScope = null
     windows.asReversed().forEach { it.close() }
     windows.clear()
+    displayServer = null
     if (initialized) {
       glfwTerminate()
       initialized = false
@@ -102,7 +107,14 @@ internal class ApplicationHost(private val content: @Composable ApplicationScope
     var hasCompletedFirstFrame = false
     while (applicationScope.isOpen && (!hasCompletedFirstFrame || windows.isNotEmpty())) {
       uiDispatcher.drain()
-      glfwPollEvents()
+      if (!applicationScope.isOpen) {
+        break
+      }
+      if (hasCompletedFirstFrame && !hasPendingWork()) {
+        waitForEvents()
+      } else {
+        glfwPollEvents()
+      }
       uiDispatcher.drain()
       windows.toList().forEach { window ->
         if (window in windows) {
@@ -115,7 +127,7 @@ internal class ApplicationHost(private val content: @Composable ApplicationScope
   }
 
   private fun createWindow(request: WindowRequest): WindowHost =
-    WindowHost(request, uiDispatcher).also { windows += it }
+    WindowHost(request, uiDispatcher, ::wakeEventLoop).also { windows += it }
 
   private fun disposeWindow(window: WindowHost) {
     if (windows.remove(window)) {
@@ -130,12 +142,32 @@ internal class ApplicationHost(private val content: @Composable ApplicationScope
     preferredPlatform()?.let { glfwInitHint(GLFW_PLATFORM, it.glfwPlatformHint) }
     check(glfwInit()) { "GLFW initialization failed: ${glfwGetError(null)}" }
     initialized = true
-    currentDisplayServer()
+    displayServer = currentDisplayServer()
+  }
+
+  private fun hasPendingWork(): Boolean = uiDispatcher.hasTasks || windows.any { it.hasPendingWork }
+
+  private fun waitForEvents() {
+    glfwWaitEvents()
+
+    // GLFW's Wayland backend can wake for internal EGL/Wayland events after a buffer swap without
+    // delivering app callbacks or Compose invalidations. GLFW does not expose an app-visible event
+    // counter, so only the Wayland idle path backs off, and only when the wake produced no work.
+    if (displayServer == DisplayServer.WAYLAND && !hasPendingWork()) {
+      LockSupport.parkNanos(WaylandIdleWakeBackoffNanos)
+    }
+  }
+
+  private fun wakeEventLoop() {
+    if (initialized && !uiDispatcher.isOwnerThread()) {
+      uiDispatcher.unparkOwnerThread()
+      glfwPostEmptyEvent()
+    }
   }
 
   private fun preferredPlatform(): DisplayServer? {
     val requested =
-      System.getProperty("compose.glfw.platform")
+      System.getProperty(PlatformProperty)
         ?: if (
           hostOperatingSystem == HostOperatingSystem.LINUX &&
             System.getenv("WAYLAND_DISPLAY") != null
@@ -215,3 +247,6 @@ private object YieldFrameClock : MonotonicFrameClock {
     return onFrame(System.nanoTime())
   }
 }
+
+private const val PlatformProperty = "compose.glfw.platform"
+private const val WaylandIdleWakeBackoffNanos = 4_000_000L

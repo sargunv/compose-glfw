@@ -1,15 +1,25 @@
 package dev.sargunv.composeglfw.internal.application
 
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.locks.LockSupport
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineDispatcher
 
-internal class UiDispatcher : CoroutineDispatcher() {
+internal class UiDispatcher(private val wakeEventLoop: () -> Unit) : CoroutineDispatcher() {
   private val tasks = ConcurrentLinkedQueue<Runnable>()
   private var ownerThread: Thread? = null
 
+  val hasTasks: Boolean
+    get() = tasks.isNotEmpty()
+
   fun bindToCurrentThread() {
     ownerThread = Thread.currentThread()
+  }
+
+  fun isOwnerThread(): Boolean = Thread.currentThread() == ownerThread
+
+  fun unparkOwnerThread() {
+    ownerThread?.let(LockSupport::unpark)
   }
 
   fun checkOwnerThread(operation: String) {
@@ -22,6 +32,7 @@ internal class UiDispatcher : CoroutineDispatcher() {
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {
     tasks += block
+    wakeEventLoop()
   }
 
   fun drain() {
