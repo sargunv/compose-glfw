@@ -75,8 +75,6 @@ import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GLCapabilities
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.NULL
-import org.lwjgl.system.MemoryUtil.memAlloc
-import org.lwjgl.system.MemoryUtil.memFree
 
 internal class PlatformWindow(
   title: String,
@@ -149,7 +147,7 @@ internal class PlatformWindow(
   val isTransparent: Boolean = transparent
 
   private val standardCursors = mutableMapOf<Int, Long>()
-  private val imageCursors = mutableMapOf<CursorImagePointerIcon, Long>()
+  private val imageCursors = mutableMapOf<ImageCursorKey, Long>()
   private var glCapabilities: GLCapabilities? = null
 
   init {
@@ -403,7 +401,10 @@ internal class PlatformWindow(
 
   private fun PointerIcon.glfwCursor(): Long =
     when (this) {
-      is CursorImagePointerIcon -> imageCursors[this] ?: createImageCursor(this)
+      is CursorImagePointerIcon -> {
+        val key = imageCursorKey(displayServer, contentScale)
+        imageCursors[key] ?: createImageCursor(key)
+      }
       else -> standardCursor()
     }
 
@@ -417,33 +418,18 @@ internal class PlatformWindow(
       }
   }
 
-  private fun createImageCursor(pointerIcon: CursorImagePointerIcon): Long {
-    val image = pointerIcon.image
-    val argbPixels = IntArray(image.width * image.height)
-    image.readPixels(argbPixels)
-
-    val rgbaPixels = memAlloc(argbPixels.size * 4)
-    try {
-      argbPixels.forEachIndexed { index, argb ->
-        val offset = index * 4
-        rgbaPixels.put(offset, ((argb shr 16) and 0xff).toByte())
-        rgbaPixels.put(offset + 1, ((argb shr 8) and 0xff).toByte())
-        rgbaPixels.put(offset + 2, (argb and 0xff).toByte())
-        rgbaPixels.put(offset + 3, ((argb ushr 24) and 0xff).toByte())
-      }
-
+  private fun createImageCursor(key: ImageCursorKey): Long {
+    key.toNativeCursorImage().use { image ->
       val cursor =
         MemoryStack.stackPush().use { stack ->
           val glfwImage =
-            GLFWImage.malloc(stack).width(image.width).height(image.height).pixels(rgbaPixels)
-          glfwCreateCursor(glfwImage, pointerIcon.hotSpot.x, pointerIcon.hotSpot.y)
+            GLFWImage.malloc(stack).width(image.width).height(image.height).pixels(image.rgbaPixels)
+          glfwCreateCursor(glfwImage, image.xhot, image.yhot)
         }
       if (cursor != NULL) {
-        imageCursors[pointerIcon] = cursor
+        imageCursors[key] = cursor
       }
       return cursor
-    } finally {
-      memFree(rgbaPixels)
     }
   }
 

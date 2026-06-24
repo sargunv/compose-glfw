@@ -26,9 +26,17 @@ import org.jetbrains.compose.resources.imageResource
 @Composable
 internal fun PointerIconCard(modifier: Modifier = Modifier) {
   val customCursorImage = imageResource(Res.drawable.custom_cursor)
-  val customPointerIcon =
+  val customPointerIcon1x =
     remember(customCursorImage) {
-      cursorImagePointerIcon(customCursorImage, IntOffset(12, 12))
+      cursorImagePointerIcon(customCursorImage, imageScale = 1f, hotSpot = IntOffset(12, 12))
+    }
+  val customPointerIcon2x =
+    remember(customCursorImage) {
+      cursorImagePointerIcon(customCursorImage, imageScale = 2f, hotSpot = IntOffset(12, 12))
+    }
+  val customPointerIcon3x =
+    remember(customCursorImage) {
+      cursorImagePointerIcon(customCursorImage, imageScale = 3f, hotSpot = IntOffset(12, 12))
     }
 
   Card(modifier) {
@@ -42,7 +50,9 @@ internal fun PointerIconCard(modifier: Modifier = Modifier) {
         PointerIconTarget("Hand", PointerIcon.Hand)
         PointerIconTarget("Text", PointerIcon.Text)
         PointerIconTarget("Crosshair", PointerIcon.Crosshair)
-        PointerIconTarget("Custom", customPointerIcon)
+        PointerIconTarget("Custom 1x", customPointerIcon1x)
+        PointerIconTarget("Custom 2x", customPointerIcon2x)
+        PointerIconTarget("Custom 3x", customPointerIcon3x)
       }
     }
   }

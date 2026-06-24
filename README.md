@@ -90,7 +90,7 @@ custom `ImageBitmap` cursor:
 
 ```kotlin
 Modifier.pointerHoverIcon(
-  cursorImagePointerIcon(image, hotSpot),
+  cursorImagePointerIcon(image, imageScale = 1f, hotSpot = hotSpot),
 )
 ```
 
