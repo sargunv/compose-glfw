@@ -1,26 +1,32 @@
 # Roadmap
 
-This file tracks implementation status for Compose GLFW.
+This file tracks known gaps for Compose GLFW.
 
-Known gaps:
+Windowing:
 
-OS/platform API wiring:
+- Support macOS fullscreen Spaces (`NSWindow.toggleFullScreen`)
+- Support Wayland parent-window integration for file picker dialogs
 
-- [ ] Wayland file drops through GLFW
-- [ ] Full native drag-and-drop parity beyond GLFW file drop callbacks:
-      enter/move/action events, non-file payloads, and outgoing drags
-- [ ] IME/preedit integration: composition text, candidate positioning, and
-      commit/cancel lifecycle
-- [ ] Touch/stylus input routing and `InputModeManager` updates on backends that
-      can report non-mouse pointer devices
-- [ ] Screen reader and accessibility integration
-- [ ] Keep-screen-on and frame-rate voting
-- [ ] Native macOS fullscreen Spaces (`NSWindow.toggleFullScreen`)
-- [ ] Native menus
-- [ ] System tray
-- [ ] Dialogs
-- [ ] Wayland parent-window integration for native file pickers
-- [ ] Draggable window area
+Drag and drop:
+
+- Support Wayland file drag and drop
+- Support rich drag and drop events (enter, move, action) and non-file payloads
+
+Input:
+
+- Support IME/preedit integration: composition text, candidate positioning, and
+  commit/cancel lifecycle
+- Support Touch/stylus input routing and `InputModeManager` updates for
+  non-mouse pointer devices
+
+System integration:
+
+- Support screen reader / accessibility integration
+- Support keep screen on and frame rate voting
+- Support native menus
+- Support system tray
+- Support draggable window area, especially on Wayland as it can't be done by
+  just setting window position
 
 Useful parity reference:
 [Compose Multiplatform desktop-only API](https://kotlinlang.org/docs/multiplatform/compose-desktop-components.html).

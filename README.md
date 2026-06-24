@@ -34,6 +34,70 @@ dependencies {
 }
 ```
 
+On recent JDKs, we also require native access to be enabled:
+
+```sh
+--enable-native-access=ALL-UNNAMED
+```
+
+## Status and limitations
+
+The following features are supported:
+
+- App composition and window state
+- HiDPI and fractional scaling
+- Pointer, scroll, keyboard, and text input
+  - Not yet advanced IMEs or touch/stylus input
+- Clipboard integration
+- Custom cursors
+- Dark/light theme detection
+- Native file and folder pickers
+- Dragged file drops
+  - Just the final drop event; not events like enter, exit, drag
+- Graphics context access for advanced rendering integrations
+
+The following features are not yet supported:
+
+- Screen reader, native menus, or the system tray
+- Keep screen on and frame rate voting
+- Interop views like `SwingPanel`. Advanced users can instead use the host
+  graphics context for integrating custom components.
+- Draggable window area (custom title bar)
+
+See <ROADMAP.md> for a detailed list of known gaps. Please contribute!
+
+### Linux notes
+
+On Linux, by default, the host prefers Wayland when `WAYLAND_DISPLAY` is set.
+You can force the GLFW display server backend with:
+
+```sh
+-Dcompose.glfw.platform=wayland
+-Dcompose.glfw.platform=x11
+```
+
+Certain features are unavailable under Wayland:
+
+- Window positioning and always-on-top are not supported due to limitations in
+  the Wayland protocol.
+- Native file dialogs are supported but not parented to the window due to a
+  limitation of
+  [lwjgl-nfd](https://mvnrepository.com/artifact/org.lwjgl/lwjgl-nfd)
+- Dragged file drops are not supported on Wayland (unclear why; it _should_
+  work)
+
+### macOS notes
+
+On macOS, apps must be launched on AppKit's first thread:
+
+```sh
+-XstartOnFirstThread
+```
+
+Fullscreen support is limited. We (do ???? placeholder what's it called), not
+the fullscreen Spaces (`NSWindow.toggleFullScreen`) most users are used to
+seeing. Scale factor is 1x in fullscreen mode regardless of display density.
+
 ## Usage
 
 Run your Compose content with `glfwApplication`:
@@ -54,8 +118,6 @@ fun App() {
   // Your Compose UI.
 }
 ```
-
-You can pass a `Dp.Unspecified` dimension to window size to fit to contents.
 
 ### Window configuration
 
@@ -147,28 +209,6 @@ fun RendererHost() {
 }
 ```
 
-### Platform notes
-
-On macOS, apps must be launched on AppKit's first thread:
-
-```sh
--XstartOnFirstThread
-```
-
-On recent JDKs, LWJGL may also require native access to be enabled:
-
-```sh
---enable-native-access=ALL-UNNAMED
-```
-
-On Linux, by default, the host prefers Wayland when `WAYLAND_DISPLAY` is set.
-You can force the GLFW display server backend with:
-
-```sh
--Dcompose.glfw.platform=wayland
--Dcompose.glfw.platform=x11
-```
-
 ### App icons
 
 Compose GLFW does not expose GLFW's `glfwSetWindowIcon` API. Modern Linux
@@ -176,43 +216,3 @@ Wayland and macOS ignore that per-window API; app icons should come from
 platform app metadata instead. Use Freedesktop desktop-entry/icon-theme metadata
 on Linux, app bundle `Info.plist` icon metadata on macOS, and executable icon
 resources on Windows.
-
-## Status and limitations
-
-The following features are supported:
-
-- Application composition and window model
-- Fractional scaling
-- Resize, density, focus, and window info updates
-- Pointer, scroll, and keyboard events
-- Clipboard integration
-- Popup/dropdown positioning
-- Pointer cursor shapes and custom cursor images
-- Light/dark theme detection
-- Native file and folder pickers
-- Graphics context access for advanced rendering integrations
-
-The following features are partially supported:
-
-- Native file pickers
-  - On Wayland, portal dialogs are supported but are not parented to the GLFW
-    window yet.
-- Compose drag-and-drop targets
-  - Only file drops are supported, and only the final dropped file list event.
-  - GLFW does not deliver enter, exit, drag, hover, move events.
-  - GLFW does not currently deliver file drop callbacks to Wayland.
-- Text input routing
-  - Supports committed text from keyboard layouts, including normal text field
-    editing.
-  - Complex input methods are not fully supported yet, such as composing
-    accented characters before committing them, choosing characters from CJK
-    input method popups, or canceling an in-progress composition.
-- Window state
-  - Supports runtime size, minimize, maximize, fullscreen, and position updates.
-  - Wayland restricts window positioning and always-on-top.
-
-The following features are not yet supported:
-
-- Screen reader, native menus, tray, or dialogs
-- Interop views like `SwingPanel`. Advanced users can instead use the host
-  graphics context for integrating custom components.
