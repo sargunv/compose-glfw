@@ -5,7 +5,9 @@ dbusJava = "5.2.0"
 dokka = "2.2.0"
 javaRelease = "24"
 kotlin = "2.4.0"
+kotlinxSerialization = "1.8.1"
 lifecycle = "2.9.6"
+navigation = "2.9.2"
 lwjgl = "3.4.1"
 material3 = "1.11.0-alpha07"
 mavenPublish = "0.37.0"
@@ -18,6 +20,7 @@ composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinCompose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
 
 [libraries]
@@ -31,7 +34,9 @@ dbusJavaCore = { module = "com.github.hypfvieh:dbus-java-core" }
 dbusJavaTransportNativeUnixSocket = { module = "com.github.hypfvieh:dbus-java-transport-native-unixsocket" }
 lifecycleViewModel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycle" }
 lifecycleViewModelCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+kotlinxSerializationJson = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 lifecycleViewModelSavedState = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-savedstate", version.ref = "lifecycle" }
+navigationCompose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigation" }
 lwjglBom = { module = "org.lwjgl:lwjgl-bom", version.ref = "lwjgl" }
 lwjgl = { module = "org.lwjgl:lwjgl" }
 lwjglGlfw = { module = "org.lwjgl:lwjgl-glfw" }

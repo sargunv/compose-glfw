@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
   alias(libs.plugins.kotlinMultiplatform)
   alias(libs.plugins.kotlinCompose)
+  alias(libs.plugins.kotlinSerialization)
   alias(libs.plugins.composeMultiplatform)
 }
 
@@ -50,8 +51,10 @@ kotlin {
         implementation(project(":"))
         implementation(libs.composeMaterial3)
         implementation(libs.composeComponentsResources)
+        implementation(libs.kotlinxSerializationJson)
         implementation(libs.lifecycleRuntimeCompose)
         implementation(libs.lifecycleViewModelCompose)
+        implementation(libs.navigationCompose)
         if (hostRuntimeModule != null) {
           runtimeOnly(project(hostRuntimeModule))
         }
