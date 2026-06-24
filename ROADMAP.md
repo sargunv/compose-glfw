@@ -7,7 +7,8 @@ This file tracks known gaps for Compose GLFW.
 - Support rich drag and drop events (enter, move, action) and non-file payloads
 - Support Touch/stylus input routing and `InputModeManager` updates for
   non-mouse pointer devices; see `roadmap/NATIVE_POINTER_INPUT.md`
-- Support screen reader / accessibility integration
+- Support screen reader / accessibility integration; see
+  `roadmap/ACCESSIBILITY.md`
 - Support keep screen on
 - Support native menus
 - Support system tray
