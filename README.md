@@ -102,16 +102,46 @@ Modifier.fileDropTarget { files ->
 }
 ```
 
-### GPU interop
+### File pickers
 
-Advanced renderers can access the host GPU context from the `Window` content
-scope:
+Use `LocalWindow` to show native file and folder pickers from composables:
 
 ```kotlin
-Window(onCloseRequest = ::exitApplication, title = "Example") {
-  val openGl = gpu as? OpenGlInterop // linux
-  val metal = gpu as? MetalInterop // macos
-  val direct3d = gpu as? Direct3DInterop // windows
+@Composable
+fun OpenImageButton() {
+  val filePicker = LocalWindow.current.filePicker
+
+  Button(
+    onClick = {
+      val image =
+        filePicker.openFile(
+          filters = listOf(FileDialogFilter("Images", listOf("png", "jpg", "jpeg"))),
+        )
+      // Handle selected path, or null if canceled.
+    }
+  ) {
+    Text("Open image")
+  }
+}
+```
+
+On Linux, file pickers use `xdg-desktop-portal` so they work with your desktop
+environment's file picker.
+
+### Graphics interop
+
+Advanced renderers can access the host graphics context from composables:
+
+```kotlin
+@Composable
+fun RendererHost() {
+  val renderContext = LocalWindow.current.renderContext
+
+  val openGl = renderContext as? OpenGlRenderContext
+  // or
+  val metal = renderContext as? MetalRenderContext
+  // or
+  val direct3d = renderContext as? Direct3DRenderContext
 
   App()
 }
@@ -159,10 +189,14 @@ The following features are supported:
 - Popup/dropdown positioning
 - Pointer cursor shapes and custom cursor images
 - Light/dark theme detection
-- Per-window GPU interop access for advanced rendering integrations
+- Native file and folder pickers
+- Graphics context access for advanced rendering integrations
 
 The following features are partially supported:
 
+- Native file pickers
+  - On Wayland, portal dialogs are supported but are not parented to the GLFW
+    window yet.
 - Compose drag-and-drop targets
   - Only file drops are supported, and only the final dropped file list event.
   - GLFW does not deliver enter, exit, drag, hover, move events.
@@ -179,6 +213,6 @@ The following features are partially supported:
 
 The following features are not yet supported:
 
-- Screen reader, native menus, tray, dialogs, or file pickers
-- Interop views like `SwingPanel`. Advanced users can instead use the host GPU
-  context for integrating custom components.
+- Screen reader, native menus, tray, or dialogs
+- Interop views like `SwingPanel`. Advanced users can instead use the host
+  graphics context for integrating custom components.

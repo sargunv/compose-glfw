@@ -41,6 +41,7 @@ kotlin {
         api(project.dependencies.platform(libs.lwjglBom))
         implementation(libs.lwjgl)
         implementation(libs.lwjglGlfw)
+        implementation(libs.lwjglNfd)
         implementation(libs.lwjglOpenGl)
       }
     }

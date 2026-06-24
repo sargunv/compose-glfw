@@ -17,6 +17,7 @@ import dev.sargunv.composeglfw.WindowPosition
 import dev.sargunv.composeglfw.WindowState
 import dev.sargunv.composeglfw.internal.input.InputDispatcher
 import dev.sargunv.composeglfw.internal.platform.HostPlatformContext
+import dev.sargunv.composeglfw.internal.platform.NfdFilePicker
 import dev.sargunv.composeglfw.internal.platform.SystemThemeProvider
 import dev.sargunv.composeglfw.internal.platform.currentDisplayServer
 import dev.sargunv.composeglfw.internal.render.RenderBackendDriver
@@ -29,6 +30,7 @@ import dev.sargunv.composeglfw.internal.window.PlatformWindowBounds
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.ceil
 import kotlin.math.roundToInt
+import org.lwjgl.glfw.GLFW.glfwPollEvents
 import org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowCloseCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback
@@ -81,6 +83,7 @@ internal class WindowHost(
     }
 
   private val platformContext: HostPlatformContext
+  private val filePicker: NfdFilePicker
   private val scope: WindowScopeImpl
   private val systemThemeProvider: SystemThemeProvider
   private val scene: ComposeWindowScene
@@ -106,10 +109,17 @@ internal class WindowHost(
         initialVisible = actualVisible,
         initialMinimized = request.state.isMinimized,
       )
+    filePicker =
+      NfdFilePicker(
+        window = initialWindow,
+        checkThread = { operation -> uiDispatcher.checkOwnerThread(operation) },
+        runNativeDialog = ::runNativeDialog,
+      )
     scope =
       WindowScopeImpl(
         currentInfo(initialWindow, initialRenderBackend.backend),
         initialRenderBackend.interop,
+        filePicker,
       )
     systemThemeProvider =
       SystemThemeProvider.create { theme ->
@@ -125,7 +135,7 @@ internal class WindowHost(
     scene =
       ComposeWindowScene(
         initialDensity = initialWindow.contentScale,
-        // Compose layout/rendering uses framebuffer pixels to match the GPU/Skia target.
+        // Compose layout/rendering uses framebuffer pixels to match the Skia target.
         initialSize = initialWindow.framebufferSize,
         platformContext = platformContext,
         coroutineContext = uiDispatcher,
@@ -235,6 +245,7 @@ internal class WindowHost(
     peer.detachInput()
     systemThemeProvider.close()
     platformContext.destroyLifecycle()
+    filePicker.close()
     scene.close()
     peer.closeNative()
   }
@@ -250,7 +261,8 @@ internal class WindowHost(
       visible = actualVisible,
       minimized = state.isMinimized,
     )
-    scope.gpu = newRenderBackend.interop
+    filePicker.updateWindow(newWindow)
+    scope.window.renderContext = newRenderBackend.interop
     peer = attachPeer(newWindow, newRenderBackend, config.enabled)
     lastFramebufferSize = newWindow.framebufferSize
     lastContentScale = newWindow.contentScale
@@ -258,7 +270,7 @@ internal class WindowHost(
     scene.resize(newWindow.framebufferSize)
     scene.updateDensity(newWindow.contentScale)
     updateSceneMetrics()
-    scope.windowInfo = currentInfo()
+    scope.window.info = currentInfo()
     requestRender()
   }
 
@@ -499,7 +511,7 @@ internal class WindowHost(
     }
     updatePlatformLifecycleState()
     platformContext.updateWindowInfo()
-    scope.windowInfo = currentInfo()
+    scope.window.info = currentInfo()
   }
 
   private fun updateStateFromWindow() {
@@ -745,6 +757,21 @@ internal class WindowHost(
   }
 
   private fun IntOffset.toWindowPosition(): WindowPosition = WindowPosition(x.dp, y.dp)
+
+  private fun runNativeDialog(action: () -> Unit) {
+    try {
+      action()
+    } finally {
+      // Hack: NFD blocks GLFW polling, so drop stale app input queued behind the dialog.
+      val wasInputEnabled = peer.input.enabled
+      peer.input.enabled = false
+      try {
+        glfwPollEvents()
+      } finally {
+        peer.input.enabled = wasInputEnabled
+      }
+    }
+  }
 
   private inner class WindowPeer(
     val window: PlatformWindow,

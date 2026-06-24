@@ -3,11 +3,21 @@ package dev.sargunv.composeglfw.internal.application
 import dev.sargunv.composeglfw.internal.platform.HostOperatingSystem
 import dev.sargunv.composeglfw.internal.platform.hostOperatingSystem
 import dev.sargunv.composeglfw.internal.platform.macos.MacObjectiveC
+import org.lwjgl.system.Configuration
 
 internal fun prepareApplicationRuntime() {
+  if (hostOperatingSystem == HostOperatingSystem.LINUX) {
+    prepareLinuxRuntime()
+  }
   if (hostOperatingSystem == HostOperatingSystem.MACOS) {
     prepareMacOsRuntime()
   }
+}
+
+private fun prepareLinuxRuntime() {
+  // Prefer xdg-desktop-portal for native file pickers so Wayland sessions do not fall back to GTK
+  // dialogs running on the wrong display connection.
+  Configuration.NFD_LINUX_PORTAL.set(true)
 }
 
 private fun prepareMacOsRuntime() {

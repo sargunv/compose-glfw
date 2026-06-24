@@ -57,6 +57,7 @@ internal fun ComposeGlfwApp(
           PointerIconCard(Modifier.fillMaxWidth())
           PopupMenuCard(Modifier.fillMaxWidth())
           FileDropCard(Modifier.fillMaxWidth())
+          FilePickerCard(Modifier.fillMaxWidth())
           InputEventsCard(Modifier.fillMaxWidth())
         }
 

@@ -1,5 +1,7 @@
 package dev.sargunv.composeglfw
 
+import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.staticCompositionLocalOf
 import dev.sargunv.composeglfw.internal.platform.defaultTextToolbarContent
 
 /**
@@ -25,13 +27,27 @@ public class WindowOptions private constructor(public val textToolbar: TextToolb
   }
 }
 
-/** Values and services available to content hosted in a GLFW window. */
+/** Values available to content hosted in a GLFW window. */
 public interface HostWindowScope {
-  /** Current host window and rendering information. */
-  public val windowInfo: HostWindowInfo
+  /** Current host window. */
+  public val window: HostWindow
+}
 
-  /** Backend-specific GPU interop for the current window. */
-  public val gpu: GpuInterop
+/** Current host window. */
+public interface HostWindow {
+  /** Current host window information. */
+  public val info: HostWindowInfo
+
+  /** Backend-specific render context for the current window. */
+  public val renderContext: RenderContext
+
+  /** Native file and folder picker associated with the current window. */
+  public val filePicker: FilePicker
+}
+
+/** Current Compose GLFW window. */
+public val LocalWindow: ProvidableCompositionLocal<HostWindow> = staticCompositionLocalOf {
+  error("LocalWindow is only available inside a Compose GLFW Window")
 }
 
 /** Current host window, display, and renderer information. */

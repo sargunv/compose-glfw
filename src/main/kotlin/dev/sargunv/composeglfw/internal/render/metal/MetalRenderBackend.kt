@@ -2,7 +2,7 @@ package dev.sargunv.composeglfw.internal.render.metal
 
 import androidx.compose.ui.graphics.asComposeCanvas
 import androidx.compose.ui.unit.IntSize
-import dev.sargunv.composeglfw.MetalInterop
+import dev.sargunv.composeglfw.MetalRenderContext
 import dev.sargunv.composeglfw.RenderBackend
 import dev.sargunv.composeglfw.internal.platform.HostOperatingSystem
 import dev.sargunv.composeglfw.internal.platform.hostOperatingSystem
@@ -31,7 +31,7 @@ internal class MetalRenderBackend(private val window: PlatformWindow) : RenderBa
 
   override val backend: RenderBackend = RenderBackend.METAL
 
-  override val interop: MetalInterop
+  override val interop: MetalRenderContext
 
   init {
     check(hostOperatingSystem == HostOperatingSystem.MACOS) {
@@ -53,7 +53,7 @@ internal class MetalRenderBackend(private val window: PlatformWindow) : RenderBa
 
     directContext = DirectContext.makeMetal(device, queue)
     interop =
-      MetalInterop(
+      MetalRenderContext(
         directContext = directContext,
         view = view,
         layer = layer,

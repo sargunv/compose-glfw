@@ -2,7 +2,7 @@ package dev.sargunv.composeglfw.internal.render.direct3d
 
 import androidx.compose.ui.graphics.asComposeCanvas
 import androidx.compose.ui.unit.IntSize
-import dev.sargunv.composeglfw.Direct3DInterop
+import dev.sargunv.composeglfw.Direct3DRenderContext
 import dev.sargunv.composeglfw.RenderBackend
 import dev.sargunv.composeglfw.internal.platform.windows.Com
 import dev.sargunv.composeglfw.internal.render.RenderBackendDriver
@@ -25,7 +25,7 @@ internal class Direct3DRenderBackend(private val window: PlatformWindow) : Rende
 
   override val backend: RenderBackend = RenderBackend.DIRECT3D
 
-  override val interop: Direct3DInterop
+  override val interop: Direct3DRenderContext
 
   init {
     val hwnd = glfwGetWin32Window(window.handle)
@@ -40,7 +40,7 @@ internal class Direct3DRenderBackend(private val window: PlatformWindow) : Rende
     deviceResources.createSwapChain(window.framebufferSize)
     targets = createSkiaTargets(window.framebufferSize)
     interop =
-      Direct3DInterop(
+      Direct3DRenderContext(
         directContext = directContext,
         hwnd = hwnd,
         adapter = deviceResources.adapter,
