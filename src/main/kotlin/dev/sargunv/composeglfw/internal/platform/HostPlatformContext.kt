@@ -37,6 +37,8 @@ import dev.sargunv.composeglfw.internal.window.PlatformWindow
 internal class HostPlatformContext(
   private var window: PlatformWindow,
   textToolbarContent: TextToolbarContent,
+  initialVisible: Boolean,
+  initialMinimized: Boolean,
 ) : PlatformContext {
   private val fallbackContext = PlatformContext.Empty()
   val textInput: TextInputService = TextInputService()
@@ -50,6 +52,9 @@ internal class HostPlatformContext(
       setLifecycleState(State.CREATED)
     }
   private var lifecycleDestroyed = false
+  private var lifecycleVisible = initialVisible
+  private var lifecycleMinimized = initialMinimized || window.isIconified
+  private var lastLifecycleState: State? = null
   var systemTheme: SystemTheme by mutableStateOf(SystemTheme.Unknown)
 
   override val windowInfo: WindowInfo = mutableWindowInfo
@@ -180,12 +185,27 @@ internal class HostPlatformContext(
     updateLifecycle()
   }
 
+  fun updateLifecycleState(
+    visible: Boolean = lifecycleVisible,
+    minimized: Boolean = lifecycleMinimized,
+  ) {
+    lifecycleVisible = visible
+    lifecycleMinimized = minimized
+    updateLifecycle()
+  }
+
   fun updateTextToolbarContent(content: TextToolbarContent) {
     textToolbarAdapter.updateContent(content)
   }
 
-  fun updateWindow(window: PlatformWindow) {
+  fun updateWindow(
+    window: PlatformWindow,
+    visible: Boolean,
+    minimized: Boolean,
+  ) {
     this.window = window
+    lifecycleVisible = visible
+    lifecycleMinimized = minimized || window.isIconified
     updateWindowInfo()
   }
 
@@ -193,6 +213,7 @@ internal class HostPlatformContext(
     if (!lifecycleDestroyed) {
       lifecycleDestroyed = true
       architectureOwner.setLifecycleState(State.DESTROYED)
+      lastLifecycleState = State.DESTROYED
     }
   }
 
@@ -203,9 +224,16 @@ internal class HostPlatformContext(
 
   private fun updateLifecycle() {
     if (!lifecycleDestroyed) {
-      architectureOwner.setLifecycleState(
-        if (mutableWindowInfo.isWindowFocused) State.RESUMED else State.STARTED
-      )
+      val state =
+        when {
+          !lifecycleVisible || lifecycleMinimized -> State.CREATED
+          mutableWindowInfo.isWindowFocused -> State.RESUMED
+          else -> State.STARTED
+        }
+      if (state != lastLifecycleState) {
+        architectureOwner.setLifecycleState(state)
+        lastLifecycleState = state
+      }
     }
   }
 }

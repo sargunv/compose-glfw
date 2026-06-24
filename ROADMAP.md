@@ -8,8 +8,6 @@ Application composition and window model:
 
 - [ ] Event loop waiting: use `glfwWaitEvents`/wakeups instead of polling every
       loop when there is no pending Compose or GLFW work
-- [ ] Window lifecycle state for hidden and minimized windows; focus currently
-      maps to STARTED/RESUMED but visibility does not lower lifecycle state
 - [ ] Propagate recomposer/coroutine failures out of the application loop before
       shutdown
 

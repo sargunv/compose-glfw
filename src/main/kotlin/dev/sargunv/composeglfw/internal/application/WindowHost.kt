@@ -83,7 +83,13 @@ internal class WindowHost(
     actualVisible = initialNativeVisibility(config)
     val initialWindow = createPlatformWindow(config, visible = actualVisible)
     val initialRenderBackend = OpenGlRenderBackend(initialWindow)
-    platformContext = HostPlatformContext(initialWindow, request.options.textToolbar)
+    platformContext =
+      HostPlatformContext(
+        window = initialWindow,
+        textToolbarContent = request.options.textToolbar,
+        initialVisible = actualVisible,
+        initialMinimized = request.state.isMinimized,
+      )
     scope = WindowScopeImpl(currentInfo(initialWindow), initialRenderBackend.interop)
     systemThemeProvider =
       SystemThemeProvider.create { theme ->
@@ -216,7 +222,11 @@ internal class WindowHost(
     actualVisible = initialNativeVisibility(config)
     val newWindow = createPlatformWindow(config, visible = actualVisible)
     val newRenderBackend = OpenGlRenderBackend(newWindow)
-    platformContext.updateWindow(newWindow)
+    platformContext.updateWindow(
+      window = newWindow,
+      visible = actualVisible,
+      minimized = state.isMinimized,
+    )
     scope.gpu = newRenderBackend.interop
     peer = attachPeer(newWindow, newRenderBackend, config.enabled)
     lastFramebufferSize = newWindow.framebufferSize
@@ -346,6 +356,7 @@ internal class WindowHost(
         window.restore()
       }
       lastAppliedMinimized = state.isMinimized
+      updatePlatformLifecycleState()
     }
   }
 
@@ -429,6 +440,7 @@ internal class WindowHost(
       scene.updateDensity(window.contentScale)
       requestRender()
     }
+    updatePlatformLifecycleState()
     platformContext.updateWindowInfo()
     scope.windowInfo = currentInfo()
   }
@@ -613,8 +625,16 @@ internal class WindowHost(
     if (shouldBeVisible != actualVisible) {
       window.setVisible(shouldBeVisible)
       actualVisible = shouldBeVisible
+      updatePlatformLifecycleState()
       requestRender()
     }
+  }
+
+  private fun updatePlatformLifecycleState() {
+    platformContext.updateLifecycleState(
+      visible = actualVisible,
+      minimized = state.isMinimized || window.isIconified,
+    )
   }
 
   private fun currentInfo(window: PlatformWindow = this.window): HostWindowInfo {
