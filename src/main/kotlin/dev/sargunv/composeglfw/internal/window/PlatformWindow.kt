@@ -321,6 +321,8 @@ internal class PlatformWindow(
 
   fun currentMonitorWorkArea(): PlatformRect = monitorWorkArea(currentMonitor())
 
+  fun currentRefreshRate(): Int? = glfwGetVideoMode(currentMonitor())?.refreshRate()
+
   fun maximize() {
     glfwMaximizeWindow(handle)
     refreshSizes()

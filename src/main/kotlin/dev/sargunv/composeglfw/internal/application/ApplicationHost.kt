@@ -38,6 +38,7 @@ import org.lwjgl.glfw.GLFW.glfwPostEmptyEvent
 import org.lwjgl.glfw.GLFW.glfwSetErrorCallback
 import org.lwjgl.glfw.GLFW.glfwTerminate
 import org.lwjgl.glfw.GLFW.glfwWaitEvents
+import org.lwjgl.glfw.GLFW.glfwWaitEventsTimeout
 import org.lwjgl.system.MemoryUtil.memUTF8
 
 internal data class WindowRequest(
@@ -167,7 +168,12 @@ internal class ApplicationHost(private val content: @Composable ApplicationScope
   private fun hasPendingWork(): Boolean = uiDispatcher.hasTasks || windows.any { it.hasPendingWork }
 
   private fun waitForEvents() {
-    glfwWaitEvents()
+    val nextFrameDelayNanos = nextFrameDelayNanos()
+    if (nextFrameDelayNanos != null) {
+      glfwWaitEventsTimeout(nextFrameDelayNanos.coerceAtLeast(0) / NanosPerSecond.toDouble())
+    } else {
+      glfwWaitEvents()
+    }
 
     // GLFW's Wayland backend can wake for internal EGL/Wayland events after a buffer swap without
     // delivering app callbacks or Compose invalidations. GLFW does not expose an app-visible event
@@ -176,6 +182,9 @@ internal class ApplicationHost(private val content: @Composable ApplicationScope
       LockSupport.parkNanos(WaylandIdleWakeBackoffNanos)
     }
   }
+
+  private fun nextFrameDelayNanos(): Long? =
+    windows.mapNotNull { it.nextFrameDelayNanos }.minOrNull()
 
   private fun wakeEventLoop() {
     if (initialized && !uiDispatcher.isOwnerThread()) {
@@ -295,3 +304,4 @@ private object YieldFrameClock : MonotonicFrameClock {
 
 private const val PlatformProperty = "compose.glfw.platform"
 private const val WaylandIdleWakeBackoffNanos = 4_000_000L
+private const val NanosPerSecond = 1_000_000_000L

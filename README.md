@@ -54,6 +54,7 @@ The following features are supported:
 - Native file and folder pickers
 - Dragged file drops
   - Just the final drop event; not events like enter, exit, drag
+- Preferred frame rates
 - Graphics context access for advanced rendering integrations
 
 The following features are not yet supported:

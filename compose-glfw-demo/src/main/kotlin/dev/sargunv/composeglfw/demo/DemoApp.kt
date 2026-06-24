@@ -52,6 +52,7 @@ internal fun ComposeGlfwApp(
           )
           WindowShowcaseCard(showcaseState, showcaseActions, Modifier.fillMaxWidth())
           LifecycleCard(Modifier.fillMaxWidth())
+          FrameRateCard(Modifier.fillMaxWidth())
           LayoutDirectionCard(Modifier.fillMaxWidth())
           PointerInputCard(Modifier.fillMaxWidth())
           PointerIconCard(Modifier.fillMaxWidth())

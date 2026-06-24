@@ -8,7 +8,7 @@ This file tracks known gaps for Compose GLFW.
 - Support Touch/stylus input routing and `InputModeManager` updates for
   non-mouse pointer devices; see `roadmap/NATIVE_POINTER_INPUT.md`
 - Support screen reader / accessibility integration
-- Support keep screen on and frame rate voting
+- Support keep screen on
 - Support native menus
 - Support system tray
 - Support draggable window area, especially on Wayland as it can't be done by

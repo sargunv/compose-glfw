@@ -138,9 +138,10 @@ internal class HostPlatformContext(
       fallbackContext.isKeepScreenOnEnabled = value
     }
 
-  // TODO: Requires compositor/display frame-rate APIs; GLFW does not provide this directly.
+  private var frameRateVote: FrameRateVote? = null
+
   override fun voteFrameRate(frameRate: Float, frameRateCategory: Float) {
-    fallbackContext.voteFrameRate(frameRate, frameRateCategory)
+    frameRateVote = FrameRateVote(frameRate, frameRateCategory)
   }
 
   override val rootForTestListener: PlatformContext.RootForTestListener?
@@ -224,6 +225,10 @@ internal class HostPlatformContext(
     }
   }
 
+  fun consumeFrameRateVote(): FrameRateVote? = frameRateVote.also {
+    frameRateVote = null
+  }
+
   @Composable
   fun TextToolbarContent() {
     textToolbarAdapter.Content()
@@ -244,6 +249,22 @@ internal class HostPlatformContext(
     }
   }
 }
+
+internal data class FrameRateVote(
+  val frameRate: Float,
+  val frameRateCategory: Float,
+) {
+  fun targetFramesPerSecond(displayRefreshRate: Int?): Float? =
+    when {
+      frameRate.isFinite() && frameRate > 0f -> frameRate
+      frameRateCategory == FrameRateCategoryNormal -> minOf(displayRefreshRate ?: 60, 60).toFloat()
+      frameRateCategory == FrameRateCategoryHigh -> null
+      else -> null
+    }
+}
+
+private const val FrameRateCategoryNormal = -3f
+private const val FrameRateCategoryHigh = -4f
 
 private class ComposeWindowInfoState : WindowInfo {
   override var isWindowFocused: Boolean by mutableStateOf(true)

@@ -16,6 +16,7 @@ import dev.sargunv.composeglfw.WindowPlacement
 import dev.sargunv.composeglfw.WindowPosition
 import dev.sargunv.composeglfw.WindowState
 import dev.sargunv.composeglfw.internal.input.InputDispatcher
+import dev.sargunv.composeglfw.internal.platform.FrameRateVote
 import dev.sargunv.composeglfw.internal.platform.HostPlatformContext
 import dev.sargunv.composeglfw.internal.platform.NfdFilePicker
 import dev.sargunv.composeglfw.internal.platform.SystemThemeProvider
@@ -30,6 +31,7 @@ import dev.sargunv.composeglfw.internal.window.PlatformWindowBounds
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.ceil
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 import org.lwjgl.glfw.GLFW.glfwPollEvents
 import org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback
 import org.lwjgl.glfw.GLFW.glfwSetWindowCloseCallback
@@ -73,6 +75,8 @@ internal class WindowHost(
   private var lastAppliedMinimized: Boolean = false
   private var windowedBoundsBeforeFullscreen: PlatformWindowBounds? = null
   private var renderRequested = true
+  private var forceNextRender = false
+  private val framePacer = FramePacer()
   private var isRenderingFromGlfwCallback = false
   private val shouldRenderDuringBlockedEventProcessing =
     when (currentDisplayServer()) {
@@ -96,7 +100,16 @@ internal class WindowHost(
     get() = peer.window
 
   val hasPendingWork: Boolean
-    get() = canRenderFrame && (renderRequested || scene.hasInvalidations)
+    get() =
+      canRenderFrame && hasDirtyFrame && framePacer.canRender(System.nanoTime(), forceNextRender)
+
+  val nextFrameDelayNanos: Long?
+    get() =
+      if (canRenderFrame && hasDirtyFrame && !forceNextRender) {
+        framePacer.delayNanos(System.nanoTime())
+      } else {
+        null
+      }
 
   init {
     actualVisible = initialNativeVisibility(config)
@@ -233,11 +246,21 @@ internal class WindowHost(
     if (!canRenderFrame) {
       return
     }
-    if (!renderRequested && !scene.hasInvalidations) {
+    if (!hasDirtyFrame) {
+      return
+    }
+    val frameTimeNanos = System.nanoTime()
+    if (!framePacer.canRender(frameTimeNanos, forceNextRender)) {
       return
     }
     renderRequested = false
-    peer.renderBackend.render(scene, System.nanoTime())
+    forceNextRender = false
+    framePacer.onFrameStarted(frameTimeNanos)
+    peer.renderBackend.render(scene, frameTimeNanos)
+    framePacer.applyVote(
+      vote = platformContext.consumeFrameRateVote(),
+      displayRefreshRate = window.currentRefreshRate(),
+    )
   }
 
   override fun close() {
@@ -305,7 +328,7 @@ internal class WindowHost(
           onPointerInputMode = platformContext::updatePointerInputMode,
           onPreviewKeyEvent = { onPreviewKeyEvent(it) },
           onKeyEvent = { onKeyEvent(it) },
-          requestRender = ::requestRender,
+          requestRender = { requestRender(urgent = true) },
         )
         .also { it.enabled = enabled }
     installWindowCallbacks(window)
@@ -319,7 +342,7 @@ internal class WindowHost(
       if (!isApplyingStateSize) {
         settlePendingStateSize()
       }
-      requestRender()
+      requestRender(urgent = true)
       renderFromGlfwCallback()
     }
     glfwSetWindowSizeCallback(window.handle) { _, _, _ ->
@@ -328,16 +351,16 @@ internal class WindowHost(
       if (!isApplyingStateSize && !settlePendingStateSize()) {
         updateStateSizeFromWindow()
       }
-      requestRender()
+      requestRender(urgent = true)
       renderFromGlfwCallback()
     }
     glfwSetWindowRefreshCallback(window.handle) { _ ->
-      requestRender()
+      requestRender(urgent = true)
       renderFromGlfwCallback()
     }
     glfwSetWindowFocusCallback(window.handle) { _, focused ->
       platformContext.updateFocus(focused)
-      requestRender()
+      requestRender(urgent = true)
     }
     glfwSetWindowCloseCallback(window.handle) { _ ->
       window.cancelCloseRequest()
@@ -475,8 +498,11 @@ internal class WindowHost(
     lastAppliedMinimized = false
   }
 
-  private fun requestRender() {
-    if (!renderRequested) {
+  private fun requestRender(urgent: Boolean = false) {
+    if (urgent) {
+      forceNextRender = true
+    }
+    if (!renderRequested || urgent) {
       renderRequested = true
       wakeEventLoop()
     }
@@ -484,6 +510,9 @@ internal class WindowHost(
 
   private val canRenderFrame: Boolean
     get() = actualVisible && window.framebufferSize.width > 0 && window.framebufferSize.height > 0
+
+  private val hasDirtyFrame: Boolean
+    get() = renderRequested || scene.hasInvalidations
 
   private fun renderFromGlfwCallback() {
     if (!shouldRenderDuringBlockedEventProcessing || isRenderingFromGlfwCallback) {
@@ -819,8 +848,69 @@ private data class WindowPeerConfig(
   val alwaysOnTop: Boolean,
 )
 
+private class FramePacer {
+  private var nextFrameTimeNanos: Long? = null
+  private var lastFrameStartNanos: Long? = null
+
+  fun canRender(
+    nowNanos: Long,
+    force: Boolean,
+  ): Boolean = force || delayNanos(nowNanos) == null
+
+  fun delayNanos(nowNanos: Long): Long? = nextFrameTimeNanos?.let { frameTime ->
+    (frameTime - nowNanos).coerceAtLeast(0L)
+  }
+
+  fun onFrameStarted(frameTimeNanos: Long) {
+    lastFrameStartNanos = frameTimeNanos
+  }
+
+  fun applyVote(
+    vote: FrameRateVote?,
+    displayRefreshRate: Int?,
+  ) {
+    val pacing =
+      FramePacing.resolve(
+        targetFramesPerSecond = vote?.targetFramesPerSecond(displayRefreshRate),
+        displayRefreshRate = displayRefreshRate,
+      )
+    nextFrameTimeNanos =
+      pacing.softwareFramePeriodNanos?.let { period ->
+        (lastFrameStartNanos ?: System.nanoTime()) + period
+      }
+  }
+}
+
+private data class FramePacing(val softwareFramePeriodNanos: Long?) {
+  companion object {
+    fun resolve(
+      targetFramesPerSecond: Float?,
+      displayRefreshRate: Int?,
+    ): FramePacing {
+      if (targetFramesPerSecond == null || targetFramesPerSecond <= 0f) {
+        return Default
+      }
+
+      val refreshRate = displayRefreshRate?.takeIf { it > 0 }
+      if (refreshRate != null) {
+        if (targetFramesPerSecond >= refreshRate - FrameRateToleranceFramesPerSecond) {
+          return Default
+        }
+      }
+
+      return FramePacing(
+        softwareFramePeriodNanos = (NanosPerSecond / targetFramesPerSecond.toDouble()).roundToLong()
+      )
+    }
+
+    private val Default = FramePacing(softwareFramePeriodNanos = null)
+  }
+}
+
 private val DefaultWindowSize = DpSize(800.dp, 600.dp)
 private val MinWindowSize = 1.dp
+private const val FrameRateToleranceFramesPerSecond = 0.5f
+private const val NanosPerSecond = 1_000_000_000L
 
 private fun DpSize.hasUnspecifiedDimensions(): Boolean = !width.isSpecified || !height.isSpecified
 
