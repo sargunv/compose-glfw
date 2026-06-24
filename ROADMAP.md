@@ -6,7 +6,7 @@ This file tracks known gaps for Compose GLFW.
 - Support Wayland file drag and drop
 - Support rich drag and drop events (enter, move, action) and non-file payloads
 - Support Touch/stylus input routing and `InputModeManager` updates for
-  non-mouse pointer devices
+  non-mouse pointer devices; see `roadmap/NATIVE_POINTER_INPUT.md`
 - Support screen reader / accessibility integration
 - Support keep screen on and frame rate voting
 - Support native menus
