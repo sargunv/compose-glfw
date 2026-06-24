@@ -3,10 +3,7 @@ package dev.sargunv.composeglfw
 import org.jetbrains.skia.DirectContext
 
 /** Backend-specific GPU interop for a hosted Compose window. */
-public sealed interface GpuInterop {
-  /** Rendering backend used by this interop object. */
-  public val backend: RenderBackend
-}
+public sealed interface GpuInterop
 
 /**
  * OpenGL interop for a Compose GLFW window.
@@ -35,9 +32,7 @@ public data class OpenGlInterop(
 
   /** Makes this window's OpenGL context current on the calling thread. */
   public val makeCurrent: () -> Unit,
-) : GpuInterop {
-  override val backend: RenderBackend = RenderBackend.OPENGL
-}
+) : GpuInterop
 
 /**
  * Metal interop for a Compose GLFW window.
@@ -61,6 +56,4 @@ public data class MetalInterop(
 
   /** `MTLCommandQueue*` used by Skia. */
   public val queue: Long,
-) : GpuInterop {
-  override val backend: RenderBackend = RenderBackend.METAL
-}
+) : GpuInterop
