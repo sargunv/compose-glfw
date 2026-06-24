@@ -61,7 +61,7 @@ internal class WindowHost(
   private var onPreviewKeyEvent = request.onPreviewKeyEvent
   private var onKeyEvent = request.onKeyEvent
   private var lastAppliedStateSize = request.state.size.initialConcreteSize()
-  private var pendingStateSize: DpSize? = lastAppliedStateSize
+  private var pendingStateSize: DpSize? = null
   private var hasReappliedPendingStateSize = false
   private var pendingVisiblePreferredSizeRequest: DpSize? = null
   private var isApplyingStateSize = false
@@ -448,8 +448,7 @@ internal class WindowHost(
 
   private fun resetAppliedStateForNewPeer() {
     lastAppliedStateSize = state.size.initialConcreteSize()
-    pendingStateSize = lastAppliedStateSize
-    hasReappliedPendingStateSize = false
+    clearPendingStateSize()
     lastAppliedPosition = WindowPosition.PlatformDefault
     lastAppliedPlacement = WindowPlacement.Floating
     pendingPlacement = null
@@ -531,6 +530,7 @@ internal class WindowHost(
     val size = currentWindowStateSize() ?: return
     if (size != state.size) {
       pendingVisiblePreferredSizeRequest = null
+      clearPendingStateSize()
       lastAppliedStateSize = size
       state.size = size
       config = config.copy(size = size)
