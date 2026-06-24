@@ -73,7 +73,12 @@ internal class WindowHost(
   private var renderRequested = true
   private var isRenderingFromGlfwCallback = false
   private val shouldRenderDuringBlockedEventProcessing =
-    currentDisplayServer() == DisplayServer.COCOA
+    when (currentDisplayServer()) {
+      DisplayServer.COCOA,
+      DisplayServer.WIN32 -> true
+      DisplayServer.WAYLAND,
+      DisplayServer.X11 -> false
+    }
 
   private val platformContext: HostPlatformContext
   private val scope: WindowScopeImpl
@@ -371,8 +376,9 @@ internal class WindowHost(
     }
 
     if (state.placement != lastAppliedPlacement) {
-      applyPlacement(state.placement)
-      lastAppliedPlacement = state.placement
+      val requestedPlacement = state.placement
+      lastAppliedPlacement = requestedPlacement
+      applyPlacement(requestedPlacement)
     }
 
     if (state.isMinimized != lastAppliedMinimized) {
