@@ -6,7 +6,6 @@ Known gaps:
 
 OS/platform API wiring:
 
-- [ ] Windows light/dark mode detection
 - [ ] Wayland file drops through GLFW
 - [ ] Full native drag-and-drop parity beyond GLFW file drop callbacks:
       enter/move/action events, non-file payloads, and outgoing drags
