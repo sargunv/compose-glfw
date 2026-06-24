@@ -70,11 +70,10 @@ internal fun PopupMenuCard(modifier: Modifier = Modifier) {
               TooltipPlacement.CursorPoint(
                 alignment = Alignment.BottomEnd,
                 offset =
-                  if (index % 2 == 0) {
-                    DpOffset((-16).dp, 0.dp)
-                  } else {
-                    DpOffset.Zero
-                  },
+                  DpOffset(
+                    x = if (index % 2 == 0) (-16).dp else 0.dp,
+                    y = 16.dp,
+                  ),
               ),
           ) {
             Button(onClick = {}) {
