@@ -513,6 +513,7 @@ internal class WindowHost(
     }
     updatePlatformLifecycleState()
     platformContext.updateWindowInfo()
+    peer.input.updatePreeditCursorRectangle()
     scope.window.info = currentInfo()
   }
 

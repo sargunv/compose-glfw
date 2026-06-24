@@ -35,6 +35,7 @@ import org.lwjgl.glfw.GLFW.GLFW_SCALE_TO_MONITOR
 import org.lwjgl.glfw.GLFW.GLFW_TRANSPARENT_FRAMEBUFFER
 import org.lwjgl.glfw.GLFW.GLFW_TRUE
 import org.lwjgl.glfw.GLFW.GLFW_VISIBLE
+import org.lwjgl.glfw.GLFW.GLFW_X11_ONTHESPOT
 import org.lwjgl.glfw.GLFW.glfwCreateCursor
 import org.lwjgl.glfw.GLFW.glfwCreateStandardCursor
 import org.lwjgl.glfw.GLFW.glfwCreateWindow
@@ -174,6 +175,9 @@ internal class PlatformWindow(
     // On X11, screen coordinates and pixels are 1:1, so GLFW needs this to create windows at
     // the requested logical size on scaled desktops. Wayland uses framebuffer scaling instead.
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE)
+    if (displayServer == DisplayServer.X11) {
+      glfwWindowHint(GLFW_X11_ONTHESPOT, GLFW_TRUE)
+    }
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, if (transparent) GLFW_TRUE else GLFW_FALSE)
     glfwWindowHint(GLFW_VISIBLE, if (visible) GLFW_TRUE else GLFW_FALSE)
 

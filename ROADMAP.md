@@ -14,8 +14,6 @@ Drag and drop:
 
 Input:
 
-- Support IME/preedit integration: composition text, candidate positioning, and
-  commit/cancel lifecycle
 - Support Touch/stylus input routing and `InputModeManager` updates for
   non-mouse pointer devices
 

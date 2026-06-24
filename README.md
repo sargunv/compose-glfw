@@ -46,8 +46,8 @@ The following features are supported:
 
 - App composition and window state
 - HiDPI and fractional scaling
-- Pointer, scroll, keyboard, and text input
-  - Not yet advanced IMEs or touch/stylus input
+- Pointer, scroll, keyboard, text, and IME input
+  - Not yet touch/stylus input
 - Clipboard integration
 - Custom cursors
 - Dark/light theme detection

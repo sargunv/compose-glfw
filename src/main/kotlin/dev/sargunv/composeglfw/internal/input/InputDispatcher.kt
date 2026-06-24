@@ -10,6 +10,8 @@ import dev.sargunv.composeglfw.internal.platform.TextInputService
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
 import dev.sargunv.composeglfw.internal.window.PlatformWindow
 import java.nio.file.Path
+import org.lwjgl.glfw.GLFW.GLFW_FALSE
+import org.lwjgl.glfw.GLFW.GLFW_IME
 import org.lwjgl.glfw.GLFW.GLFW_KEY_CAPS_LOCK
 import org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT
 import org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL
@@ -35,25 +37,27 @@ import org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_5
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 import org.lwjgl.glfw.GLFW.GLFW_REPEAT
+import org.lwjgl.glfw.GLFW.GLFW_TRUE
 import org.lwjgl.glfw.GLFW.glfwGetCursorPos
+import org.lwjgl.glfw.GLFW.glfwResetPreeditText
 import org.lwjgl.glfw.GLFW.glfwSetCharCallback
 import org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback
 import org.lwjgl.glfw.GLFW.glfwSetDropCallback
+import org.lwjgl.glfw.GLFW.glfwSetIMEStatusCallback
+import org.lwjgl.glfw.GLFW.glfwSetInputMode
 import org.lwjgl.glfw.GLFW.glfwSetKeyCallback
 import org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback
+import org.lwjgl.glfw.GLFW.glfwSetPreeditCallback
 import org.lwjgl.glfw.GLFW.glfwSetScrollCallback
 import org.lwjgl.glfw.GLFWDropCallback
 import org.lwjgl.system.MemoryStack
-
-// Compose's desktop scroll config normally sees AWT's scrollAmount, commonly 3 lines per wheel
-// step.
-// GLFW gives unit offsets without that metadata, so apply the same baseline before forwarding.
-private const val ScrollAmount = 3f
+import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.MemoryUtil.memIntBuffer
 
 internal class InputDispatcher(
   private val window: PlatformWindow,
   private val scene: ComposeWindowScene,
-  textInput: TextInputService,
+  private val textInput: TextInputService,
   private val onKeyboardModifiers: (PointerKeyboardModifiers) -> Unit,
   private val onKeyboardInputMode: () -> Unit,
   private val onPointerInputMode: () -> Unit,
@@ -66,8 +70,17 @@ internal class InputDispatcher(
   private var lastMouse = Offset.Zero
   private var currentMods = 0
   private var scrollLockOn = false
+  private val onInputMethodStarting: () -> Unit = {
+    resetPreedit()
+  }
+  private val onInputMethodActiveChanged: (Boolean) -> Unit = { active ->
+    updateInputMethodSession(active)
+  }
 
   init {
+    installImeCallbacks()
+    textInput.onInputMethodStarting = onInputMethodStarting
+    textInput.onInputMethodActiveChanged = onInputMethodActiveChanged
     glfwSetCursorPosCallback(window.handle) { _, x, y ->
       if (!enabled) return@glfwSetCursorPosCallback
       updateMousePosition(x, y)
@@ -90,7 +103,10 @@ internal class InputDispatcher(
       if (!enabled) return@glfwSetScrollCallback
       sendPointer(
         type = PointerEventType.Scroll,
-        scrollDelta = Offset(x.toFloat(), -y.toFloat()) * ScrollAmount,
+        // TODO: GLFW's public scroll callback does not expose input source, precise-wheel state,
+        // scroll phase/momentum, or OS scrollAmount. Forward the raw offsets for now instead of
+        // guessing Compose Desktop's AWT MouseWheelEvent metadata.
+        scrollDelta = Offset(x.toFloat(), -y.toFloat()),
       )
     }
     glfwSetKeyCallback(window.handle) { _, key, scancode, action, mods ->
@@ -104,7 +120,9 @@ internal class InputDispatcher(
         if (action == GLFW_PRESS || action == GLFW_REPEAT) {
           onKeyboardInputMode()
         }
-        onPreviewKeyEvent(event) || scene.sendKeyEvent(event) || onKeyEvent(event)
+        if (!shouldSuppressKeyEventForIme(key)) {
+          onPreviewKeyEvent(event) || scene.sendKeyEvent(event) || onKeyEvent(event)
+        }
         requestRender()
       }
     }
@@ -137,8 +155,62 @@ internal class InputDispatcher(
     glfwSetScrollCallback(window.handle, null)?.free()
     glfwSetKeyCallback(window.handle, null)?.free()
     glfwSetCharCallback(window.handle, null)?.free()
+    runCatching { glfwSetPreeditCallback(window.handle, null)?.free() }
+    runCatching { glfwSetIMEStatusCallback(window.handle, null)?.free() }
+    if (textInput.onInputMethodStarting === onInputMethodStarting) {
+      textInput.onInputMethodStarting = null
+    }
+    if (textInput.onInputMethodActiveChanged === onInputMethodActiveChanged) {
+      textInput.onInputMethodActiveChanged = null
+    }
+    runCatching { glfwSetInputMode(window.handle, GLFW_IME, GLFW_FALSE) }
     glfwSetDropCallback(window.handle, null)?.free()
   }
+
+  fun updatePreeditCursorRectangle() {
+    textInput.updatePreeditCursorRectangle(window)
+  }
+
+  private fun installImeCallbacks() {
+    runCatching { glfwSetInputMode(window.handle, GLFW_IME, GLFW_TRUE) }
+    runCatching {
+      glfwSetPreeditCallback(window.handle) { _, preeditCount, preeditString, _, _, _, caret ->
+        if (!enabled) return@glfwSetPreeditCallback
+        if (!textInput.isInputMethodActive) {
+          return@glfwSetPreeditCallback
+        }
+        if (textInput.setPreedit(preeditString.toCodePointString(preeditCount), caret)) {
+          textInput.updatePreeditCursorRectangle(window)
+          onKeyboardInputMode()
+          requestRender()
+        }
+      }
+    }
+    runCatching {
+      glfwSetIMEStatusCallback(window.handle) { _ ->
+        if (!enabled) return@glfwSetIMEStatusCallback
+        if (textInput.isInputMethodActive) {
+          textInput.updatePreeditCursorRectangle(window)
+        }
+        requestRender()
+      }
+    }
+  }
+
+  private fun updateInputMethodSession(active: Boolean) {
+    if (!active) {
+      resetPreedit()
+    } else {
+      textInput.updatePreeditCursorRectangle(window)
+    }
+  }
+
+  private fun resetPreedit() {
+    runCatching { glfwResetPreeditText(window.handle) }
+  }
+
+  private fun shouldSuppressKeyEventForIme(key: Int): Boolean =
+    textInput.isComposing && !key.isModifierKey()
 
   private fun updateMousePosition(x: Double, y: Double) {
     val framebuffer = window.framebufferSize
@@ -258,6 +330,22 @@ private fun Int.glfwPressedModifierMask(): Int? =
     else -> null
   }
 
+private fun Int.isModifierKey(): Boolean =
+  when (this) {
+    GLFW_KEY_LEFT_SHIFT,
+    GLFW_KEY_RIGHT_SHIFT,
+    GLFW_KEY_LEFT_CONTROL,
+    GLFW_KEY_RIGHT_CONTROL,
+    GLFW_KEY_LEFT_ALT,
+    GLFW_KEY_RIGHT_ALT,
+    GLFW_KEY_LEFT_SUPER,
+    GLFW_KEY_RIGHT_SUPER,
+    GLFW_KEY_CAPS_LOCK,
+    GLFW_KEY_NUM_LOCK,
+    GLFW_KEY_SCROLL_LOCK -> true
+    else -> false
+  }
+
 private fun Int.glfwLockModifierMask(): Int? =
   when (this) {
     GLFW_KEY_CAPS_LOCK -> GLFW_MOD_CAPS_LOCK
@@ -273,3 +361,18 @@ private fun Int.withModifier(mask: Int, enabled: Boolean): Int =
   }
 
 private infix fun Int.has(mask: Int): Boolean = (this and mask) != 0
+
+private fun Long.toCodePointString(count: Int): String {
+  if (this == NULL || count <= 0) {
+    return ""
+  }
+  val codePoints = memIntBuffer(this, count)
+  return buildString {
+    for (index in 0 until count) {
+      val codePoint = codePoints[index]
+      if (Character.isValidCodePoint(codePoint)) {
+        appendCodePoint(codePoint)
+      }
+    }
+  }
+}
