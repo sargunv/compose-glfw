@@ -2,16 +2,16 @@ package dev.sargunv.composeglfw
 
 import org.jetbrains.skia.DirectContext
 
-/** Backend-specific GPU interop for a hosted Compose window. */
-public sealed interface GpuInterop
+/** Backend-specific render context for a hosted Compose window. */
+public sealed interface RenderContext
 
 /**
- * OpenGL interop for a Compose GLFW window.
+ * OpenGL render context for a Compose GLFW window.
  *
  * Native handles are borrowed from the host window and remain valid only until that window is
  * closed or recreated. Do not close or release them from user code.
  */
-public data class OpenGlInterop(
+public data class OpenGlRenderContext(
   /** Skia direct context used by Compose for this window. */
   public val directContext: DirectContext,
 
@@ -32,16 +32,16 @@ public data class OpenGlInterop(
 
   /** Makes this window's OpenGL context current on the calling thread. */
   public val makeCurrent: () -> Unit,
-) : GpuInterop
+) : RenderContext
 
 /**
- * Metal interop for a Compose GLFW window.
+ * Metal render context for a Compose GLFW window.
  *
  * Native handles are borrowed from the host window and remain valid only until that window is
  * closed or recreated. Do not close or release them from user code. Cocoa and Metal objects should
  * be used from the application/UI thread unless their platform documentation says otherwise.
  */
-public data class MetalInterop(
+public data class MetalRenderContext(
   /** Skia direct context used by Compose for this window. */
   public val directContext: DirectContext,
 
@@ -56,15 +56,15 @@ public data class MetalInterop(
 
   /** `MTLCommandQueue*` used by Skia. */
   public val queue: Long,
-) : GpuInterop
+) : RenderContext
 
 /**
- * Direct3D interop for a Compose GLFW window.
+ * Direct3D render context for a Compose GLFW window.
  *
  * Native handles are borrowed from the host window and remain valid only until that window is
  * closed or recreated. Do not close or release them from user code.
  */
-public data class Direct3DInterop(
+public data class Direct3DRenderContext(
   /** Skia direct context used by Compose for this window. */
   public val directContext: DirectContext,
 
@@ -91,4 +91,4 @@ public data class Direct3DInterop(
 
   /** IDCompositionVisual pointer whose content is the DXGI swap chain. */
   public val compositionVisual: Long,
-) : GpuInterop
+) : RenderContext

@@ -17,6 +17,7 @@ dependencies {
   runtimeOnly(platform(libs.lwjglBom))
   runtimeOnly(variantOf(libs.lwjgl) { classifier("natives-linux-arm64") })
   runtimeOnly(variantOf(libs.lwjglGlfw) { classifier("natives-linux-arm64") })
+  runtimeOnly(variantOf(libs.lwjglNfd) { classifier("natives-linux-arm64") })
   runtimeOnly(variantOf(libs.lwjglOpenGl) { classifier("natives-linux-arm64") })
   runtimeOnly(libs.skikoAwtRuntimeLinuxArm64)
 }

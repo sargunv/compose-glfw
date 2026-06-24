@@ -47,7 +47,7 @@ internal fun main(): Unit {
       title = "Compose GLFW demo",
       state = windowState,
     ) {
-      ComposeGlfwApp(windowInfo, windowState, showcaseState, showcaseActions)
+      ComposeGlfwApp(window.info, windowState, showcaseState, showcaseActions)
     }
 
     if (toolsOpen) {
@@ -58,7 +58,7 @@ internal fun main(): Unit {
         alwaysOnTop = true,
         focusOnShow = false,
       ) {
-        ToolsWindowContent(windowInfo, toolsWindowState)
+        ToolsWindowContent(window.info, toolsWindowState)
       }
     }
 
@@ -74,7 +74,7 @@ internal fun main(): Unit {
         focusOnShow = false,
       ) {
         TransparentHudWindowContent(
-          windowInfo = windowInfo,
+          windowInfo = window.info,
           windowState = hudWindowState,
           state =
             HudWindowControlState(
@@ -104,7 +104,7 @@ internal fun main(): Unit {
         enabled = false,
         focusOnShow = false,
       ) {
-        PassiveWindowContent(windowInfo)
+        PassiveWindowContent(window.info)
       }
     }
 
@@ -122,7 +122,7 @@ internal fun main(): Unit {
             }
           },
       ) {
-        TextToolbarWindowContent(windowInfo)
+        TextToolbarWindowContent(window.info)
       }
     }
   }

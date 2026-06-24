@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import dev.sargunv.composeglfw.DroppedFiles
 import dev.sargunv.composeglfw.HostWindowScope
+import dev.sargunv.composeglfw.LocalWindow
 import dev.sargunv.composeglfw.internal.platform.HostPlatformContext
 import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
@@ -56,7 +57,10 @@ internal class ComposeWindowScene(
   init {
     checkSceneThread("ComposeScene setContent")
     scene.setContent {
-      CompositionLocalProvider(LocalSystemTheme provides platformContext.systemTheme) {
+      CompositionLocalProvider(
+        LocalSystemTheme provides platformContext.systemTheme,
+        LocalWindow provides scope.window,
+      ) {
         WindowRootLayout(preferredSizeConstraints = { preferredSizeConstraints }) {
           scope.content()
           platformContext.TextToolbarContent()

@@ -2,7 +2,7 @@ package dev.sargunv.composeglfw.internal.render.opengl
 
 import androidx.compose.ui.graphics.asComposeCanvas
 import androidx.compose.ui.unit.IntSize
-import dev.sargunv.composeglfw.OpenGlInterop
+import dev.sargunv.composeglfw.OpenGlRenderContext
 import dev.sargunv.composeglfw.RenderBackend
 import dev.sargunv.composeglfw.internal.render.RenderBackendDriver
 import dev.sargunv.composeglfw.internal.scene.ComposeWindowScene
@@ -47,14 +47,14 @@ internal class OpenGlRenderBackend(private val window: PlatformWindow) : RenderB
 
   override val backend: RenderBackend = RenderBackend.OPENGL
 
-  override val interop: OpenGlInterop
+  override val interop: OpenGlRenderContext
 
   init {
     window.makeCurrent()
     directContext = createDirectContext()
     skiaTarget = createSkiaTarget(window.framebufferSize)
     interop =
-      OpenGlInterop(
+      OpenGlRenderContext(
         directContext = directContext,
         eglDisplay = glfwGetEGLDisplay(),
         eglConfig = getEglConfig(),

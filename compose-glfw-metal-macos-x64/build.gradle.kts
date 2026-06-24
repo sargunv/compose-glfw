@@ -17,6 +17,7 @@ dependencies {
   runtimeOnly(platform(libs.lwjglBom))
   runtimeOnly(variantOf(libs.lwjgl) { classifier("natives-macos") })
   runtimeOnly(variantOf(libs.lwjglGlfw) { classifier("natives-macos") })
+  runtimeOnly(variantOf(libs.lwjglNfd) { classifier("natives-macos") })
   runtimeOnly(libs.skikoAwtRuntimeMacosX64)
 }
 

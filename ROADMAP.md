@@ -19,7 +19,8 @@ OS/platform API wiring:
 - [ ] Native macOS fullscreen Spaces (`NSWindow.toggleFullScreen`)
 - [ ] Native menus
 - [ ] System tray
-- [ ] Dialogs and file pickers
+- [ ] Dialogs
+- [ ] Wayland parent-window integration for native file pickers
 - [ ] Draggable window area
 
 Useful parity reference:

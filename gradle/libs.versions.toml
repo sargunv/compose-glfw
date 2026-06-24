@@ -35,6 +35,7 @@ lifecycleViewModelSavedState = { module = "org.jetbrains.androidx.lifecycle:life
 lwjglBom = { module = "org.lwjgl:lwjgl-bom", version.ref = "lwjgl" }
 lwjgl = { module = "org.lwjgl:lwjgl" }
 lwjglGlfw = { module = "org.lwjgl:lwjgl-glfw" }
+lwjglNfd = { module = "org.lwjgl:lwjgl-nfd" }
 lwjglOpenGl = { module = "org.lwjgl:lwjgl-opengl" }
 navigationEvent = { module = "androidx.navigationevent:navigationevent", version.ref = "navigationEvent" }
 savedState = { module = "androidx.savedstate:savedstate", version.ref = "savedState" }
