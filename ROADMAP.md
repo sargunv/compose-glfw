@@ -22,11 +22,11 @@ OS/platform API wiring:
       can report non-mouse pointer devices
 - [ ] Screen reader and accessibility integration
 - [ ] Keep-screen-on and frame-rate voting
+- [ ] Native macOS fullscreen Spaces (`NSWindow.toggleFullScreen`)
 - [ ] Native menus, tray, dialogs, and file pickers
 
 Packaging and platform expansion:
 
-- [ ] macOS quirks and light/dark theme detection
 - [ ] Windows backend/runtime modules
 
 Useful parity reference:

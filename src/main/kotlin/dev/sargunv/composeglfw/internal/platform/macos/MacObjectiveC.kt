@@ -4,6 +4,7 @@ import org.lwjgl.system.JNI
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.MemoryUtil.memAddress
+import org.lwjgl.system.MemoryUtil.memGetAddress
 import org.lwjgl.system.macosx.DynamicLinkLoader.RTLD_LOCAL
 import org.lwjgl.system.macosx.DynamicLinkLoader.RTLD_NOW
 import org.lwjgl.system.macosx.DynamicLinkLoader.dlerror
@@ -19,6 +20,21 @@ internal object MacObjectiveC {
   private val selectors = mutableMapOf<String, Long>()
   private val classes = mutableMapOf<String, Long>()
   private val frameworks = mutableMapOf<String, Long>()
+
+  fun cls(name: String): Long =
+    classes.getOrPut(name) {
+      loadFrameworkForClass(name)
+      val cls = objc_getClass(name)
+      check(cls != NULL) { "Objective-C class not found: $name" }
+      cls
+    }
+
+  fun selector(name: String): Long =
+    selectors.getOrPut(name) {
+      val selector = sel_registerName(name)
+      check(selector != NULL) { "Objective-C selector not found: $name" }
+      selector
+    }
 
   fun allocInit(className: String): Long = sendPointer(sendPointer(cls(className), "alloc"), "init")
 
@@ -37,6 +53,26 @@ internal object MacObjectiveC {
   fun metalSystemDefaultDevice(): Long {
     loadFramework("Metal")
     return JNI.invokeP(function("Metal", "MTLCreateSystemDefaultDevice"))
+  }
+
+  fun frameworkObjectConstant(
+    framework: String,
+    symbol: String,
+  ): Long = memGetAddress(function(framework, symbol))
+
+  fun retainedNsString(value: String): Long =
+    MemoryStack.stackPush().use { stack ->
+      sendPointer(
+        sendPointer(cls("NSString"), "alloc"),
+        "initWithUTF8String:",
+        memAddress(stack.UTF8(value)),
+      )
+    }
+
+  fun nsArray(vararg objects: Long): Long {
+    val array = allocInit("NSMutableArray")
+    objects.forEach { sendVoid(array, "addObject:", it) }
+    return sendPointer(array, "autorelease")
   }
 
   fun sendPointer(
@@ -62,6 +98,15 @@ internal object MacObjectiveC {
   ): Boolean {
     val selector = selector(selectorName)
     return JNI.invokePPI(receiver, selector, implementation(receiver, selector)) != 0
+  }
+
+  fun sendBoolean(
+    receiver: Long,
+    selectorName: String,
+    argument: Long,
+  ): Boolean {
+    val selector = selector(selectorName)
+    return JNI.invokePPPI(receiver, selector, argument, implementation(receiver, selector)) != 0
   }
 
   fun sendVoid(
@@ -97,6 +142,44 @@ internal object MacObjectiveC {
   ) {
     val selector = selector(selectorName)
     JNI.invokePPPV(receiver, selector, argument, implementation(receiver, selector))
+  }
+
+  fun sendVoid(
+    receiver: Long,
+    selectorName: String,
+    argument1: Long,
+    argument2: Long,
+    argument3: Long,
+  ) {
+    val selector = selector(selectorName)
+    JNI.invokePPPPPV(
+      receiver,
+      selector,
+      argument1,
+      argument2,
+      argument3,
+      implementation(receiver, selector),
+    )
+  }
+
+  fun sendVoid(
+    receiver: Long,
+    selectorName: String,
+    argument1: Long,
+    argument2: Long,
+    argument3: Long,
+    argument4: Long,
+  ) {
+    val selector = selector(selectorName)
+    JNI.invokePPPPPPV(
+      receiver,
+      selector,
+      argument1,
+      argument2,
+      argument3,
+      argument4,
+      implementation(receiver, selector),
+    )
   }
 
   fun sendVoid(
@@ -155,28 +238,14 @@ internal object MacObjectiveC {
     }
   }
 
-  private fun cls(name: String): Long =
-    classes.getOrPut(name) {
-      loadFrameworkForClass(name)
-      val cls = objc_getClass(name)
-      check(cls != NULL) { "Objective-C class not found: $name" }
-      cls
-    }
-
   private fun loadFrameworkForClass(className: String) {
     when {
       className.startsWith("CA") -> loadFramework("QuartzCore")
       className.startsWith("MTL") -> loadFramework("Metal")
+      className == "NSApplication" || className == "NSAppearance" -> loadFramework("AppKit")
       else -> loadFramework("Foundation")
     }
   }
-
-  private fun selector(name: String): Long =
-    selectors.getOrPut(name) {
-      val selector = sel_registerName(name)
-      check(selector != NULL) { "Objective-C selector not found: $name" }
-      selector
-    }
 
   private fun implementation(
     receiver: Long,

@@ -161,7 +161,7 @@ The following features are supported:
 - Clipboard integration
 - Popup/dropdown positioning
 - Pointer cursor shapes and custom cursor images
-- Light/dark theme detection on Linux
+- Light/dark theme detection
 - Per-window GPU interop access for advanced rendering integrations
 
 The following features are partially supported:
