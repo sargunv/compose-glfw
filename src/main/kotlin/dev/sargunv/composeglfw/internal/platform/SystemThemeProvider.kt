@@ -1,12 +1,9 @@
-@file:OptIn(InternalComposeUiApi::class)
-
 package dev.sargunv.composeglfw.internal.platform
 
-import androidx.compose.ui.InternalComposeUiApi
-import androidx.compose.ui.SystemTheme
 import dev.sargunv.composeglfw.internal.platform.linux.createLinuxSystemThemeProvider
 import dev.sargunv.composeglfw.internal.platform.macos.createMacSystemThemeProvider
 import dev.sargunv.composeglfw.internal.platform.windows.createWindowsSystemThemeProvider
+import org.jetbrains.skiko.SystemTheme
 
 internal interface SystemThemeProvider : AutoCloseable {
   val systemTheme: SystemTheme
@@ -25,5 +22,5 @@ internal interface SystemThemeProvider : AutoCloseable {
 }
 
 private object UnknownSystemThemeProvider : SystemThemeProvider {
-  override val systemTheme: SystemTheme = SystemTheme.Unknown
+  override val systemTheme: SystemTheme = SystemTheme.UNKNOWN
 }

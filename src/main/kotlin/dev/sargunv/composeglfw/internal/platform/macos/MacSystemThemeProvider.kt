@@ -1,10 +1,7 @@
-@file:OptIn(InternalComposeUiApi::class)
-
 package dev.sargunv.composeglfw.internal.platform.macos
 
-import androidx.compose.ui.InternalComposeUiApi
-import androidx.compose.ui.SystemTheme
 import dev.sargunv.composeglfw.internal.platform.SystemThemeProvider
+import org.jetbrains.skiko.SystemTheme
 import java.lang.foreign.Arena
 import java.lang.foreign.FunctionDescriptor
 import java.lang.foreign.Linker
@@ -28,7 +25,7 @@ private class AppKitSystemThemeProvider(private val onSystemThemeChanged: (Syste
   private var app: Long = NULL
   private var observer: Long = NULL
   private var keyPath: Long = NULL
-  private var currentSystemTheme: SystemTheme = SystemTheme.Unknown
+  private var currentSystemTheme: SystemTheme = SystemTheme.UNKNOWN
 
   override val systemTheme: SystemTheme
     get() = currentSystemTheme
@@ -140,7 +137,7 @@ private class AppKitSystemThemeProvider(private val onSystemThemeChanged: (Syste
 
 private fun Long.toSystemTheme(): SystemTheme {
   if (this == NULL) {
-    return SystemTheme.Unknown
+    return SystemTheme.UNKNOWN
   }
   val matchingName =
     MacObjectiveC.sendPointer(
@@ -149,12 +146,12 @@ private fun Long.toSystemTheme(): SystemTheme {
       MacObjectiveC.nsArray(DarkAquaAppearanceName, AquaAppearanceName),
     )
   return when {
-    matchingName == NULL -> SystemTheme.Unknown
+    matchingName == NULL -> SystemTheme.UNKNOWN
     MacObjectiveC.sendBoolean(matchingName, "isEqualToString:", DarkAquaAppearanceName) ->
-      SystemTheme.Dark
+      SystemTheme.DARK
     MacObjectiveC.sendBoolean(matchingName, "isEqualToString:", AquaAppearanceName) ->
-      SystemTheme.Light
-    else -> SystemTheme.Unknown
+      SystemTheme.LIGHT
+    else -> SystemTheme.UNKNOWN
   }
 }
 

@@ -7,7 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.InternalComposeUiApi
-import androidx.compose.ui.SystemTheme
+import org.jetbrains.skiko.SystemTheme
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.InputModeManager
@@ -56,7 +56,7 @@ internal class HostPlatformContext(
   private var lifecycleVisible = initialVisible
   private var lifecycleMinimized = initialMinimized || window.isIconified
   private var lastLifecycleState: State? = null
-  var systemTheme: SystemTheme by mutableStateOf(SystemTheme.Unknown)
+  var systemTheme: SystemTheme by mutableStateOf(SystemTheme.UNKNOWN)
 
   override val windowInfo: WindowInfo = mutableWindowInfo
 
