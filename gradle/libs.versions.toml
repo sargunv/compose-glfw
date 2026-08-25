@@ -1,17 +1,17 @@
 [versions]
-compose = "1.11.1"
-androidxLifecycle = "2.9.4"
+compose = "1.12.0"
+androidxLifecycle = "2.11.0"
 dbusJava = "5.2.0"
 dokka = "2.2.0"
 javaRelease = "24"
 kotlin = "2.4.0"
-lifecycle = "2.9.6"
+lifecycle = "2.11.0"
 lwjgl = "3.4.1"
-material3 = "1.11.0-alpha07"
+material3 = "1.12.0-alpha03"
 mavenPublish = "0.37.0"
-navigationEvent = "1.0.1"
+navigationEvent = "1.1.1"
 savedState = "1.4.0"
-skiko = "0.144.6"
+skiko = "0.150.1"
 
 [plugins]
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose" }

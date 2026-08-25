@@ -207,7 +207,7 @@ private fun glfwKeyCodeFromMapping(key: Int): Int =
     // AWT stops at F24.
     GLFW_KEY_F25 -> AwtKeyEvent.VK_UNDEFINED
     in GLFW_KEY_KP_0..GLFW_KEY_KP_9 -> AwtKeyEvent.VK_NUMPAD0 + (key - GLFW_KEY_KP_0)
-    GLFW_KEY_KP_DECIMAL -> AwtKeyEvent.VK_PERIOD
+    GLFW_KEY_KP_DECIMAL -> AwtKeyEvent.VK_DECIMAL
     GLFW_KEY_KP_DIVIDE -> AwtKeyEvent.VK_DIVIDE
     GLFW_KEY_KP_MULTIPLY -> AwtKeyEvent.VK_MULTIPLY
     GLFW_KEY_KP_SUBTRACT -> AwtKeyEvent.VK_SUBTRACT
