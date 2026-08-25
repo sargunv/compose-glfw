@@ -7,7 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.InternalComposeUiApi
-import org.jetbrains.skiko.SystemTheme
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.InputModeManager
@@ -33,6 +32,7 @@ import androidx.lifecycle.Lifecycle.State
 import androidx.lifecycle.enableSavedStateHandles
 import dev.sargunv.composeglfw.TextToolbarContent
 import dev.sargunv.composeglfw.internal.window.PlatformWindow
+import org.jetbrains.skiko.SystemTheme
 
 internal class HostPlatformContext(
   private var window: PlatformWindow,

@@ -1,13 +1,13 @@
 package dev.sargunv.composeglfw.internal.platform.linux
 
 import dev.sargunv.composeglfw.internal.platform.SystemThemeProvider
-import org.jetbrains.skiko.SystemTheme
 import org.freedesktop.dbus.connections.impl.DBusConnection
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder
 import org.freedesktop.dbus.interfaces.DBusSigHandler
 import org.freedesktop.dbus.matchrules.DBusMatchRuleBuilder
 import org.freedesktop.dbus.types.UInt32
 import org.freedesktop.dbus.types.Variant
+import org.jetbrains.skiko.SystemTheme
 
 internal fun createLinuxSystemThemeProvider(
   onSystemThemeChanged: (SystemTheme) -> Unit

@@ -1,7 +1,6 @@
 package dev.sargunv.composeglfw.internal.platform.macos
 
 import dev.sargunv.composeglfw.internal.platform.SystemThemeProvider
-import org.jetbrains.skiko.SystemTheme
 import java.lang.foreign.Arena
 import java.lang.foreign.FunctionDescriptor
 import java.lang.foreign.Linker
@@ -10,6 +9,7 @@ import java.lang.foreign.ValueLayout.ADDRESS
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.util.concurrent.ConcurrentHashMap
+import org.jetbrains.skiko.SystemTheme
 import org.lwjgl.system.MemoryUtil.NULL
 import org.lwjgl.system.macosx.ObjCRuntime.class_addMethod
 import org.lwjgl.system.macosx.ObjCRuntime.objc_allocateClassPair

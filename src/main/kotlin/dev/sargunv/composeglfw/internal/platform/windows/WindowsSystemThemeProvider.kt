@@ -1,7 +1,6 @@
 package dev.sargunv.composeglfw.internal.platform.windows
 
 import dev.sargunv.composeglfw.internal.platform.SystemThemeProvider
-import org.jetbrains.skiko.SystemTheme
 import java.lang.foreign.Arena
 import java.lang.foreign.FunctionDescriptor
 import java.lang.foreign.Linker
@@ -12,6 +11,7 @@ import java.lang.foreign.ValueLayout.JAVA_CHAR
 import java.lang.foreign.ValueLayout.JAVA_INT
 import java.lang.invoke.MethodHandle
 import kotlin.concurrent.thread
+import org.jetbrains.skiko.SystemTheme
 import org.lwjgl.system.MemoryUtil.NULL
 
 internal fun createWindowsSystemThemeProvider(
