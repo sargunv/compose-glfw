@@ -30,6 +30,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import org.lwjgl.glfw.GLFW.GLFW_PLATFORM
+import org.lwjgl.glfw.GLFW.GLFW_TRUE
+import org.lwjgl.glfw.GLFW.GLFW_X11_ONTHESPOT
 import org.lwjgl.glfw.GLFW.glfwGetError
 import org.lwjgl.glfw.GLFW.glfwInit
 import org.lwjgl.glfw.GLFW.glfwInitHint
@@ -160,6 +162,8 @@ internal class ApplicationHost(private val content: @Composable ApplicationScope
       System.err.println("GLFW error $code: ${memUTF8(description)}")
     }
     preferredPlatform()?.let { glfwInitHint(GLFW_PLATFORM, it.glfwPlatformHint) }
+    // On-the-spot XIM is an init hint, not a window hint.
+    glfwInitHint(GLFW_X11_ONTHESPOT, GLFW_TRUE)
     check(glfwInit()) { "GLFW initialization failed: ${glfwGetError(null)}" }
     initialized = true
     displayServer = currentDisplayServer()
