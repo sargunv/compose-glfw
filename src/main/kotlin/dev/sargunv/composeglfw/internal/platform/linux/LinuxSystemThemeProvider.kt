@@ -1,9 +1,5 @@
-@file:OptIn(InternalComposeUiApi::class)
-
 package dev.sargunv.composeglfw.internal.platform.linux
 
-import androidx.compose.ui.InternalComposeUiApi
-import androidx.compose.ui.SystemTheme
 import dev.sargunv.composeglfw.internal.platform.SystemThemeProvider
 import org.freedesktop.dbus.connections.impl.DBusConnection
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder
@@ -11,6 +7,7 @@ import org.freedesktop.dbus.interfaces.DBusSigHandler
 import org.freedesktop.dbus.matchrules.DBusMatchRuleBuilder
 import org.freedesktop.dbus.types.UInt32
 import org.freedesktop.dbus.types.Variant
+import org.jetbrains.skiko.SystemTheme
 
 internal fun createLinuxSystemThemeProvider(
   onSystemThemeChanged: (SystemTheme) -> Unit
@@ -21,7 +18,7 @@ private class XdgPortalSystemThemeProvider(
 ) : SystemThemeProvider {
   private val connection: DBusConnection?
   private val signalSubscription: AutoCloseable?
-  private var currentSystemTheme: SystemTheme = SystemTheme.Unknown
+  private var currentSystemTheme: SystemTheme = SystemTheme.UNKNOWN
 
   override val systemTheme: SystemTheme
     get() = currentSystemTheme
@@ -81,9 +78,9 @@ private class XdgPortalSystemThemeProvider(
 
 private fun Variant<*>.toSystemTheme(): SystemTheme =
   when ((value as? UInt32)?.toInt()) {
-    1 -> SystemTheme.Dark
-    2 -> SystemTheme.Light
-    else -> SystemTheme.Unknown
+    1 -> SystemTheme.DARK
+    2 -> SystemTheme.LIGHT
+    else -> SystemTheme.UNKNOWN
   }
 
 private const val PortalBusName = "org.freedesktop.portal.Desktop"

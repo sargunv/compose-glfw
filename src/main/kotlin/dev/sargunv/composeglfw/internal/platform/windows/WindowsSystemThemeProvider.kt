@@ -1,9 +1,5 @@
-@file:OptIn(InternalComposeUiApi::class)
-
 package dev.sargunv.composeglfw.internal.platform.windows
 
-import androidx.compose.ui.InternalComposeUiApi
-import androidx.compose.ui.SystemTheme
 import dev.sargunv.composeglfw.internal.platform.SystemThemeProvider
 import java.lang.foreign.Arena
 import java.lang.foreign.FunctionDescriptor
@@ -15,6 +11,7 @@ import java.lang.foreign.ValueLayout.JAVA_CHAR
 import java.lang.foreign.ValueLayout.JAVA_INT
 import java.lang.invoke.MethodHandle
 import kotlin.concurrent.thread
+import org.jetbrains.skiko.SystemTheme
 import org.lwjgl.system.MemoryUtil.NULL
 
 internal fun createWindowsSystemThemeProvider(
@@ -28,7 +25,7 @@ private class RegistrySystemThemeProvider(private val onSystemThemeChanged: (Sys
   private var closeEvent: Long = NULL
   private var watcherThread: Thread? = null
   @Volatile private var closed = false
-  @Volatile private var currentSystemTheme: SystemTheme = SystemTheme.Unknown
+  @Volatile private var currentSystemTheme: SystemTheme = SystemTheme.UNKNOWN
 
   override val systemTheme: SystemTheme
     get() = currentSystemTheme
@@ -68,9 +65,9 @@ private class RegistrySystemThemeProvider(private val onSystemThemeChanged: (Sys
 
   private fun watchThemeChanges() {
     Arena.ofConfined().use { arena ->
-      val handles = arena.allocate(ADDRESS, 2)
-      handles.setAtIndex(ADDRESS, 0, MemorySegment.ofAddress(changeEvent))
-      handles.setAtIndex(ADDRESS, 1, MemorySegment.ofAddress(closeEvent))
+      val handles = arena.allocate(ADDRESS.byteSize() * 2)
+      handles.set(ADDRESS, 0, MemorySegment.ofAddress(changeEvent))
+      handles.set(ADDRESS, ADDRESS.byteSize(), MemorySegment.ofAddress(closeEvent))
 
       while (!closed) {
         if (!WindowsThemeRegistry.notifyValueChanges(key, changeEvent)) {
@@ -204,9 +201,9 @@ private object WindowsThemeRegistry {
           type.get(JAVA_INT, 0) == RegDword &&
           dataSize.get(JAVA_INT, 0) >= JAVA_INT.byteSize()
       ) {
-        if (data.get(JAVA_INT, 0) == 0) SystemTheme.Dark else SystemTheme.Light
+        if (data.get(JAVA_INT, 0) == 0) SystemTheme.DARK else SystemTheme.LIGHT
       } else {
-        SystemTheme.Unknown
+        SystemTheme.UNKNOWN
       }
     }
 

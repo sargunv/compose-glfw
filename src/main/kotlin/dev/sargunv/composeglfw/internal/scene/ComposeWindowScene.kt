@@ -1,4 +1,6 @@
 @file:OptIn(androidx.compose.ui.InternalComposeUiApi::class)
+// Compose 1.12 made LocalSystemTheme file-internal while still using it for isSystemInDarkTheme().
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 
 package dev.sargunv.composeglfw.internal.scene
 
@@ -17,8 +19,10 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.FrameRecomposer
 import androidx.compose.ui.scene.CanvasLayersComposeScene
 import androidx.compose.ui.scene.ComposeScene
+import androidx.compose.ui.scene.SingleComposeSceneRenderingScope
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
@@ -42,22 +46,27 @@ internal class ComposeWindowScene(
 ) : AutoCloseable {
   private var preferredSizeConstraints: PreferredContentSizeConstraints? = null
 
+  private val frameRecomposer = FrameRecomposer(coroutineContext, invalidate)
+  private val renderingScope = SingleComposeSceneRenderingScope(scheduleFrame = invalidate)
+
   private val scene: ComposeScene =
     CanvasLayersComposeScene(
+      frameRecomposer = frameRecomposer,
       density = Density(initialDensity),
       layoutDirection = LayoutDirection.Ltr,
       // The scene is rendered directly into the Skia framebuffer target, so local coordinates are
       // pixels.
       size = initialSize,
       platformContext = platformContext,
-      coroutineContext = coroutineContext,
-      invalidate = invalidate,
+      invalidateLayout = renderingScope::onSceneInvalidation,
+      invalidateDraw = renderingScope::onSceneInvalidation,
     )
 
   init {
     checkSceneThread("ComposeScene setContent")
-    scene.setContent {
+    scene.setContent(frameRecomposer.compositionContext) {
       CompositionLocalProvider(
+        // LocalSystemTheme is file-internal in Compose 1.12 and now carries Skiko's SystemTheme.
         LocalSystemTheme provides platformContext.systemTheme,
         LocalWindow provides scope.window,
       ) {
@@ -72,12 +81,14 @@ internal class ComposeWindowScene(
   val hasInvalidations: Boolean
     get() {
       checkSceneThread("ComposeScene invalidation check")
-      return scene.hasInvalidations()
+      return scene.hasPendingMeasureOrLayout ||
+        scene.hasPendingDraw ||
+        frameRecomposer.hasPendingWork()
     }
 
   fun render(canvas: Canvas, frameTimeNanos: Long) {
     checkSceneThread("ComposeScene render")
-    scene.render(canvas, frameTimeNanos)
+    with(renderingScope) { scene.render(frameRecomposer, canvas, frameTimeNanos) }
   }
 
   fun resize(size: IntSize) {
@@ -99,7 +110,12 @@ internal class ComposeWindowScene(
     checkSceneThread("ComposeScene preferred content size calculation")
     preferredSizeConstraints = PreferredContentSizeConstraints(fixedWidth, fixedHeight)
     try {
-      return scene.calculateContentSize()
+      return scene.measureContent(
+        Constraints(
+          maxWidth = fixedWidth ?: Constraints.Infinity,
+          maxHeight = fixedHeight ?: Constraints.Infinity,
+        )
+      )
     } finally {
       preferredSizeConstraints = null
     }
@@ -163,13 +179,10 @@ internal class ComposeWindowScene(
   override fun close() {
     checkSceneThread("ComposeScene close")
     scene.close()
+    frameRecomposer.close()
   }
 
   private fun checkSceneThread(operation: String) {
-    // TODO(CMP-10289): Compose UI 1.11.x starts GlobalSnapshotManager on Skiko's Swing
-    // MainUIDispatcher instead of this scene's coroutineContext. Keep this local guard as a
-    // diagnostic until snapshot apply notifications are dispatched per scene context.
-    // https://youtrack.jetbrains.com/issue/CMP-10289
     checkThread(operation)
   }
 }

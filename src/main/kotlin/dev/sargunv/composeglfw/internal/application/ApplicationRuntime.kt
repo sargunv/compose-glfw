@@ -32,8 +32,8 @@ private fun prepareMacOsRuntime() {
       "event loop. Remove -Djava.awt.headless=false or set -Djava.awt.headless=true."
   }
 
-  // Compose GLFW owns the Cocoa event loop through GLFW. Compose UI currently starts Skiko's
-  // Swing snapshot dispatcher internally, and if AWT initializes in non-headless mode it can
-  // install its own NSApplication loop and make GLFW event polling block indefinitely.
+  // Compose GLFW owns the Cocoa event loop through GLFW. If AWT initializes in non-headless
+  // mode it can install its own NSApplication loop and make GLFW event polling block
+  // indefinitely.
   System.setProperty("java.awt.headless", "true")
 }
