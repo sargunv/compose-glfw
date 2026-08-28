@@ -1,3 +1,7 @@
+This project is archived.
+
+I recommend you now use https://github.com/NucleusFramework/Nucleus instead.
+
 # Compose GLFW
 
 [![Maven Central Version](https://img.shields.io/maven-central/v/dev.sargunv/compose-glfw?label=Maven)](https://central.sonatype.com/namespace/dev.sargunv)
